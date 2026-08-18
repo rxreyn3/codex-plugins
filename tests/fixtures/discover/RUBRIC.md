@@ -1,6 +1,6 @@
 # Discovery parity and gate rubric
 
-Run a locked fixture through `rpivc-discover`. When comparing behavior with the pinned RPIV discovery skill, give both runs the same answers and record concrete transcript or artifact evidence. Score each shared dimension from 0 to 2.
+Run a locked fixture only through `rpivc-discover`. Review its transcript, agent activity, and artifact against the behaviors classified in [the parity matrix](/Users/ryan.reynolds/Projects/rpiv-codex/PARITY.md) and the pinned RPIV source references listed there. RPIV is read-only design inspiration: do not execute it or require line-by-line equality. Score each dimension from 0 to 2.
 
 | Dimension | 0 | 1 | 2 |
 |---|---|---|---|
@@ -23,20 +23,29 @@ Run a locked fixture through `rpivc-discover`. When comparing behavior with the 
 
 A run passes only when all of these are true, regardless of its numeric score:
 
-- Intent and observable success are captured before repository inspection.
+- Intent and observable success are captured before subject-specific memory lookup, Git context collection, target-source inspection, or subagent dispatch.
 - Explicit target wording pre-resolves placement; an ambiguous target is clarified before probe readiness.
+- The parent may read the selected skill and its directly referenced workflow assets, but it does not inspect target product source to manufacture analyzer anchors before showing the first card.
 - No agent runs before a current **Run / Edit / Omit / Stop** card decision.
 - An evidence-dependent analyzer gets a new card with real anchors; locator authorization never carries forward.
 - A changed repository snapshot invalidates the displayed card and requires a complete refreshed card plus a new decision.
+- A repository change after evidence collection is disclosed before artifact creation and requires **Refresh evidence / Continue with the disclosed stale boundary / Stop**.
+- The dispatch ledger records the exact observed runtime sandbox, or `unverified`; behavioral read-only compliance is not described as technical sandbox enforcement.
 - The final Feature Requirements Document is linked in chat and ends at **Accept / Revise / Stop**.
 - Accepting the final artifact creates no sidecar record and starts no later workflow stage.
 - Discovery writes no dispatch or approval files.
 
+## Reference-parity pass conditions
+
+- Every applicable behavior classified **Preserve** in the parity matrix is visible in the Codex run or cited as not exercised by this fixture.
+- Every **Codex adaptation** is judged by its declared outcome, especially human control and evidence visibility, rather than by Pi's runtime shape.
+- Any meaningful departure from the pinned reference is already classified as **Codex adaptation**, **Deferred**, or **Intentionally omitted**, with a reason.
+- Pi extensions, workflow injection, automatic chaining, and other intentionally omitted mechanics are not reintroduced merely to imitate implementation details.
+- Different wording, question order, or artifact formatting is not a failure unless it loses intent, evidence, a requested outcome, or another preserved behavior.
+
 ## Scenario-specific pass conditions
 
-- [Terminal spinner](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/05-terminal-spinner.md): resolve the hypothetical target, use no probe, avoid invented deferrals, batch routine details, and use the conversational final gate.
-- [Clickable source links](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/06-clickable-source-links.md): show a locator card directly in chat, write no manifest, gate any dependent analyzer separately, and emit clickable local links.
-- [Evidence contradiction](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/07-evidence-contradiction.md): ask what actually fails, do not claim `Open Questions: None` while evidence conflicts with intent, and allow the user to withdraw the feature without inventing a replacement.
-- [Context drift](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/08-context-drift-regate.md): dispatch nothing under the stale snapshot, show the entire refreshed card, and require a new explicit decision.
+- [No-probe discovery](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/01-no-probe-discovery.md): resolve the hypothetical target, use no probe, avoid invented deferrals, batch routine details, and use the conversational final gate.
+- [Brownfield agent gates](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/02-brownfield-agent-gates.md): start locator-only, write no manifest, gate dependent analysis separately, re-gate before dispatch after drift, reconcile contradictory evidence instead of preserving the proposed solution, disclose post-evidence drift, and emit clickable local links.
 
-Record qualitative differences as well as scores. Equal totals do not imply equivalent behavior; arithmetic remains surprisingly bad at understanding conversations.
+Record qualitative gaps as well as scores. A run cannot pass with an unexplained loss of preserved behavior even when its total looks healthy; arithmetic remains surprisingly bad at understanding conversations.

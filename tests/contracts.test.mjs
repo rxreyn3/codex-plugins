@@ -162,19 +162,14 @@ test("human-facing local paths use clickable Markdown links", () => {
 
 test("manual discovery fixtures track the conversational gate design", () => {
   const fixtures = path.join(root, "tests", "fixtures", "discover");
-  assert.equal(fs.existsSync(path.join(fixtures, "06-current-repository-probe.md")), false);
-  const manualFixtures = [
-    "01-vague-greenfield.md",
-    "02-narrow-brownfield-addition.md",
-    "03-cross-cutting-brownfield.md",
-    "04-existing-artifact-refinement.md",
-    "05-terminal-spinner.md",
-    "06-clickable-source-links.md",
-    "07-evidence-contradiction.md",
-    "08-context-drift-regate.md",
-  ];
+  const manualFixtures = fs.readdirSync(fixtures)
+    .filter((name) => name.endsWith(".md") && name !== "RUBRIC.md")
+    .sort();
+  assert.deepEqual(manualFixtures, [
+    "01-no-probe-discovery.md",
+    "02-brownfield-agent-gates.md",
+  ]);
   for (const name of manualFixtures) {
-    assert.equal(fs.existsSync(path.join(fixtures, name)), true, `${name} should exist`);
     const fixture = read("tests", "fixtures", "discover", name);
     assert.match(fixture, /^## Paste this prompt into the Codex editor$/m, `${name} needs a paste heading`);
     assert.match(fixture, /```text\n\$rpivc-discover [^\n]+\n```/, `${name} needs one copyable prompt`);
@@ -182,21 +177,22 @@ test("manual discovery fixtures track the conversational gate design", () => {
     assert.match(fixture, /Do not paste (?:this section|the rest of this file) into the editor/, `${name} must distinguish answers from the prompt`);
   }
 
-  const links = read("tests", "fixtures", "discover", "06-clickable-source-links.md");
-  assert.match(links, /\*\*Run\*\*[\s\S]*\*\*Edit\*\*[\s\S]*\*\*Omit\*\*[\s\S]*\*\*Stop\*\*/);
-  assert.match(links, /new analyzer-only card containing the actual anchors/);
-  assert.doesNotMatch(links, /dispatch manifest|approval record is supplied/i);
+  const noProbe = read("tests", "fixtures", "discover", "01-no-probe-discovery.md");
+  assert.match(noProbe, /no probe justified/);
+  assert.match(noProbe, /runs no agent/);
+  assert.match(noProbe, /\*\*Accept\*\*/);
 
-  const contradiction = read("tests", "fixtures", "discover", "07-evidence-contradiction.md");
-  assert.match(contradiction, /scripts invoke `artifact-check\.mjs` directly/);
-  assert.match(contradiction, /what fails with existing multiline JSON/i);
-  assert.match(contradiction, /Drop the proposed `--compact` feature/);
-  assert.match(contradiction, /Never write `Open Questions: None`/);
-
-  const drift = read("tests", "fixtures", "discover", "08-context-drift-regate.md");
-  assert.match(drift, /runs no agent under the stale card/);
-  assert.match(drift, /complete refreshed card/);
-  assert.match(drift, /another \*\*Run \/ Edit \/ Omit \/ Stop\*\* decision/);
+  const brownfield = read("tests", "fixtures", "discover", "02-brownfield-agent-gates.md");
+  assert.match(brownfield, /\*\*Run \/ Edit \/ Omit \/ Stop\*\*/);
+  assert.match(brownfield, /locator-only/);
+  assert.match(brownfield, /new analyzer-only card containing actual locator anchors/);
+  assert.match(brownfield, /tests\/\.rpivc-eval-drift-<iteration>\.txt/);
+  assert.match(brownfield, /stale card must dispatch nothing/);
+  assert.match(brownfield, /complete refreshed card/);
+  assert.match(brownfield, /Refresh evidence \/ Continue with the disclosed stale boundary \/ Stop/);
+  assert.match(brownfield, /exact observed runtime sandbox or `unverified`/);
+  assert.match(brownfield, /clickable Markdown links/);
+  assert.doesNotMatch(brownfield, /dispatch manifest|approval record is supplied/i);
 
   const rubric = read("tests", "fixtures", "discover", "RUBRIC.md");
   for (const dimension of [
@@ -209,6 +205,38 @@ test("manual discovery fixtures track the conversational gate design", () => {
     assert.match(rubric, new RegExp(`\\| ${dimension} \\|`));
   }
   assert.match(rubric, /Scenario-specific pass conditions/);
+  assert.match(rubric, /Reference-parity pass conditions/);
+  assert.match(rubric, /only through `rpivc-discover`/);
+  assert.match(rubric, /do not execute it or require line-by-line equality/);
+  assert.doesNotMatch(rubric, /both runs|same answers/);
+});
+
+test("forward-testing guide defines the reusable two-harness iteration contract", () => {
+  const guide = read("tests", "FORWARD-TESTING.md");
+  const manual = read("MANUAL-TEST.md");
+  assert.match(guide, /\*\*Minimal path\*\*/);
+  assert.match(guide, /\*\*Integration path\*\*/);
+  assert.match(guide, /exactly two read-only reviewers in parallel/);
+  assert.match(guide, /Contract and evidence reviewer/);
+  assert.match(guide, /Interaction and product-fidelity reviewer/);
+  assert.match(guide, /raw evidence/);
+  assert.match(guide, /Use RPIV as a reference, not a second runtime/);
+  assert.match(guide, /Do not run RPIV-Pi, install or invoke Pi extensions/);
+  assert.match(guide, /parity matrix/);
+  assert.match(guide, /no meaningful parity gap remains unexplained/);
+  assert.match(guide, /Do not give either reviewer[\s\S]*prior-iteration findings[\s\S]*intended patch/);
+  assert.match(guide, /fresh isolated Codex task/);
+  assert.match(guide, /ten iterations have completed/);
+  assert.match(guide, /delete only artifact paths created after the recorded baseline/);
+  assert.match(guide, /Never use a broad recursive deletion/);
+  assert.match(guide, /## Reusable `\/goal` template/);
+  assert.match(guide, /\/goal Improve rpivc-discover/);
+  assert.match(guide, /do not run RPIV, invoke Pi extensions, or require line-by-line output equality/);
+  assert.match(guide, /no verified material reviewer findings or unexplained parity gaps/);
+  assert.match(guide, /Do not implement research or another stage, install anything, commit, push, or modify rpiv-mono/);
+  assert.match(manual, /tests\/FORWARD-TESTING\.md/);
+  assert.match(manual, /01-no-probe-discovery\.md/);
+  assert.match(manual, /02-brownfield-agent-gates\.md/);
 });
 
 test("project agents are pinned, behaviorally read-only, bounded, and childless", () => {
@@ -252,6 +280,10 @@ test("RPIV source and omission choices are explicit", () => {
   assert.match(parity, /Intentionally omitted/);
   assert.match(parity, /Run \/ Edit \/ Omit \/ Stop/);
   assert.match(parity, /inherited-parent sandbox enforcement/);
+  assert.match(parity, /behavioral reference contract, not a differential test/);
+  assert.match(parity, /does not run RPIV-Pi/);
+  assert.match(parity, /line-by-line equality/);
+  assert.match(parity, /## Verification rule/);
   assert.doesNotMatch(parity, /read-only sandbox is enforced by the agent configuration/i);
 });
 

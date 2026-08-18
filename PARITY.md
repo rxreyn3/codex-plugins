@@ -9,6 +9,8 @@ The first checkpoint adapts RPIV-Pi discovery from commit `d0eb55371f622ac524b33
 
 RPIV-Pi is MIT licensed; the original notice is retained in [LICENSE](/Users/ryan.reynolds/Projects/rpiv-codex/LICENSE).
 
+This matrix is a behavioral reference contract, not a differential test. Evaluation reads the pinned RPIV sources for intent and inspiration, then exercises only `rpivc-discover` in Codex. It does not run RPIV-Pi, reproduce Pi runtime mechanics, or require line-by-line equality in prompts, transcripts, or artifacts.
+
 | RPIV behavior | Classification | RPIV-Codex treatment |
 |---|---|---|
 | Free text and existing artifact inputs | Preserve | Reads user-named inputs fully and always creates a fresh Feature Requirements Document. |
@@ -34,3 +36,11 @@ RPIV-Pi is MIT licensed; the original notice is retained in [LICENSE](/Users/rya
 | Additional specialists or discovery write agents | Deferred | Add only if a reviewed fixture demonstrates a gap the two discovery roles cannot cover. |
 
 Model, reasoning, intended tool lists, behavioral permissions, and budgets are visible conversational contracts. Current manual evidence shows that project-agent model and reasoning settings apply, while child-specific sandbox settings do not override the parent runtime. Read-only behavior, tool lists, and budgets remain prompt-level constraints.
+
+## Verification rule
+
+- Harnesses must demonstrate every applicable behavior classified **Preserve**.
+- Reviewers judge **Codex adaptation** rows against the declared human-control outcome, not Pi's implementation shape.
+- A meaningful departure must be classified as **Codex adaptation**, **Deferred**, or **Intentionally omitted** with a reason before the evaluation can pass.
+- Different wording, question order, artifact formatting, and native interaction mechanics are not parity failures by themselves.
+- Changes to the RPIV source pin or the intended treatment require an explicit matrix update; no evaluation silently follows a moving upstream target.

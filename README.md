@@ -19,4 +19,4 @@ intent + explicit target context
 
 Only final stage artifacts are written. They remain local under the gitignored `.rpiv-codex/` directory. There are no dispatch manifests, approval records, resume commands, or automatic next stages.
 
-See [the parity matrix](/Users/ryan.reynolds/Projects/rpiv-codex/PARITY.md), [the manual checkpoint](/Users/ryan.reynolds/Projects/rpiv-codex/MANUAL-TEST.md), and [the implementation plan](/Users/ryan.reynolds/Projects/rpiv-codex/PLAN.md).
+See [the parity matrix](/Users/ryan.reynolds/Projects/rpiv-codex/PARITY.md), [the manual checkpoint](/Users/ryan.reynolds/Projects/rpiv-codex/MANUAL-TEST.md), [the reusable forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md), and [the implementation plan](/Users/ryan.reynolds/Projects/rpiv-codex/PLAN.md).

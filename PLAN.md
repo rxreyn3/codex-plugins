@@ -431,22 +431,19 @@ No later unit is scaffolded early.
 
 ### Behavioral parity
 
-For every skill, maintain a parity matrix:
+For every skill, maintain a parity matrix against pinned RPIV sources:
 
 - Preserve
 - Codex adaptation
 - Deferred
 - Intentionally omitted
 
-For discovery, continue testing:
+This is source-guided behavioral parity, not differential execution. Read the pinned workflow, skill, command, agent, helper, and artifact sources for inspiration; run only the Codex-native capability. Do not execute RPIV-Pi, install Pi extensions, or require line-by-line equality in prompts, transcripts, or artifacts. Every meaningful departure must be classified, and no applicable behavior marked Preserve may disappear without becoming a failing finding.
 
-- Vague greenfield feature
-- Narrow brownfield addition
-- Cross-cutting brownfield change
-- Existing artifact refinement
-- Terminal-spinner pacing fixture
-- Locator followed by evidence-dependent analyzer
-- Repository evidence contradicting the user’s proposed solution
+For discovery, use two high-value harnesses:
+
+- No-probe discovery, absorbing the terminal-spinner pacing regression.
+- Brownfield agent gates, absorbing progressive locator/analyzer dispatch, evidence contradiction, repository drift, and clickable-link behavior.
 
 Score:
 

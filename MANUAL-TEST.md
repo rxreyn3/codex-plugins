@@ -1,79 +1,44 @@
 # Manual checkpoint: `rpivc-discover`
 
-These fixtures are the manual regression surface for discovery. Update them whenever an interaction contract changes, then exercise the affected fixture before considering the discovery unit ready.
+Discovery has two manual harnesses: one proves the simplest no-agent path, and one proves the highest-risk brownfield agent path. Use [the shared forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md) when running an iterative evaluation goal; this file contains only the discovery-specific entry points and safety checks.
 
 ## Prerequisite
 
-Open a fresh Codex task rooted at `/Users/ryan.reynolds/Projects/rpiv-codex` so the repository-local skill and project agents are loaded. Do not install or copy them globally.
+Open a fresh Codex task rooted at `/Users/ryan.reynolds/Projects/rpiv-codex` so the repository-local skill and agents are loaded. Do not install or copy them globally.
 
-Open the chosen fixture, copy only its **Paste this prompt into the Codex editor** block, and submit it. Keep the fixture open afterward so you can give its locked answers one at a time. Do not paste the answer section or volunteer later answers early.
+Open one harness and paste only its **Paste this prompt into the Codex editor** block. Keep the harness open, but do not show it to the task under test. Supply the closest locked answer only when the corresponding question is asked, and perform operator steps outside the task conversation.
 
-Use [the scoring rubric](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/RUBRIC.md) for every run.
+Use [the discovery rubric](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/RUBRIC.md) and [the parity matrix](/Users/ryan.reynolds/Projects/rpiv-codex/PARITY.md) to review each run. RPIV is a pinned, read-only behavioral reference; do not run it or compare outputs line by line.
 
-## Fixture catalog
+## The two harnesses
 
-| Fixture | What it exercises | Expected probe |
+| Harness | What it proves | Expected probe |
 |---|---|---|
-| [01 — vague greenfield](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/01-vague-greenfield.md) | Intent refinement without implementation leakage | None unless a product repository is later established |
-| [02 — narrow brownfield](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/02-narrow-brownfield-addition.md) | Small additive command change | Smallest evidence-backed roster |
-| [03 — cross-cutting brownfield](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/03-cross-cutting-brownfield.md) | Propagation across integration boundaries | Locator, then separately gated analysis if justified |
-| [04 — artifact refinement](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/04-existing-artifact-refinement.md) | Preserving a supplied artifact while refining decisions | Only when repository evidence can change a live decision |
-| [05 — terminal spinner](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/05-terminal-spinner.md) | No-probe pacing and the earlier bucket-filling regression | None |
-| [06 — clickable source links](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/06-clickable-source-links.md) | Brownfield conversational dispatch and link rendering | Locator first; analyzer only through a new gate |
-| [07 — evidence contradiction](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/07-evidence-contradiction.md) | Evidence correcting or cancelling the proposed feature | Smallest probe needed to establish the contradiction |
-| [08 — context drift](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/08-context-drift-regate.md) | Re-gating a card after repository state changes | Locator must remain undispatched under stale context |
+| [01 — no-probe discovery](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/01-no-probe-discovery.md) | Intent capture, adaptive pacing, artifact quality, and the final conversational gate | None |
+| [02 — brownfield agent gates](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/02-brownfield-agent-gates.md) | Progressive locator/analyzer gates, repository drift, evidence reconciliation, clickable Markdown links, and final review | Locator first; analyzer only when locator evidence justifies it |
 
-## Core run: no-probe discovery
+The first harness absorbs the former terminal-spinner regression. The second absorbs the former clickable-link, contradictory-evidence, and context-drift regressions. Two tests, many sharp edges; a pleasingly small blast radius.
 
-Copy the prompt block from [05 — terminal spinner](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/05-terminal-spinner.md), then use its locked answers only when asked.
+## Running a harness manually
 
-Confirm that discovery:
+1. Start from a recorded Git and `.rpiv-codex/` baseline.
+2. Create a fresh task and paste only the harness's exact prompt.
+3. Send locked answers one at a time when asked. Do not volunteer later answers or pass conditions.
+4. Make only the gate decisions specified by the harness.
+5. For the brownfield harness, create and remove its unique drift marker at the exact instructed points. Do this outside the subject task so the workflow must detect the repository change itself.
+6. Save the raw transcript, agent-task records, repository snapshots, final artifact, validation output, and filesystem diff before cleanup.
+7. Score the run with the rubric, then delete only paths created by that run.
 
-1. Establishes that the idea is a hypothetical script and not an `rpiv-codex` feature.
-2. Captures what the user can run and observe, then declares `no probe justified`.
-3. Batches independent routine details instead of asking a long procession of single questions.
-4. Creates one Feature Requirements Document and no dispatch or approval file.
-5. Presents a clickable artifact link and asks **Accept / Revise / Stop**.
-6. On **Accept**, creates no additional file and starts no later stage.
+For a repeatable autonomous evaluation, copy the **Suggested discovery goal** from [the forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md). It runs both harnesses in fresh tasks, asks two independent reviewers to judge raw evidence, applies only material in-scope corrections, and stops on success or after ten iterations.
 
-## Core run: conversational agent round trip
-
-Copy the prompt block from [06 — clickable source links](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/06-clickable-source-links.md), then use its locked answers only when asked.
-
-Confirm that discovery:
-
-1. Treats `rpiv-codex` as the already-resolved target.
-2. Displays only the locator card first unless exact analyzer anchors already exist.
-3. Shows the role, exact prompt, inputs, repository snapshot, model, reasoning level, requested sandbox, inherited-parent enforcement, behavioral permissions, budget, evidence schema, and stop condition.
-4. Runs nothing before **Run**. **Edit** shows the whole revised card; **Omit** removes the role; **Stop** ends discovery.
-5. Rechecks the repository snapshot immediately before dispatch.
-6. Runs the approved locator with the displayed contract, no inherited conversation beyond named inputs, and no child agent.
-7. Reports what locator evidence was incorporated or excluded.
-8. If analysis is justified, displays a new analyzer-only card with actual locator anchors and waits for another decision.
-9. Records actual runtime sandbox observations separately from behavioral read-only compliance.
-10. Produces clickable Markdown links for artifact, lineage, dispatch-ledger, and source references without long path tables.
-
-## Targeted regression: contradictory evidence
-
-Run [07 — evidence contradiction](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/07-evidence-contradiction.md).
-
-The run passes only if discovery distinguishes scripts invoking the helper from scripts consuming conversational prose, asks what fails with multiline JavaScript Object Notation, and accepts that no feature is needed. It must not manufacture a compact-output requirement merely to leave the interview carrying an implementation-shaped souvenir.
-
-## Targeted regression: repository drift
-
-Follow the operator steps in [08 — context drift](/Users/ryan.reynolds/Projects/rpiv-codex/tests/fixtures/discover/08-context-drift-regate.md).
-
-The run passes only if the stale **Run** dispatches nothing, the complete card is refreshed with the new working-tree hash, and a new **Run / Edit / Omit / Stop** decision is required.
-
-## Filesystem checks
-
-After each run:
+## Filesystem and scope checks
 
 - A completed discovery may add only `.rpiv-codex/artifacts/discover/<timestamp>_<topic>.md`.
 - `.rpiv-codex/dispatch/` and `.rpiv-codex/approvals/` must not appear.
-- Source files, `.gitignore`, Git history, and remote state must remain unchanged except for the deliberate temporary edit in fixture 08, which the operator restores.
+- Source files, `.gitignore`, Git history, and remote state must remain unchanged except for deliberate evaluation changes made by the orchestrator.
+- Cleanup must remove only artifacts and drift markers created after the recorded baseline; preserve all pre-existing artifacts and unrelated dirty files.
 - `.agents/skills/rpivc-research/` must not exist.
 
 ## Stop checkpoint
 
-Stop after the affected fixtures have been manually exercised and record the rubric scores, agent-card decisions, evidence incorporated or rejected, context-drift behavior, artifact path, and final **Accept / Revise / Stop** decision. Do not implement research until Ryan explicitly approves the next unit.
+Stop when both discovery harnesses pass after the latest source change, both independent reviewers have no verified material finding, no applicable preserved behavior or unexplained parity gap remains, deterministic checks pass, and evaluation-created state is cleaned. Otherwise stop after ten iterations or at a user-only decision or unavailable proof boundary. Do not implement research or another workflow stage.
