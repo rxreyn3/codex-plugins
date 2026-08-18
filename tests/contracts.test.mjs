@@ -54,6 +54,10 @@ test("discovery preserves adaptive RPIV interview behavior", () => {
   assert.match(combined, /constraint, exclusion, other-outcome, and observable-success branch/);
   assert.match(combined, /“that's it”[\s\S]*does not confirm suggested defaults|“that's it” as approval of proposed defaults/);
   assert.match(combined, /Never infer dependency, lifecycle, interruption, rendering, or timing requirements/i);
+  assert.match(combined, /do not reopen its unanswered routine items one by one/i);
+  assert.match(combined, /“I don't know,” “none,” silence[\s\S]*not (?:an )?explicit deferral/i);
+  assert.match(combined, /leave (?:that )?implementation degree(?:s)? of freedom unspecified/i);
+  assert.match(combined, /explicit only when the user says to defer the decision or decide it later/i);
 });
 
 test("every agent dispatch uses a conversational gate", () => {

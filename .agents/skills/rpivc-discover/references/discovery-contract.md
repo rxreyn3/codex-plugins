@@ -75,12 +75,15 @@ For a trivial feature, allow at most one detail checkpoint unless its answer exp
 
 Use that checkpoint to expose independent unresolved branches, including constraints, exclusions, other requested outcomes, and observable success when the user has not supplied them. A reply resolves only the numbered items it actually answers. A general response such as “that's it” means no additional outcome only when that is what was asked; it does not confirm suggested defaults or silently close unrelated branches. Do not infer dependencies, lifecycle, interruption handling, rendering mechanics, or timing from the absence of a correction.
 
+Do not turn unanswered routine items from that checkpoint into a serial interview. “I don't know,” “none,” silence, and declining a recommended default are not explicit deferrals. Leave non-material implementation degrees of freedom unspecified when they do not change the requested outcome, scope, constraints, acceptance boundary, or user-approved approach. Ask one narrow follow-up only when an unanswered item would materially change one of those product decisions.
+
 ## Corrections, boundaries, and deferrals
 
 - Treat corrections as authoritative. Update prior decisions and revisit dependent branches.
 - A correction may justify at most one additional narrow agent on a newly exposed code seam, and that agent requires a new displayed card and explicit **Run** decision.
 - Put related, unrequested observations in Suggested Follow-ups unless the user explicitly expands scope.
 - Record a decision in Open Questions only when the user explicitly defers it.
+- Treat a deferral as explicit only when the user says to defer the decision or decide it later; uncertainty by itself is not a deferral.
 - Do not invent deferrals to make the interview finish.
 - Capture explicit non-goals and resist later accidental rescoping.
 

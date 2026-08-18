@@ -51,6 +51,8 @@ Then run the full interview in [the discovery contract](references/discovery-con
 
 Before declaring the interview complete, explicitly resolve any still-unasked constraint, exclusion, other-outcome, and observable-success branch. Prefer including independent unresolved branches in the one detail checkpoint. Do not treat a general response such as “that's it” as approval of proposed defaults or as resolution of a different branch; ask the narrow missing question instead. Never infer dependency, lifecycle, interruption, rendering, or timing requirements merely because the user does not correct a proposal.
 
+After the detail checkpoint, do not reopen its unanswered routine items one by one. “I don't know,” “none,” silence, or failure to choose a proposed default is not an explicit deferral. If an unanswered item would not materially change the requested outcome, scope, constraint, acceptance boundary, or user-approved approach, leave that implementation degree of freedom unspecified and omit it from Open Questions. Ask one narrow follow-up only when the missing decision is material; record it as deferred only when the user explicitly says to defer or decide it later.
+
 If a correction exposes one genuinely new code seam, display at most one new narrow card across the entire discovery and use the same conversational gate. Never dispatch it silently.
 
 ## Produce the Feature Requirements Document
