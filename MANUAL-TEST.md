@@ -1,6 +1,6 @@
 # Manual checkpoint: `rpivc-discover`
 
-Discovery has two manual harnesses: one proves the simplest no-agent path, and one proves the highest-risk brownfield agent path. Use [the shared forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md) when running an iterative evaluation goal; this file contains only the discovery-specific entry points and safety checks.
+Discovery has two manual harnesses: one proves the simplest no-agent path, and one proves the highest-risk brownfield agent path. Use [the shared forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md) when running a single-pass evaluation goal; this file contains only the discovery-specific entry points and safety checks.
 
 ## Prerequisite
 
@@ -29,7 +29,7 @@ The first harness absorbs the former terminal-spinner regression. The second abs
 6. Save the raw transcript, agent-task records, repository snapshots, final artifact, validation output, and filesystem diff before cleanup.
 7. Score the run with the rubric, then delete only paths created by that run.
 
-For a repeatable autonomous evaluation, copy the **Suggested discovery goal** from [the forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md). It runs both harnesses in fresh tasks, asks two independent reviewers to judge raw evidence, applies only material in-scope corrections, and stops on success or after ten iterations.
+For a repeatable evaluation, copy the **Suggested discovery goal** from [the forward-testing guide](/Users/ryan.reynolds/Projects/rpiv-codex/tests/FORWARD-TESTING.md). It runs each harness once in a fresh task, asks two independent reviewers to judge raw evidence, may apply one bounded correction set, validates, reports **PASS** or **FAIL**, and stops. Any behavioral edit requires a new user-triggered evaluation before it can pass.
 
 ## Filesystem and scope checks
 
@@ -41,4 +41,4 @@ For a repeatable autonomous evaluation, copy the **Suggested discovery goal** fr
 
 ## Stop checkpoint
 
-Stop when both discovery harnesses pass after the latest source change, both independent reviewers have no verified material finding, no applicable preserved behavior or unexplained parity gap remains, deterministic checks pass, and evaluation-created state is cleaned. Otherwise stop after ten iterations or at a user-only decision or unavailable proof boundary. Do not implement research or another workflow stage.
+Stop after one evaluation. Report **PASS** only when both discovery harnesses pass, both independent reviewers have no verified material finding, no applicable preserved behavior or unexplained parity gap remains, deterministic checks pass, and evaluation-created state is cleaned. If a behavioral correction was applied, report **FAIL — candidate fixes applied; rerun required**. Do not rerun either harness or implement research or another workflow stage.

@@ -43,9 +43,13 @@ For a justified probe:
 
 Wait for all authorized cards. Record actual completion, observable runtime sandbox or `unverified`, behavioral compliance, and what evidence was incorporated or excluded. Read at most five files surfaced by the probe. If the result is empty or irrelevant, record `no codebase precedent` rather than inventing evidence.
 
+Retain the repository snapshot that covered the incorporated evidence. Before asking the next product question after the probe, and again immediately before artifact creation, run `node .agents/skills/_shared/scripts/context-snapshot.mjs`. If repository, branch, commit, or working-tree SHA-256 differs from the evidence snapshot, show the changed fields and ask exactly **Refresh evidence**, **Continue with the disclosed stale boundary**, or **Stop**. End the response and take no further action until the user chooses. **Refresh evidence** requires newly gated cards for any agent work; **Continue with the disclosed stale boundary** records both the evidence snapshot and current snapshot in the artifact; **Stop** ends discovery. An irrelevant repository change still requires this gate.
+
 If locator evidence reveals anchors that justify analysis, display a new analyzer-only card containing the actual repository-relative anchors and ask **Run / Edit / Omit / Stop**. Never dispatch it from the locator authorization or name future locator output as an input.
 
 Then run the full interview in [the discovery contract](references/discovery-contract.md). Subagents gather evidence; the user makes product decisions. Before asking details, batch two to four currently independent leaves into one numbered checkpoint. A trivial feature gets at most one such checkpoint unless an answer exposes a new dependency, contradiction, or material scope decision.
+
+Before declaring the interview complete, explicitly resolve any still-unasked constraint, exclusion, other-outcome, and observable-success branch. Prefer including independent unresolved branches in the one detail checkpoint. Do not treat a general response such as “that's it” as approval of proposed defaults or as resolution of a different branch; ask the narrow missing question instead. Never infer dependency, lifecycle, interruption, rendering, or timing requirements merely because the user does not correct a proposal.
 
 If a correction exposes one genuinely new code seam, display at most one new narrow card across the entire discovery and use the same conversational gate. Never dispatch it silently.
 

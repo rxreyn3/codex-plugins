@@ -440,6 +440,8 @@ For every skill, maintain a parity matrix against pinned RPIV sources:
 
 This is source-guided behavioral parity, not differential execution. Read the pinned workflow, skill, command, agent, helper, and artifact sources for inspiration; run only the Codex-native capability. Do not execute RPIV-Pi, install Pi extensions, or require line-by-line equality in prompts, transcripts, or artifacts. Every meaningful departure must be classified, and no applicable behavior marked Preserve may disappear without becoming a failing finding.
 
+Forward-testing is one manually triggered pass: run each harness once, perform two independent reviews, apply at most one bounded correction set, validate, report **PASS** or **FAIL**, and stop. Never rerun a harness or begin a second correction cycle automatically. A behavioral edit yields **FAIL — candidate fixes applied; rerun required** so Ryan decides whether to launch the next evaluation.
+
 For discovery, use two high-value harnesses:
 
 - No-probe discovery, absorbing the terminal-spinner pacing regression.

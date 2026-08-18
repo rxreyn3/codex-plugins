@@ -51,6 +51,9 @@ test("discovery preserves adaptive RPIV interview behavior", () => {
   assert.match(combined, /no codebase precedent/);
   assert.match(combined, /Batch two to four independent leaves into one compact numbered checkpoint/);
   assert.match(combined, /at most one such checkpoint/i);
+  assert.match(combined, /constraint, exclusion, other-outcome, and observable-success branch/);
+  assert.match(combined, /“that's it”[\s\S]*does not confirm suggested defaults|“that's it” as approval of proposed defaults/);
+  assert.match(combined, /Never infer dependency, lifecycle, interruption, rendering, or timing requirements/i);
 });
 
 test("every agent dispatch uses a conversational gate", () => {
@@ -76,6 +79,19 @@ test("dependent analysis receives a new card with real locator anchors", () => {
   assert.match(combined, /prior locator decision does not authorize it|Never dispatch it from the locator authorization/);
   assert.match(combined, /all anchors in `inputs` already exist/);
   assert.doesNotMatch(combined, /D1 ranked anchors/);
+});
+
+test("repository evidence is rechecked and stale evidence requires a conversational gate", () => {
+  const skill = read(".agents", "skills", "rpivc-discover", "SKILL.md");
+  const contract = read(".agents", "skills", "rpivc-discover", "references", "discovery-contract.md");
+  const combined = `${skill}\n${contract}`;
+  assert.match(combined, /Retain the repository snapshot that covered the incorporated evidence/);
+  assert.match(combined, /before artifact creation/i);
+  assert.match(combined, /\*\*Refresh evidence\*\*/);
+  assert.match(combined, /\*\*Continue with the disclosed stale boundary\*\*/);
+  assert.match(combined, /irrelevant repository change still requires this gate/i);
+  assert.match(combined, /records both the evidence snapshot and current snapshot in the artifact/);
+  assert.match(combined, /Refresh evidence[\s\S]*newly gated cards/);
 });
 
 test("agent cards expose the complete editable contract and current context", () => {
@@ -186,7 +202,7 @@ test("manual discovery fixtures track the conversational gate design", () => {
   assert.match(brownfield, /\*\*Run \/ Edit \/ Omit \/ Stop\*\*/);
   assert.match(brownfield, /locator-only/);
   assert.match(brownfield, /new analyzer-only card containing actual locator anchors/);
-  assert.match(brownfield, /tests\/\.rpivc-eval-drift-<iteration>\.txt/);
+  assert.match(brownfield, /tests\/\.rpivc-eval-drift-<run-id>\.txt/);
   assert.match(brownfield, /stale card must dispatch nothing/);
   assert.match(brownfield, /complete refreshed card/);
   assert.match(brownfield, /Refresh evidence \/ Continue with the disclosed stale boundary \/ Stop/);
@@ -211,7 +227,7 @@ test("manual discovery fixtures track the conversational gate design", () => {
   assert.doesNotMatch(rubric, /both runs|same answers/);
 });
 
-test("forward-testing guide defines the reusable two-harness iteration contract", () => {
+test("forward-testing guide defines the reusable single-pass two-harness contract", () => {
   const guide = read("tests", "FORWARD-TESTING.md");
   const manual = read("MANUAL-TEST.md");
   assert.match(guide, /\*\*Minimal path\*\*/);
@@ -224,16 +240,21 @@ test("forward-testing guide defines the reusable two-harness iteration contract"
   assert.match(guide, /Do not run RPIV-Pi, install or invoke Pi extensions/);
   assert.match(guide, /parity matrix/);
   assert.match(guide, /no meaningful parity gap remains unexplained/);
-  assert.match(guide, /Do not give either reviewer[\s\S]*prior-iteration findings[\s\S]*intended patch/);
+  assert.match(guide, /Do not give either reviewer[\s\S]*earlier evaluation findings[\s\S]*intended patch/);
   assert.match(guide, /fresh isolated Codex task/);
-  assert.match(guide, /ten iterations have completed/);
+  assert.match(guide, /Run each harness exactly once/);
+  assert.match(guide, /apply at most one bounded correction set/);
+  assert.match(guide, /FAIL — candidate fixes applied; rerun required/);
+  assert.match(guide, /Do not restart or rerun a harness during the same evaluation/);
+  assert.doesNotMatch(guide, /ten iterations|repeat until|Validate and repeat|Start the next iteration/);
   assert.match(guide, /delete only artifact paths created after the recorded baseline/);
   assert.match(guide, /Never use a broad recursive deletion/);
   assert.match(guide, /## Reusable `\/goal` template/);
-  assert.match(guide, /\/goal Improve rpivc-discover/);
+  assert.match(guide, /\/goal Evaluate rpivc-discover exactly once/);
   assert.match(guide, /do not run RPIV, invoke Pi extensions, or require line-by-line output equality/);
-  assert.match(guide, /no verified material reviewer findings or unexplained parity gaps/);
-  assert.match(guide, /Do not implement research or another stage, install anything, commit, push, or modify rpiv-mono/);
+  assert.match(guide, /Do not rerun a harness, respawn reviewers, start a second correction pass/);
+  assert.match(guide, /report FAIL with candidate fixes applied and rerun required/);
+  assert.match(guide, /implement research or another stage, install anything, commit, push, or modify rpiv-mono/);
   assert.match(manual, /tests\/FORWARD-TESTING\.md/);
   assert.match(manual, /01-no-probe-discovery\.md/);
   assert.match(manual, /02-brownfield-agent-gates\.md/);

@@ -30,7 +30,7 @@ Do not paste this section into the editor. Give the closest matching answer only
 Do not send these instructions to the task under test.
 
 1. Wait until the first codebase-agent card is displayed. Record its repository, branch, commit, and working-tree SHA-256.
-2. Before answering **Run**, create one uniquely named Git-visible marker in that task's worktree: `tests/.rpivc-eval-drift-<iteration>.txt`.
+2. Before answering **Run**, create one uniquely named Git-visible marker in that task's worktree: `tests/.rpivc-eval-drift-<run-id>.txt`.
 3. Answer **Run**. The stale card must dispatch nothing and must be replaced by a complete refreshed card.
 4. Answer **Run** again while the marker exists. Record the actual dispatched task, prompt, model, reasoning level, runtime sandbox, commands, and result.
 5. After repository evidence returns, delete that exact marker before answering the next product question.

@@ -73,6 +73,8 @@ Before asking, scan all unresolved leaves whose parents are already resolved. Ba
 
 For a trivial feature, allow at most one detail checkpoint unless its answer exposes a new dependency, contradiction, or material scope decision. Relevance alone is not enough reason to serialize many small questions.
 
+Use that checkpoint to expose independent unresolved branches, including constraints, exclusions, other requested outcomes, and observable success when the user has not supplied them. A reply resolves only the numbered items it actually answers. A general response such as “that's it” means no additional outcome only when that is what was asked; it does not confirm suggested defaults or silently close unrelated branches. Do not infer dependencies, lifecycle, interruption handling, rendering mechanics, or timing from the absence of a correction.
+
 ## Corrections, boundaries, and deferrals
 
 - Treat corrections as authoritative. Update prior decisions and revisit dependent branches.
@@ -103,3 +105,4 @@ This is a depth test, not a document-bucket test. Do not ask padding questions a
 - If evidence conflicts, show the conflict and ask the user to resolve its product consequence.
 - When repository evidence contradicts the stated problem or proposed solution, the contradiction is a live decision. Ask the smallest differentiating question and keep it in Open Questions until the user resolves it; do not write `None` merely because the proposed behavior is implementable.
 - Keep implementation detail out of requirements unless it is an explicit constraint or necessary to make the recommended approach actionable.
+- Preserve the repository snapshot that covered incorporated evidence. Before the next product question and immediately before artifact creation, compare a fresh snapshot with it. Any repository, branch, commit, or working-tree SHA-256 change requires **Refresh evidence / Continue with the disclosed stale boundary / Stop**, even when the changed file appears irrelevant. Continuing records both snapshots and the accepted stale boundary in the artifact; refreshing requires newly gated agent work.
