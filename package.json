@@ -1,0 +1,13 @@
+{
+  "name": "rpiv-codex",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Human-gated Codex port of RPIV workflow behavior",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { contextSnapshot } from "./context-snapshot.mjs";
+
+const allowedStages = new Set(["discover"]);
+
+export function slugify(value) {
+  const slug = value
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64);
+  return slug || "feature";
+}
+
+export function artifactPath(stage, topic, cwd = process.cwd(), now = new Date()) {
+  if (!allowedStages.has(stage)) {
+    throw new Error(`stage must be one of: ${[...allowedStages].join(", ")}`);
+  }
+
+  const context = contextSnapshot(cwd, now);
+  const relative = path.posix.join(
+    ".rpiv-codex",
+    "artifacts",
+    stage,
+    `${context.filename_timestamp}_${slugify(topic)}.md`,
+  );
+  const absolute = path.join(context.repository, ...relative.split("/"));
+  if (fs.existsSync(absolute)) {
+    throw new Error(`refusing to overwrite existing path: ${relative}`);
+  }
+  const commonFrontmatter = {
+    stage,
+    status: "review",
+    rpiv_source: "packages/rpiv-pi/skills/discover/SKILL.md",
+    rpiv_commit: "d0eb55371f622ac524b3355711a482f95feb14d4",
+    supersedes: null,
+    source_artifacts: [],
+    repository: context.repository,
+    branch: context.branch,
+    commit: context.commit,
+    working_tree_sha256: context.working_tree_sha256,
+    working_tree_scope: context.working_tree_scope,
+    created_at: context.created_at,
+    author: context.author,
+    topic: slugify(topic),
+  };
+  return {
+    stage,
+    topic: slugify(topic),
+    relative,
+    absolute,
+    common_frontmatter: commonFrontmatter,
+    context,
+  };
+}
+
+const invokedDirectly = process.argv[1]
+  && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+
+if (invokedDirectly) {
+  try {
+    const [, , stage, ...topicParts] = process.argv;
+    if (!stage || topicParts.length === 0) {
+      throw new Error("usage: artifact-path.mjs <discover> <topic>");
+    }
+    process.stdout.write(`${JSON.stringify(artifactPath(stage, topicParts.join(" ")), null, 2)}\n`);
+  } catch (error) {
+    process.stderr.write(`rpivc artifact path error: ${error.message}\n`);
+    process.exitCode = 1;
+  }
+}
