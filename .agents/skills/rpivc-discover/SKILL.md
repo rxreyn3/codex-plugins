@@ -19,6 +19,8 @@ Before declaring probe readiness, establish the **target context**: the current 
 
 ## Gate a narrow evidence probe
 
+While choosing the roster and preparing cards, read only the user's named inputs, this skill's own resources, the matching project-agent definition, and `context-snapshot.mjs` output. Do not search memories or inspect target-repository source, tests, documentation, Git history, or configuration to discover anchors. Reading this skill so you can follow it does not turn its paths into approved product evidence. Treat an exact anchor as already known only when the user supplied it or an approved prior artifact records it. Otherwise, unresolved **where** questions require a locator card before any analyzer card.
+
 Choose the smallest useful roster:
 
 - no agent when this is only a fixture, no product repository is established, or code evidence cannot change a live decision;
@@ -31,7 +33,7 @@ Choose the smallest useful roster:
 For a justified probe:
 
 1. Run `node .agents/skills/_shared/scripts/context-snapshot.mjs` and confirm that its absolute repository matches the established product target. If not, ask the user to re-root or continue without repository evidence.
-2. Build only the justified cards from [the card templates](assets/agent-card-templates.md). Fill every field with information available now. Include the repository, branch, commit, and working-tree SHA-256 shown by the snapshot.
+2. Build only the justified cards from [the card templates](assets/agent-card-templates.md). Fill every field with information available now. Include the repository, branch, commit, and working-tree SHA-256 shown by the snapshot. Treat the displayed card as the complete, authoritative runtime role contract; the matching project-agent definition is an authoring reference for the card, not a second hidden configuration layer.
 3. Display the complete cards directly in chat as YAML. Explain that requested read-only isolation is not a technical guarantee because child agents inherit the parent runtime sandbox.
 4. Ask for exactly one conversational decision: **Run**, **Edit**, **Omit**, or **Stop**. End the response and run nothing yet.
 5. Treat only an explicit **Run** as authorization for the most recently displayed cards:
@@ -39,9 +41,11 @@ For a justified probe:
    - **Omit**: remove the named roles; if none remain, continue without a probe.
    - **Stop**: end discovery without dispatch.
 6. Before an authorized dispatch, collect context again. If repository, branch, commit, or working-tree SHA-256 differs from the displayed card, show a refreshed complete card and require a new **Run** decision.
-7. Dispatch exactly the displayed roles, prompts, inputs, models, reasoning levels, behavioral permissions, budgets, evidence schemas, and stop conditions. Give agents no inherited conversation beyond named inputs. Do not allow child or follow-up agents. Run cards in parallel only when their displayed inputs are independent.
+7. Dispatch exactly the displayed roles, prompts, inputs, models, reasoning levels, behavioral permissions, budgets, evidence schemas, and stop conditions. The displayed card is the native Codex role instance; do not require or claim a separate hidden custom-agent selector. Build the dispatch message as a JSON object with exactly two top-level fields: `protocol`, equal to the displayed `dispatch_protocol`, and `card`, containing every other displayed card field with the same values and no extra fields. Set `task_name` to the displayed `task_name`, `fork_turns` to `none`, `model` to the displayed `model`, and `reasoning_effort` to the displayed `reasoning`. If the runtime cannot accept those explicit spawn arguments, stop and report the card as unverified instead of claiming it ran as approved. Give agents no inherited conversation beyond the JSON envelope. Do not allow child or follow-up agents. Run cards in parallel only when their displayed inputs are independent.
 
 Wait for all authorized cards. Record actual completion, observable runtime sandbox or `unverified`, behavioral compliance, and what evidence was incorporated or excluded. Verify the returned distinct-file count against the displayed card budget; exceeding it is a behavioral violation, not permission to incorporate the extra files. Read at most five files surfaced by the probe. If the result is empty or irrelevant, record `no codebase precedent` rather than inventing evidence.
+
+Use repository evidence in the interview or final artifact only when it came from a user-named input or an authorized probe. Never incorporate target files that the parent inspected while planning a card or checking runtime capability; disclose and exclude any accidental read.
 
 After the final authorized probe result, report the evidence and end the response without asking a product question. This creates an operator checkpoint for an out-of-conversation repository change. On the next turn, collect a fresh snapshot before asking the next product question; if it differs, use the stale-evidence gate below. Do not require or interpret a conversational answer merely to advance past this checkpoint.
 
@@ -65,15 +69,15 @@ Finish only when the discovery contract's depth-based completion rule holds.
 2. Create a new artifact from [the Feature Requirements Document template](assets/frd-template.md). Copy `common_frontmatter` exactly. Use `supersedes` only when revising a previously presented artifact. `source_artifacts` lists only user-supplied or prior stage artifacts, not conversational dispatches.
 3. Preserve the user's language in Problem & Intent and Goals. Include every requested outcome, explicit non-goal, accepted trade-off, confirmed fact, correction, and cross-cutting requirement.
 4. Make every human-facing path clickable:
-   - use a concise repository-relative label;
+   - use the literal repository-relative `path/to/file:line` as the label, not descriptive prose;
    - use an absolute local target;
    - cite evidence as `[path/to/file:line](/absolute/path/to/file:line)`;
    - never wrap a navigable path in backticks;
    - do not put long paths in tables.
 5. Put only explicitly deferred decisions in Open Questions. Put unrequested related ideas in Suggested Follow-ups and omit that section when empty.
 6. Record each authorized role and its result in the linked-list Dispatch Ledger. If no probe ran, record `no probe justified` and the reason.
-7. Keep `status: review` and never edit the artifact after presenting it.
-8. Run `node .agents/skills/_shared/scripts/artifact-check.mjs inspect <artifact-path>`. If it fails, preserve the failed file, create one fresh corrected artifact, and inspect that path. Stop and report the fault if the correction also fails.
+7. Keep `status: review`. Treat the file as an unpublished draft until it passes inspection and is presented; it becomes immutable when presented.
+8. Run `node .agents/skills/_shared/scripts/artifact-check.mjs inspect <artifact-path>`. If the first inspection fails, correct that same unpublished draft once and inspect it again. Never create a second artifact merely because preflight failed. If the correction also fails, preserve the single failed draft, stop, and report the fault without presenting it for acceptance.
 9. Present a clickable link in the form `[Feature Requirements Document](/absolute/path/to/artifact.md)`, followed by a concise summary of decisions, deferrals, and evidence gaps.
 10. Ask **Accept**, **Revise**, or **Stop** and end the response:
     - **Accept**: acknowledge the decision and stop; write no sidecar record.
@@ -87,5 +91,5 @@ Never invoke, select, or imply that another workflow stage has begun. A later sk
 - Interview and agent work are behaviorally read-only. Disclose the broader inherited technical sandbox on every card.
 - Write only new files beneath `.rpiv-codex/artifacts/discover/`.
 - Never write dispatch manifests, approval records, hidden state, or source changes.
-- Never modify an existing artifact, `.gitignore`, Git history, or remote state.
+- Never modify an artifact after it has been presented, `.gitignore`, Git history, or remote state.
 - Never silently substitute an existing feature, broaden scope, or convert a follow-up into a requirement.

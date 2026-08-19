@@ -6,11 +6,26 @@ import path from "node:path";
 import test from "node:test";
 
 import RpivcDiscoverProvider from "../evals/discover/provider.mjs";
+import { hasAgentCard } from "../evals/discover/provider.mjs";
+import {
+  buildDispatchAttestation,
+  captureAttestationEvent,
+  dispatchEnvelope,
+  expectedTaskName,
+  extractAgentCards,
+} from "../evals/discover/runtime-attestation.mjs";
+import {
+  isSubagentTurn,
+  isTargetEvidenceTurn,
+  localLinkContract,
+  preservesStandaloneBoundary,
+} from "../evals/discover/assertions.mjs";
 import {
   cleanupDisposableWorkspace,
   createDisposableWorkspace,
   inventoryChanges,
   snapshotRepository,
+  syncEvidence,
 } from "../evals/_shared/workspace.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -39,6 +54,7 @@ function repositoryFixture() {
 test("Promptfoo is pinned and exposed through explicit local commands", () => {
   const pkg = JSON.parse(read("package.json"));
   assert.equal(pkg.devDependencies.promptfoo, "0.122.0");
+  assert.equal(pkg.devDependencies.yaml, "2.9.0");
   assert.equal(pkg.engines.node, ">=22.22.0");
   assert.equal(pkg.scripts["eval:discover:validate"], "node evals/_shared/run.mjs validate");
   assert.equal(pkg.scripts["eval:discover"], "node evals/_shared/run.mjs eval");
@@ -58,6 +74,9 @@ test("discovery config contains two simulated-user cases and two independent gra
   assert.equal((cases.match(/sandbox_mode: read-only/g) ?? []).length, 4);
   assert.equal((cases.match(/model_reasoning_effort: xhigh/g) ?? []).length, 4);
   assert.match(cases, /stateful: true/);
+  assert.equal((cases.match(/intent_answer_turn: 2/g) ?? []).length, 2);
+  assert.match(cases, /When probe evidence is reported without a question, reply exactly: Continue/);
+  assert.match(cases, /For the first locator card, reply exactly: Run/);
   assert.match(cases, /###STOP###/);
   assert.match(runner, /PROMPTFOO_DISABLE_TELEMETRY/);
   assert.match(runner, /PROMPTFOO_DISABLE_UPDATE/);
@@ -66,6 +85,150 @@ test("discovery config contains two simulated-user cases and two independent gra
   assert.match(runner, /"--no-share"/);
   assert.match(runner, /"--repeat", "1"/);
   assert.doesNotMatch(runner, /PROMPTFOO_DISABLE_REMOTE_GENERATION/);
+});
+
+test("adapter recognizes the rendered Markdown decision gate", () => {
+  assert.equal(hasAgentCard(
+    "role: rpivc-codebase-locator\nChoose **Run**, **Edit**, **Omit**, or **Stop**.",
+    "rpivc-codebase-locator",
+  ), true);
+  assert.equal(hasAgentCard("role: rpivc-codebase-locator\nRun it whenever", "rpivc-codebase-locator"), false);
+});
+
+test("runtime attestation binds the displayed card to the effective child run", () => {
+  const card = {
+    id: "D1",
+    dispatch_protocol: "rpivc-dispatch/v1",
+    task_name: "d1_codebase_locator",
+    role: "rpivc-codebase-locator",
+    purpose: "Locate the save flow",
+    prompt: "Locate the save flow and return file:line evidence.",
+    inputs: ["captured intent", "target repository: /tmp/project"],
+    repository: "/tmp/project",
+    branch: "main",
+    commit: "abc123",
+    working_tree_sha256: "tree-hash",
+    model: "gpt-5.6-luna",
+    reasoning: "low",
+    sandbox_request: "read-only",
+    sandbox_enforcement: "inherited-parent",
+    behavioral_permissions: ["read", "search", "git-read"],
+    intended_tools: ["read", "search", "git-read"],
+    child_agents: "forbidden",
+    budget: { max_files: 10, max_findings: 12 },
+    expected_evidence: "Repository-relative file:line locations",
+    output_schema: "Primary Anchors; Search Gaps",
+    stop_when: "The locations are ranked or evidence is unavailable",
+  };
+  const rendered = `\`\`\`yaml\n${[
+    'id: "D1"',
+    "dispatch_protocol: rpivc-dispatch/v1",
+    "task_name: d1_codebase_locator",
+    "role: rpivc-codebase-locator",
+  ].join("\n")}\n\`\`\``;
+  assert.equal(extractAgentCards(rendered)[0].task_name, "d1_codebase_locator");
+  assert.equal(expectedTaskName(card), "d1_codebase_locator");
+
+  const parentThreadId = "parent-thread";
+  const childThreadId = "child-thread";
+  const agentPath = "/root/d1_codebase_locator";
+  const envelope = JSON.stringify(dispatchEnvelope(card));
+  const notifications = [
+    { method: "thread/settings/updated", params: { threadId: parentThreadId, threadSettings: { model: "gpt-5.6-sol", effort: "xhigh", approvalPolicy: "never", sandboxPolicy: { type: "workspaceWrite", networkAccess: false } } } },
+    { method: "rawResponseItem/completed", params: { threadId: parentThreadId, turnId: "parent-turn", item: { type: "function_call", name: "spawn_agent", call_id: "spawn-call", arguments: JSON.stringify({ task_name: card.task_name, fork_turns: "none", model: card.model, reasoning_effort: card.reasoning, message: envelope }) } } },
+    { method: "item/completed", params: { threadId: parentThreadId, item: { type: "subAgentActivity", id: "spawn-call", kind: "started", agentThreadId: childThreadId, agentPath } } },
+    { method: "thread/settings/updated", params: { threadId: childThreadId, threadSettings: { model: card.model, effort: card.reasoning, approvalPolicy: "never", sandboxPolicy: { type: "workspaceWrite", networkAccess: false } } } },
+    { method: "turn/completed", params: { threadId: childThreadId, turn: { id: "child-turn", status: "completed", error: null } } },
+    { method: "rawResponseItem/completed", params: { threadId: parentThreadId, turnId: "parent-turn", item: { type: "agent_message", author: agentPath, recipient: "/root", content: [{ type: "output_text", text: "located" }] } } },
+  ];
+  const events = notifications.map(captureAttestationEvent).filter(Boolean);
+  const attestation = buildDispatchAttestation({ events, parentThreadId, card });
+  assert.equal(attestation.pass, true);
+  assert.equal(attestation.child.thread_id, childThreadId);
+  assert.equal(attestation.child.nested_spawn_count, 0);
+  assert.equal(JSON.stringify(events).includes(card.prompt), false);
+
+  const opaqueEvents = events.map((event) => event.kind === "spawn-call"
+    ? { ...event, canonical_envelope_sha256: null, message_sha256: "encrypted-payload-hash", message_bytes: 512 }
+    : event);
+  const opaque = buildDispatchAttestation({ events: opaqueEvents, parentThreadId, card });
+  assert.equal(opaque.pass, true);
+  assert.equal(opaque.prompt_verification.status, "opaque-encrypted-transport");
+  assert.equal(opaque.prompt_verification.exact_plaintext_observed, false);
+
+  const nested = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: { threadId: childThreadId, turnId: "child-turn", item: { type: "function_call", name: "spawn_agent", call_id: "nested", arguments: JSON.stringify({ task_name: "forbidden", message: "{}" }) } },
+  });
+  const failed = buildDispatchAttestation({ events: [...events, nested], parentThreadId, card });
+  assert.equal(failed.pass, false);
+  assert.equal(failed.checks.no_child_fanout, false);
+});
+
+test("adapter queries and archives a persisted child to attest effective settings", async () => {
+  const requests = [];
+  const connection = {
+    async request(method, params) {
+      requests.push({ method, params });
+      if (method === "thread/resume") {
+        return {
+          model: "gpt-5.6-luna",
+          reasoningEffort: "low",
+          sandbox: { type: "workspaceWrite", networkAccess: false },
+          approvalPolicy: "never",
+        };
+      }
+      return {};
+    },
+  };
+  const provider = new RpivcDiscoverProvider();
+  const state = {
+    delegate: { connections: new Map([["connection", connection]]) },
+    attestationEvents: [],
+    archivedThreadIds: new Set(),
+  };
+  await provider.captureEffectiveChildSettings(state, [{ kind: "subagent-activity", child_thread_id: "child-thread" }]);
+  assert.deepEqual(requests.map((request) => request.method), ["thread/resume", "thread/archive"]);
+  assert.equal(state.attestationEvents[0].model, "gpt-5.6-luna");
+  assert.equal(state.attestationEvents[0].effort, "low");
+  assert.equal(state.archivedThreadIds.has("child-thread"), true);
+});
+
+test("deterministic assertions distinguish ordinary messages, bootstrap reads, and real collaboration", () => {
+  const ordinary = {
+    metadata: { codexAppServer: { items: [{ type: "agentMessage" }] } },
+    raw: { items: [{ type: "agent_message" }], notifications: [{ method: "thread/settings/updated", params: { collaborationMode: "default" } }] },
+  };
+  assert.equal(isSubagentTurn(ordinary), false);
+  assert.equal(isSubagentTurn({ raw: { items: [{ type: "collabAgentToolCall" }] } }), true);
+
+  const bootstrap = { raw: { items: [{ type: "command_execution", command: "sed -n '1,200p' .agents/skills/rpivc-discover/references/discovery-contract.md" }] } };
+  const targetRead = { raw: { items: [{ type: "command_execution", command: "sed -n '1,200p' src/feature.mjs" }] } };
+  const memoryRead = { raw: { items: [{ type: "command_execution", command: "sed -n '1,200p' /Users/example/.codex/memories/MEMORY.md" }] } };
+  assert.equal(isTargetEvidenceTurn(bootstrap), false);
+  assert.equal(isTargetEvidenceTurn(memoryRead), false);
+  assert.equal(isTargetEvidenceTurn(targetRead), true);
+});
+
+test("local-link requirements differ between no-probe and brownfield discovery", () => {
+  const existing = new Set(["/tmp/artifact.md", "/tmp/source.mjs"]);
+  const exists = (target) => existing.has(target);
+  const finalChat = "[Feature Requirements Document](/tmp/artifact.md)";
+  assert.equal(localLinkContract("No repository references.", finalChat, "no-probe-discovery", exists).pass, true);
+  assert.equal(localLinkContract("No repository references.", finalChat, "brownfield-agent-gates", exists).pass, false);
+  assert.equal(localLinkContract("No repository references.", finalChat, "brownfield-agent-gates", exists, 0).pass, true);
+  assert.equal(localLinkContract("[source:3](/tmp/source.mjs:3)", finalChat, "brownfield-agent-gates", exists).pass, true);
+});
+
+test("standalone boundary uses structured artifact evidence instead of exact prose", () => {
+  const turns = [{ input: "I want a standalone terminal script." }];
+  const artifact = [
+    'target_context: "standalone artifact"',
+    "A standalone terminal script displays the widget.",
+    "- `no probe justified` — no product repository was established.",
+  ].join("\n");
+  assert.equal(preservesStandaloneBoundary(turns, artifact), true);
+  assert.equal(preservesStandaloneBoundary(turns, artifact.replace("no probe justified", "probe ran")), false);
 });
 
 test("disposable workspace mirrors current nonignored state and cleans only its verified temp root", () => {
@@ -92,8 +255,26 @@ test("disposable workspace mirrors current nonignored state and cleans only its 
   const after = snapshotRepository(state.workspace);
   assert.deepEqual(inventoryChanges(before.files, after.files).created, ["new.txt"]);
 
+  const artifactDirectory = path.join(state.workspace, ".rpiv-codex", "artifacts", "discover");
+  fs.mkdirSync(artifactDirectory, { recursive: true });
+  fs.writeFileSync(path.join(artifactDirectory, "retained.md"), `[source](${path.join(state.workspace, "tracked.txt")}:1)\n`);
+  syncEvidence({
+    workspace: state.workspace,
+    evidenceDir: state.evidenceDir,
+    baseline: state.baseline,
+    extra: { adapter_phase: "complete", drift_events: [{ action: "removed" }], turn_count: 4 },
+  });
+  syncEvidence({ workspace: state.workspace, evidenceDir: state.evidenceDir, baseline: state.baseline });
+  const retainedArtifact = path.join(state.evidenceDir, "workspace", ".rpiv-codex", "artifacts", "discover", "retained.md");
+  const retainedSource = path.join(state.evidenceDir, "workspace", "tracked.txt");
+  assert.match(fs.readFileSync(retainedArtifact, "utf8"), new RegExp(retainedSource.replaceAll("/", "\\/")));
+  const latest = JSON.parse(fs.readFileSync(path.join(state.evidenceDir, "latest.json"), "utf8"));
+  assert.equal(latest.adapter_phase, "complete");
+  assert.equal(latest.turn_count, 4);
+
   cleanupDisposableWorkspace(state.temporaryParent);
   assert.equal(fs.existsSync(state.temporaryParent), false);
+  assert.equal(fs.existsSync(retainedSource), true);
   assert.equal(fs.existsSync(source), true);
   fs.rmSync(source, { force: true, recursive: true });
   fs.rmSync(evidenceRoot, { force: true, recursive: true });
@@ -111,8 +292,8 @@ test("brownfield adapter injects drift before stale Run and removes it after pro
   process.env.RPIVC_EVIDENCE_ROOT = evidenceRoot;
   process.env.RPIVC_SOURCE_ROOT = source;
   const outputs = [
-    "role: rpivc-codebase-locator\nRun / Edit / Omit / Stop",
-    "Repository changed. Refreshed role: rpivc-codebase-locator\nRun / Edit / Omit / Stop",
+    "role: rpivc-codebase-locator\nChoose **Run**, **Edit**, **Omit**, or **Stop**.",
+    "Repository changed. Refreshed role: rpivc-codebase-locator\nChoose **Run**, **Edit**, **Omit**, or **Stop**.",
     "Locator evidence returned. What link behavior should be observable?",
   ];
   const calls = [];
@@ -152,6 +333,10 @@ test("brownfield adapter injects drift before stale Run and removes it after pro
     const runtime = JSON.parse(fs.readFileSync(path.join(evidenceRoot, "brownfield-agent-gates", "runtime.json"), "utf8"));
     await provider.cleanup();
     assert.equal(cleaned, true);
+    const latest = JSON.parse(fs.readFileSync(path.join(evidenceRoot, "brownfield-agent-gates", "latest.json"), "utf8"));
+    assert.equal(latest.adapter_phase, "post-evidence-drift");
+    assert.equal(latest.turn_count, 3);
+    assert.deepEqual(latest.drift_events.map((event) => event.action), ["created", "removed"]);
     cleanupDisposableWorkspace(runtime.temporary_parent);
   } finally {
     if (previous.id === undefined) delete process.env.RPIVC_EVAL_ID; else process.env.RPIVC_EVAL_ID = previous.id;
@@ -161,4 +346,3 @@ test("brownfield adapter injects drift before stale Run and removes it after pro
     fs.rmSync(evidenceRoot, { force: true, recursive: true });
   }
 });
-

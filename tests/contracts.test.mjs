@@ -38,6 +38,9 @@ test("discovery preserves adaptive RPIV interview behavior", () => {
   assert.match(combined, /Pre-resolve explicit wording/);
   assert.match(combined, /Never infer that the skill-hosting repository is the product target/);
   assert.match(combined, /Do not bundle placement, runtime, appearance, and success/i);
+  assert.match(combined, /Do not search memories or inspect target-repository source/i);
+  assert.match(combined, /exact anchor as already known only when the user supplied it or an approved prior artifact/i);
+  assert.match(combined, /Never incorporate target files that the parent inspected/i);
   assert.match(combined, /Lazy decision tree/);
   assert.match(combined, /depth test, not a document-bucket test/);
   assert.match(combined, /two genuine options/);
@@ -71,7 +74,16 @@ test("every agent dispatch uses a conversational gate", () => {
   assert.match(skill, /only an explicit \*\*Run\*\* as authorization for the most recently displayed cards/);
   assert.match(skill, /show a refreshed complete card and require a new \*\*Run\*\* decision/);
   assert.match(skill, /Dispatch exactly the displayed roles, prompts, inputs, models, reasoning levels/);
-  assert.match(skill, /no inherited conversation beyond named inputs/);
+  assert.match(skill, /displayed card is the native Codex role instance/);
+  assert.match(skill, /JSON object with exactly two top-level fields/);
+  assert.match(skill, /`model` to the displayed `model`/);
+  assert.match(skill, /`reasoning_effort` to the displayed `reasoning`/);
+  assert.match(skill, /stop and report the card as unverified/);
+  assert.match(skill, /correct that same unpublished draft once/);
+  assert.match(skill, /Never create a second artifact merely because preflight failed/);
+  assert.match(skill, /Never modify an artifact after it has been presented/);
+  assert.match(skill, /literal repository-relative `path\/to\/file:line` as the label/);
+  assert.match(skill, /no inherited conversation beyond the JSON envelope/);
   assert.match(skill, /Do not allow child or follow-up agents/);
   assert.match(skill, /without writing a dispatch file/);
 });
@@ -104,6 +116,8 @@ test("agent cards expose the complete editable contract and current context", ()
   const cards = read(".agents", "skills", "rpivc-discover", "assets", "agent-card-templates.md");
   for (const field of [
     "id",
+    "dispatch_protocol",
+    "task_name",
     "role",
     "purpose",
     "prompt",
@@ -118,6 +132,7 @@ test("agent cards expose the complete editable contract and current context", ()
     "sandbox_enforcement",
     "behavioral_permissions",
     "intended_tools",
+    "child_agents",
     "budget",
     "expected_evidence",
     "output_schema",

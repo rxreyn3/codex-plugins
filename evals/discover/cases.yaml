@@ -1,6 +1,7 @@
 - description: Discovery minimal path - hypothetical spinner with no repository probe
   vars:
     case_id: no-probe-discovery
+    intent_answer_turn: 2
     initial_prompt: "$rpivc-discover Create a new widget spinner."
     simulator_instructions: |-
       You are the user manually exercising a discovery workflow. The initial request has already been sent for you. Be reactive: answer only the question currently asked, using the closest matching fact below, and do not volunteer later facts, evaluation criteria, diagnoses, or fixes.
@@ -64,6 +65,7 @@
 - description: Discovery integration path - brownfield agent gates and repository drift
   vars:
     case_id: brownfield-agent-gates
+    intent_answer_turn: 2
     initial_prompt: "$rpivc-discover In rpiv-codex, improve how final discovery artifacts present their source links."
     simulator_instructions: |-
       You are the user manually exercising a discovery workflow. The initial request has already been sent for you. Be reactive: answer only the question currently asked, using the closest matching fact or decision below. Do not mention evaluation machinery, repository drift, pass conditions, prior diagnoses, or proposed fixes.
@@ -84,6 +86,7 @@
       - For the first locator card, reply exactly: Run
       - If that Run is rejected because the card is stale and a refreshed locator card is shown, reply exactly: Run
       - If a later analyzer-only card is shown with concrete locator anchors, reply exactly: Run
+      - When probe evidence is reported without a question, reply exactly: Continue
       - If asked Refresh evidence / Continue with the disclosed stale boundary / Stop, reply exactly: Continue with the disclosed stale boundary
       - When the final Feature Requirements Document is presented with Accept / Revise / Stop, reply exactly: Accept
       - After the assistant confirms the stage is finished, reply exactly: ###STOP###

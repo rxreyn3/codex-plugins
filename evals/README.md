@@ -8,6 +8,7 @@ Promptfoo case
   -> RPIV-Codex target adapter
   -> Codex app-server task
   -> disposable current-working-tree clone
+  -> safe child runtime attestation
   -> deterministic checks + two read-only agent graders
   -> local JSON, HTML, and evidence bundle
 ```
@@ -43,6 +44,7 @@ Each run writes beneath `.rpiv-codex/evals/<evaluation-id>/`:
 - source-checkout snapshots and a post-run isolation verdict
 - one evidence directory per case
 - complete target turns with app-server metadata and raw events
+- `runtime-attestations.jsonl` for every approved child dispatch, containing hashes and runtime facts but no prompt or output text
 - the relevant skill, agent, parity, and generated-artifact files
 - deterministic assertion components
 - separate contract/evidence and interaction/parity grader results
@@ -51,6 +53,8 @@ Each run writes beneath `.rpiv-codex/evals/<evaluation-id>/`:
 A product case passes only when its deterministic assertion and both independent agent rubrics pass. The wrapper also fails when the source checkout changes or a disposable workspace is not removed.
 
 Literal click behavior in the Codex Desktop renderer is outside Promptfoo's app-server boundary. The automated suite verifies Markdown-link syntax and target existence; renderer interaction remains a small human calibration check.
+
+For an approved child dispatch, the adapter captures the native spawn call, child thread identifier, completion, returned-output hash, and nested-spawn count. Evaluation threads are persisted only long enough to resume each child and verify its effective model, reasoning, and inherited sandbox, then archived. Codex exposes the child payload only as encrypted content, so the record proves opaque transport rather than byte-for-byte plaintext prompt equality; it states that limitation explicitly.
 
 ## Privacy and isolation
 
@@ -71,4 +75,3 @@ Reuse the shape, not the discovery wording:
 4. Put stable rules in deterministic assertions and qualitative behavior in two independent rubrics.
 5. Read the pinned RPIV sources and parity matrix as inspiration; do not execute Pi or require line-by-line equality.
 6. Run one baseline and stop for human calibration before changing the skill.
-

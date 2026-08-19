@@ -183,6 +183,8 @@ Before any subagent runs, the active skill displays the complete proposed card:
 
 ```yaml
 id: D1
+dispatch_protocol: rpivc-dispatch/v1
+task_name: d1_codebase_locator
 role: rpivc-codebase-locator
 purpose: Locate artifact inspection entry points
 prompt: <exact prompt>
@@ -197,6 +199,7 @@ behavioral_permissions:
   - read
   - search
   - git-read
+child_agents: forbidden
 
 budget:
   max_files: 10
@@ -214,6 +217,8 @@ Ryan chooses:
 - **Stop** — end the stage without dispatch.
 
 The response authorizes only the displayed cards. It does not authorize later agents or another wave.
+
+The displayed card is the authoritative Codex role instance. Dispatch uses its `task_name`, explicit model and reasoning arguments, `fork_turns: none`, and a JSON envelope containing the card. Evaluation captures the spawn and child lifecycle before Promptfoo sanitization, then resumes the persisted evaluation child to verify its effective model, reasoning, inherited sandbox, completion, output, and absence of nested spawns. Codex encrypts the child payload before protocol evidence exposes it, so the evaluator records the displayed-card hash and opaque transport hash separately; it does not claim byte-for-byte plaintext prompt verification.
 
 ### Dependent dispatches
 
@@ -447,6 +452,7 @@ For each case:
 - A hosted simulated user supplies only persona facts and explicit gate decisions.
 - The target is the real repository-local skill running through Codex app-server in a disposable clone of the current working tree.
 - Stable contracts use deterministic JavaScript assertions.
+- Approved subagent runs produce a safe runtime attestation containing identifiers, hashes, requested and effective settings, completion status, and nested-spawn count; prompt and output text are never persisted in that record.
 - A contract-and-evidence grader and an interaction-and-parity grader independently inspect the retained evidence bundle.
 - The case passes only when the deterministic assertion and both graders pass.
 

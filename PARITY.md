@@ -23,9 +23,9 @@ This matrix is a behavioral reference contract, not a differential test. Evaluat
 | Corrections and cross-cutting requirements | Preserve | Corrections reopen affected branches; one new seam may trigger one additional gated card. |
 | Anti-rescoping and explicit deferrals | Preserve | Existing substitutes, scope growth, follow-ups, and Open Questions require explicit user decisions. |
 | Complete Feature Requirements Document | Preserve | Keeps every original substantive section, including Recommended Approach. |
-| Agent execution | Codex adaptation | Displays exact editable cards in chat and requires **Run / Edit / Omit / Stop** before dispatch. No dispatch file is written. |
+| Agent execution | Codex adaptation | Displays exact editable cards in chat and requires **Run / Edit / Omit / Stop** before dispatch. The card becomes the native role instance and is sent with explicit task name, model, reasoning, and no inherited conversation. No dispatch file is written. |
 | Locator-dependent analysis | Codex adaptation | Runs a locator only after **Run**, then displays a new analyzer card containing actual anchors for a separate decision. |
-| Agent definitions | Codex adaptation | Uses visible project agents with pinned model and reasoning. Cards request read-only isolation while disclosing inherited-parent sandbox enforcement. |
+| Agent definitions | Codex adaptation | Uses visible project-agent files as authoring references for complete cards; the runtime card, not a hidden agent selector, is authoritative. Cards request read-only behavior while disclosing inherited-parent sandbox enforcement. |
 | Final review | Codex adaptation | Presents one immutable artifact with **Accept / Revise / Stop**. Acceptance writes no sidecar record. |
 | Dirty working-tree context | Codex adaptation | Records a Git-visible source snapshot. Later context changes produce **Refresh / Continue / Stop**, not a hash-bound approval failure. |
 | Paths and evidence | Codex adaptation | Human-facing paths and citations are Markdown links with repository-relative labels and absolute local targets. |
@@ -35,7 +35,7 @@ This matrix is a behavioral reference contract, not a differential test. Evaluat
 | Audit-grade approval records | Deferred | Reconsider only if a concrete multi-reviewer or compliance requirement appears. |
 | Additional specialists or discovery write agents | Deferred | Add only if a reviewed fixture demonstrates a gap the two discovery roles cannot cover. |
 
-Model, reasoning, intended tool lists, behavioral permissions, and budgets are visible conversational contracts. Current manual evidence shows that project-agent model and reasoning settings apply, while child-specific sandbox settings do not override the parent runtime. Read-only behavior, tool lists, and budgets remain prompt-level constraints.
+Model, reasoning, intended tool lists, behavioral permissions, and budgets are visible conversational contracts. Promptfoo runtime attestation verifies the explicit spawn model and reasoning against the persisted child's effective settings and verifies that its sandbox matches the parent policy. Codex encrypts the child payload before app-server and rollout evidence expose it, so exact plaintext prompt bytes remain unobservable; the evaluator records a displayed-card hash and a separate opaque transport hash without claiming they can be compared. Read-only behavior, tool lists, and budgets remain prompt-level constraints.
 
 ## Verification rule
 

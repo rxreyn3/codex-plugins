@@ -4,6 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
+// Evaluations run in disposable clones but reports outlive those clones. Retain
+// only the workflow inputs and evidence needed to reproduce a verdict; copying
+// the entire checkout would make reports noisy and could retain local secrets.
 const EVIDENCE_PATHS = [
   "PARITY.md",
   ".agents/skills/rpivc-discover",
@@ -12,6 +15,8 @@ const EVIDENCE_PATHS = [
   ".codex/agents/rpivc-codebase-analyzer.toml",
   ".rpiv-codex/artifacts/discover",
 ];
+
+const RETAINED_LATEST_FIELDS = ["adapter_phase", "drift_events", "turn_count"];
 
 function git(root, ...args) {
   return execFileSync("git", args, {
@@ -57,6 +62,39 @@ function copyEntry(sourceRoot, destinationRoot, relative) {
   }
 }
 
+function splitLineSuffix(target) {
+  const match = target.match(/^(.*?)(:\d+(?::\d+)?)?$/);
+  return { file: match?.[1] ?? target, suffix: match?.[2] ?? "" };
+}
+
+// Discovery artifacts contain absolute, clickable file links. Copy link targets
+// into retained evidence and rewrite only paths inside the disposable workspace;
+// external and sensitive paths remain untouched rather than being exfiltrated.
+function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
+  const artifactRoot = path.join(evidenceWorkspace, ".rpiv-codex", "artifacts", "discover");
+  if (!fs.existsSync(artifactRoot)) return;
+  for (const entry of fs.readdirSync(artifactRoot, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const artifact = path.join(artifactRoot, entry.name);
+    const markdown = fs.readFileSync(artifact, "utf8");
+    const rewritten = markdown.replaceAll(/\[([^\]]+)\]\((\/[^)]+)\)/g, (whole, label, target) => {
+      const { file, suffix } = splitLineSuffix(target);
+      const relative = path.relative(workspace, file);
+      if (relative.startsWith("..") || path.isAbsolute(relative) || isSensitivePath(relative) || !fs.existsSync(file)) {
+        return whole;
+      }
+      copyEntry(workspace, evidenceWorkspace, relative);
+      return `[${label}](${path.join(evidenceWorkspace, relative)}${suffix})`;
+    });
+    if (rewritten !== markdown) fs.writeFileSync(artifact, rewritten);
+  }
+}
+
+export function retainWorkspaceReferences(value, workspace, evidenceDir) {
+  if (typeof value !== "string") return value;
+  return value.replaceAll(workspace, path.join(evidenceDir, "workspace"));
+}
+
 function listedWorkingTreePaths(root) {
   return execFileSync(
     "git",
@@ -98,6 +136,8 @@ export function fileInventory(root, options = {}) {
   return inventory;
 }
 
+// Hash file contents rather than relying on Git status so untracked and modified
+// files participate in stale-context checks.
 export function snapshotRepository(root, options = {}) {
   const inventory = fileInventory(root, { excludeRuntime: options.excludeRuntime ?? false });
   return {
@@ -134,6 +174,9 @@ export function createDisposableWorkspace({ sourceRoot, evaluationId, caseId, ev
     maxBuffer: 16 * 1024 * 1024,
   });
 
+  // A clone contains only committed state. Overlay tracked modifications,
+  // untracked nonignored files, and deletions so the fixture sees the exact local
+  // source tree being evaluated.
   for (const relative of listedWorkingTreePaths(sourceRoot)) copyEntry(sourceRoot, workspace, relative);
   for (const relative of git(sourceRoot, "ls-files", "--deleted").split("\n").filter(Boolean)) {
     fs.rmSync(path.join(workspace, relative), { force: true, recursive: true });
@@ -164,6 +207,8 @@ export function syncEvidence({ workspace, evidenceDir, baseline, extra = {} }) {
   const current = snapshotRepository(workspace);
   const changes = inventoryChanges(baseline.files, current.files);
   const evidenceWorkspace = path.join(evidenceDir, "workspace");
+  // Rebuild the retained snapshot on each turn so deleted evidence cannot linger
+  // and accidentally satisfy a later assertion.
   fs.rmSync(evidenceWorkspace, { force: true, recursive: true });
   for (const relative of EVIDENCE_PATHS) {
     const source = path.join(workspace, relative);
@@ -172,12 +217,22 @@ export function syncEvidence({ workspace, evidenceDir, baseline, extra = {} }) {
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.cpSync(source, destination, { recursive: true, dereference: false });
   }
-  const latest = { ...current, changes, ...extra };
-  fs.writeFileSync(path.join(evidenceDir, "latest.json"), `${JSON.stringify(latest, null, 2)}\n`);
+  rewriteRetainedArtifactLinks(workspace, evidenceWorkspace);
+  const latestPath = path.join(evidenceDir, "latest.json");
+  const previous = fs.existsSync(latestPath) ? JSON.parse(fs.readFileSync(latestPath, "utf8")) : {};
+  // Cleanup performs a final sync without adapter metadata. Preserve the last
+  // observed state-machine fields instead of erasing the evidence at shutdown.
+  const retained = Object.fromEntries(RETAINED_LATEST_FIELDS
+    .filter((field) => previous[field] !== undefined)
+    .map((field) => [field, previous[field]]));
+  const latest = { ...current, changes, ...retained, ...extra };
+  fs.writeFileSync(latestPath, `${JSON.stringify(latest, null, 2)}\n`);
   return latest;
 }
 
 export function cleanupDisposableWorkspace(temporaryParent) {
+  // realpath plus the exact prefix prevents a bad variable from turning test
+  // cleanup into a surprisingly ambitious filesystem operation.
   const resolved = fs.realpathSync(temporaryParent);
   const temporaryRoot = fs.realpathSync(os.tmpdir());
   if (path.dirname(resolved) !== temporaryRoot || !path.basename(resolved).startsWith("rpivc-eval-")) {
@@ -185,4 +240,3 @@ export function cleanupDisposableWorkspace(temporaryParent) {
   }
   fs.rmSync(resolved, { force: true, recursive: true });
 }
-

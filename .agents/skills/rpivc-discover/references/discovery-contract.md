@@ -23,7 +23,9 @@ Ask no more than three intent questions before deciding readiness. Keep follow-u
 
 Use only locator and analyzer cards explicitly authorized with **Run** in the conversation. Shape each prompt from captured intent and the resolved target. Locator answers **where**; analyzer answers **how**. Neither chooses requirements or recommends architecture.
 
-Treat sandboxing as an evidence claim, not an aspiration. In the current native collaboration runtime, a project-agent definition does not guarantee a child-specific sandbox override: the child inherits the parent runtime policy. Every displayed card must distinguish the requested read-only isolation, the `inherited-parent` enforcement boundary, and the narrower read/search/Git-read behavioral permissions. **Run** authorizes that disclosed limitation only for the displayed card. After dispatch, record the observed runtime policy when available and separately state whether the agent attempted any write or mutating command. Never infer technical read-only enforcement from behavioral compliance.
+The parent may not manufacture “known anchors” by inspecting the target while planning a probe. Before authorization, use only user-named inputs, the discovery skill resources needed to follow this contract, the relevant project-agent definition, and repository identity from the context snapshot. An analyzer-only first card is valid only when the user or an approved prior artifact supplied its exact anchors. Otherwise start with locator-only. Files accidentally read outside this boundary are excluded from product evidence and must not appear as repository grounding in the artifact.
+
+Treat sandboxing as an evidence claim, not an aspiration. In the current native collaboration runtime, the displayed card is the authoritative role instance and the child inherits the parent runtime policy. A project-agent definition is an authoring reference; do not imply that its sandbox or developer instructions were selected as a hidden runtime layer. Every displayed card must distinguish the requested read-only isolation, the `inherited-parent` enforcement boundary, and the narrower read/search/Git-read behavioral permissions. **Run** authorizes that disclosed limitation only for the displayed card. After dispatch, record the observed runtime policy when available and separately state whether the agent attempted any write or mutating command. Never infer technical read-only enforcement from behavioral compliance.
 
 The valid roster is zero, one, or two agents. Use zero when no target repository is established or evidence cannot materially affect a live decision. Use locator only for an unresolved location question. Use analyzer only when its exact anchors are already known. Show two in one conversational wave only for genuinely independent questions with fully visible inputs. “At most two” must never become “always two.”
 
@@ -104,7 +106,7 @@ This is a depth test, not a document-bucket test. Do not ask padding questions a
 ## Evidence rules
 
 - Distinguish user decisions, repository facts, inferences, and unresolved questions.
-- Cite exact repository-relative `file:line` evidence for repository claims and render it as a Markdown link with an absolute local target.
+- Cite exact repository-relative `file:line` evidence for repository claims and render it as a Markdown link with an absolute local target. Use the literal repository-relative `file:line` as the link label, not a descriptive alias.
 - Use only Git-visible tracked or untracked source files covered by the recorded working-tree snapshot for repository evidence. If a required source is ignored or outside the target repository, disclose the uncovered boundary rather than implying complete stale-context detection.
 - Never fabricate a precedent, constraint, or path.
 - If evidence conflicts, show the conflict and ask the user to resolve its product consequence.
