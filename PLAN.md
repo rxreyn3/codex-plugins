@@ -351,8 +351,8 @@ Update only the existing discovery vertical unit:
 - Replace long ledger tables with linked lists.
 - Preserve adaptive zero/one/two-agent discovery.
 - Preserve truthful sandbox disclosure.
-- Update tests and manual fixtures.
-- Stop for Ryan’s manual test and decision.
+- Update deterministic product tests and the Promptfoo discovery cases.
+- Run one Promptfoo baseline and stop for Ryan’s review and decision.
 
 Do not begin `rpivc-research`.
 
@@ -440,7 +440,17 @@ For every skill, maintain a parity matrix against pinned RPIV sources:
 
 This is source-guided behavioral parity, not differential execution. Read the pinned workflow, skill, command, agent, helper, and artifact sources for inspiration; run only the Codex-native capability. Do not execute RPIV-Pi, install Pi extensions, or require line-by-line equality in prompts, transcripts, or artifacts. Every meaningful departure must be classified, and no applicable behavior marked Preserve may disappear without becoming a failing finding.
 
-Forward-testing is one manually triggered pass: run each harness once, perform two independent reviews, apply at most one bounded correction set, validate, report **PASS** or **FAIL**, and stop. Never rerun a harness or begin a second correction cycle automatically. A behavioral edit yields **FAIL — candidate fixes applied; rerun required** so Ryan decides whether to launch the next evaluation.
+Promptfoo is the committed evaluation framework. Each stage begins with two synthetic cases: a minimal path and a high-risk integration path. A thin target adapter may manage disposable Codex app-server tasks and deterministic external perturbations, but it does not implement product behavior.
+
+For each case:
+
+- A hosted simulated user supplies only persona facts and explicit gate decisions.
+- The target is the real repository-local skill running through Codex app-server in a disposable clone of the current working tree.
+- Stable contracts use deterministic JavaScript assertions.
+- A contract-and-evidence grader and an interaction-and-parity grader independently inspect the retained evidence bundle.
+- The case passes only when the deterministic assertion and both graders pass.
+
+An evaluation is one manually triggered baseline with one trial per case, no cache, no sharing, maximum concurrency one, and no automatic repair. After the baseline, stop. Product fixes and another run require a separate user decision.
 
 For discovery, use two high-value harnesses:
 
@@ -460,6 +470,8 @@ Score:
 - Agent minimality
 - Human-control clarity
 - Interaction friction
+
+The current discovery suite lives under `evals/discover/`. It preserves the no-probe and brownfield scenarios while replacing manual task creation, `/goal` orchestration, reviewer spawning, cleanup steps, and handwritten verdict assembly. RPIV remains a pinned read-only design reference, not a second runtime.
 
 ## Deferred Work
 
@@ -491,7 +503,7 @@ A strict approval mode may be reconsidered only if a concrete future use case re
 - Initial use is Ryan’s local Codex environment.
 - No global installation or plugin packaging is included.
 - Skills never modify `.gitignore`, commit, push, or choose whether artifacts should be committed.
-- The next implementation checkpoint is complete only when the simplified `rpivc-discover` can be manually exercised through:
+- The next implementation checkpoint is complete only when the simplified `rpivc-discover` can be exercised through the Promptfoo baseline and reviewed for:
   - no-probe discovery;
   - conversational locator approval;
   - evidence-dependent conversational analyzer approval;

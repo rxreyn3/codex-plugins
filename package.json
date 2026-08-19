@@ -5,9 +5,15 @@
   "description": "Human-gated Codex port of RPIV workflow behavior",
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "eval:discover:validate": "node evals/_shared/run.mjs validate",
+    "eval:discover": "node evals/_shared/run.mjs eval",
+    "eval:view": "node evals/_shared/run.mjs view"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.22.0"
+  },
+  "devDependencies": {
+    "promptfoo": "0.122.0"
   }
 }

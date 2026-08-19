@@ -135,7 +135,7 @@ test("artifact preflight validates a fresh final artifact without writing sideca
   const root = repositoryFixture();
   const { target } = writeArtifact(root);
   const inspected = inspectArtifact(target, root);
-  assert.equal(inspected.artifact, ".rpiv-codex/artifacts/discover/fixture.md");
+  assert.equal(inspected.location.relative, ".rpiv-codex/artifacts/discover/fixture.md");
   assert.equal(inspected.context_match, true);
   assert.equal(inspected.metadata.supersedes, null);
   assert.equal(fs.existsSync(path.join(root, ".rpiv-codex", "approvals")), false);

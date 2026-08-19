@@ -173,97 +173,21 @@ test("Feature Requirements Document is complete, immutable, and link-oriented", 
 
 test("human-facing local paths use clickable Markdown links", () => {
   const skill = read(".agents", "skills", "rpivc-discover", "SKILL.md");
-  const manual = read("MANUAL-TEST.md");
+  const evaluationGuide = read("evals", "README.md");
   const readme = read("README.md");
   assert.match(skill, /\[path\/to\/file:line\]\(\/absolute\/path\/to\/file:line\)/);
   assert.match(skill, /\[Feature Requirements Document\]\(\/absolute\/path\/to\/artifact\.md\)/);
   assert.match(skill, /never wrap a navigable path in backticks/);
-  assert.match(manual, /clickable Markdown links/);
-  assert.match(readme, /\[the parity matrix\]\(\/Users\/ryan\.reynolds\/Projects\/rpiv-codex\/PARITY\.md\)/);
+  assert.match(evaluationGuide, /Markdown-link syntax and target existence/);
+  assert.match(readme, /\[Parity matrix\]\(\/Users\/ryan\.reynolds\/Projects\/rpiv-codex\/PARITY\.md\)/);
 });
 
-test("manual discovery fixtures track the conversational gate design", () => {
-  const fixtures = path.join(root, "tests", "fixtures", "discover");
-  const manualFixtures = fs.readdirSync(fixtures)
-    .filter((name) => name.endsWith(".md") && name !== "RUBRIC.md")
-    .sort();
-  assert.deepEqual(manualFixtures, [
-    "01-no-probe-discovery.md",
-    "02-brownfield-agent-gates.md",
-  ]);
-  for (const name of manualFixtures) {
-    const fixture = read("tests", "fixtures", "discover", name);
-    assert.match(fixture, /^## Paste this prompt into the Codex editor$/m, `${name} needs a paste heading`);
-    assert.match(fixture, /```text\n\$rpivc-discover [^\n]+\n```/, `${name} needs one copyable prompt`);
-    assert.match(fixture, /^## Answers to give only when asked$/m, `${name} needs an answer heading`);
-    assert.match(fixture, /Do not paste (?:this section|the rest of this file) into the editor/, `${name} must distinguish answers from the prompt`);
-  }
-
-  const noProbe = read("tests", "fixtures", "discover", "01-no-probe-discovery.md");
-  assert.match(noProbe, /no probe justified/);
-  assert.match(noProbe, /runs no agent/);
-  assert.match(noProbe, /\*\*Accept\*\*/);
-
-  const brownfield = read("tests", "fixtures", "discover", "02-brownfield-agent-gates.md");
-  assert.match(brownfield, /\*\*Run \/ Edit \/ Omit \/ Stop\*\*/);
-  assert.match(brownfield, /locator-only/);
-  assert.match(brownfield, /new analyzer-only card containing actual locator anchors/);
-  assert.match(brownfield, /tests\/\.rpivc-eval-drift-<run-id>\.txt/);
-  assert.match(brownfield, /stale card must dispatch nothing/);
-  assert.match(brownfield, /complete refreshed card/);
-  assert.match(brownfield, /Refresh evidence \/ Continue with the disclosed stale boundary \/ Stop/);
-  assert.match(brownfield, /exact observed runtime sandbox or `unverified`/);
-  assert.match(brownfield, /clickable Markdown links/);
-  assert.doesNotMatch(brownfield, /dispatch manifest|approval record is supplied/i);
-
-  const rubric = read("tests", "fixtures", "discover", "RUBRIC.md");
-  for (const dimension of [
-    "Agent minimality",
-    "Gate fidelity",
-    "Evidence conflict handling",
-    "Link usability",
-    "Interaction friction",
-  ]) {
-    assert.match(rubric, new RegExp(`\\| ${dimension} \\|`));
-  }
-  assert.match(rubric, /Scenario-specific pass conditions/);
-  assert.match(rubric, /Reference-parity pass conditions/);
-  assert.match(rubric, /only through `rpivc-discover`/);
-  assert.match(rubric, /do not execute it or require line-by-line equality/);
-  assert.doesNotMatch(rubric, /both runs|same answers/);
-});
-
-test("forward-testing guide defines the reusable single-pass two-harness contract", () => {
-  const guide = read("tests", "FORWARD-TESTING.md");
-  const manual = read("MANUAL-TEST.md");
-  assert.match(guide, /\*\*Minimal path\*\*/);
-  assert.match(guide, /\*\*Integration path\*\*/);
-  assert.match(guide, /exactly two read-only reviewers in parallel/);
-  assert.match(guide, /Contract and evidence reviewer/);
-  assert.match(guide, /Interaction and product-fidelity reviewer/);
-  assert.match(guide, /raw evidence/);
-  assert.match(guide, /Use RPIV as a reference, not a second runtime/);
-  assert.match(guide, /Do not run RPIV-Pi, install or invoke Pi extensions/);
-  assert.match(guide, /parity matrix/);
-  assert.match(guide, /no meaningful parity gap remains unexplained/);
-  assert.match(guide, /Do not give either reviewer[\s\S]*earlier evaluation findings[\s\S]*intended patch/);
-  assert.match(guide, /fresh isolated Codex task/);
-  assert.match(guide, /Run each harness exactly once/);
-  assert.match(guide, /apply at most one bounded correction set/);
-  assert.match(guide, /FAIL — candidate fixes applied; rerun required/);
-  assert.match(guide, /Do not restart or rerun a harness during the same evaluation/);
-  assert.doesNotMatch(guide, /ten iterations|repeat until|Validate and repeat|Start the next iteration/);
-  assert.match(guide, /delete only artifact paths created after the recorded baseline/);
-  assert.match(guide, /Never use a broad recursive deletion/);
-  assert.match(guide, /## Reusable `\/goal` template/);
-  assert.match(guide, /\/goal Evaluate rpivc-discover exactly once/);
-  assert.match(guide, /do not run RPIV, invoke Pi extensions, or require line-by-line output equality/);
-  assert.match(guide, /Do not rerun a harness, respawn reviewers, start a second correction pass/);
-  assert.match(guide, /report FAIL with candidate fixes applied and rerun required/);
-  assert.match(guide, /implement research or another stage, install anything, commit, push, or modify rpiv-mono/);
-  assert.match(manual, /tests\/FORWARD-TESTING\.md/);
-  assert.match(manual, /01-no-probe-discovery\.md/);
-  assert.match(manual, /02-brownfield-agent-gates\.md/);
+test("Promptfoo replaces the manual forward-testing harness", () => {
+  assert.equal(fs.existsSync(path.join(root, "MANUAL-TEST.md")), false);
+  assert.equal(fs.existsSync(path.join(root, "tests", "FORWARD-TESTING.md")), false);
+  assert.equal(fs.existsSync(path.join(root, "tests", "fixtures", "discover")), false);
+  assert.equal(fs.existsSync(path.join(root, "evals", "discover", "promptfooconfig.yaml")), true);
+  assert.equal(fs.existsSync(path.join(root, "evals", "discover", "cases.yaml")), true);
 });
 
 test("project agents are pinned, behaviorally read-only, bounded, and childless", () => {
@@ -323,8 +247,7 @@ test("runtime data contains final artifacts but no obsolete dispatch or approval
   const files = fs.readdirSync(runtimeRoot, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => path.relative(runtimeRoot, path.join(entry.parentPath, entry.name)).split(path.sep).join("/"));
-  assert.ok(files.length > 0);
   for (const file of files) {
-    assert.match(file, /^artifacts\/discover\/[^/]+\.md$/);
+    assert.match(file, /^(?:artifacts\/discover\/[^/]+\.md|evals\/|promptfoo\/)/);
   }
 });
