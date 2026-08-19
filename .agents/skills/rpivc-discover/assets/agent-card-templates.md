@@ -23,7 +23,7 @@ intended_tools: [read, search, git-read]
 budget: {max_files: 10, max_findings: 12}
 expected_evidence: "Ranked repository-relative file:line locations"
 output_schema: "Primary Anchors; Secondary Locations; Tests; Documentation; Search Gaps"
-stop_when: "Relevant locations are ranked, the boundary is reached, or evidence is unavailable"
+stop_when: "Relevant locations are ranked, 10 distinct repository files have been surfaced, or evidence is unavailable; do not open or report an 11th file"
 ```
 
 ## Analyzer card

@@ -29,7 +29,9 @@ The valid roster is zero, one, or two agents. Use zero when no target repository
 
 If analyzer work depends on locator results, show and run the locator first. Then, only if analysis is still necessary, show a second analyzer-only card containing the actual anchors and stop for a separate **Run / Edit / Omit / Stop** decision. Future output such as “D1 anchors” is never a reviewable input.
 
-Read no more than five relevant files surfaced by the authorized probe. Evidence must use repository-relative `file:line` citations. An empty or irrelevant result is a valid `no codebase precedent` result.
+Read no more than five relevant files surfaced by the authorized probe. Each agent must also stop before surfacing more distinct repository files than its displayed `max_files`; extra files are a behavioral violation even when the parent excludes them. Evidence must use repository-relative `file:line` citations. An empty or irrelevant result is a valid `no codebase precedent` result.
+
+Return the final authorized probe evidence in its own response and ask no product question in that response. On the next turn, refresh the repository snapshot before continuing the interview. This response boundary lets an operator-controlled change made after evidence returns be detected before it can be bypassed by a question emitted in the same turn.
 
 Never silently turn code observations into decisions. Present likely pre-resolutions in a compact batch and ask the user to confirm, correct, or leave each unresolved.
 

@@ -67,6 +67,10 @@ function artifactMarkdown(context, overrides = {}) {
   ].join("\n");
 }
 
+function appendBody(root, target, body) {
+  fs.appendFileSync(target, body.replaceAll("{{ROOT}}", root));
+}
+
 function writeArtifact(root, name = "fixture.md", overrides = {}) {
   const context = contextSnapshot(root);
   const directory = path.join(root, ".rpiv-codex", "artifacts", "discover");
@@ -136,6 +140,20 @@ test("artifact preflight validates a fresh final artifact without writing sideca
   assert.equal(inspected.metadata.supersedes, null);
   assert.equal(fs.existsSync(path.join(root, ".rpiv-codex", "approvals")), false);
   assert.equal(fs.existsSync(path.join(root, ".rpiv-codex", "dispatch")), false);
+});
+
+test("artifact preflight validates local Markdown targets and required lineage links", () => {
+  const root = repositoryFixture();
+  const source = path.join(root, "source.md");
+  fs.writeFileSync(source, "source\n");
+  const { target } = writeArtifact(root, "linked.md", { source_artifacts: ["source.md"] });
+
+  assert.throws(() => inspectArtifact(target, root), /lineage is missing a body Markdown link/);
+  appendBody(root, target, "[source.md]({{ROOT}}/source.md)\n");
+  assert.equal(inspectArtifact(target, root).context_match, true);
+
+  appendBody(root, target, "[missing.md]({{ROOT}}/missing.md)\n");
+  assert.throws(() => inspectArtifact(target, root), /Markdown link target does not exist/);
 });
 
 test("repository drift is reported for a conversational Refresh, Continue, or Stop choice", () => {

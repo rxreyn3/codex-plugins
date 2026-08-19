@@ -75,13 +75,42 @@ function readArtifact(input, cwd) {
   const context = contextSnapshot(cwd);
   const location = locateArtifact(input, context);
   const bytes = fs.readFileSync(location.absolute);
-  const metadata = parseFrontmatter(bytes.toString("utf8"));
+  const text = bytes.toString("utf8");
+  const metadata = parseFrontmatter(text);
   for (const field of requiredArtifactFields) {
     if (!(field in metadata)) fail(`artifact frontmatter is missing required field: ${field}`);
   }
   if (metadata.status !== "review") fail('artifact frontmatter status must be "review"');
   if (metadata.stage !== location.stage) fail("artifact stage does not match its directory");
-  return { location, metadata, context, byte_length: bytes.length };
+  return { location, metadata, context, byte_length: bytes.length, text };
+}
+
+function localMarkdownTargets(text) {
+  return [...text.matchAll(/\[[^\]\n]+\]\((?:<([^>\n]+)>|(\/[^)\n]+))\)/g)]
+    .map((match) => match[1] || match[2]);
+}
+
+function targetFile(target) {
+  return target.replace(/:[0-9]+(?:-[0-9]+)?$/, "");
+}
+
+function validateLocalMarkdownLinks(read) {
+  const targets = localMarkdownTargets(read.text);
+  for (const target of targets) {
+    if (!fs.existsSync(targetFile(target))) {
+      fail(`artifact Markdown link target does not exist: ${target}`);
+    }
+  }
+
+  const lineage = [read.metadata.supersedes, ...read.metadata.source_artifacts]
+    .filter((value) => typeof value === "string" && value.length > 0)
+    .map((value) => path.resolve(read.context.repository, value));
+  const linkedFiles = new Set(targets.map(targetFile).map((target) => path.resolve(target)));
+  for (const expected of lineage) {
+    if (!linkedFiles.has(expected)) {
+      fail(`artifact lineage is missing a body Markdown link: ${expected}`);
+    }
+  }
 }
 
 function contextDifferences(metadata, context) {
@@ -105,11 +134,14 @@ export function compareArtifactContext(input, cwd = process.cwd()) {
 }
 
 export function inspectArtifact(input, cwd = process.cwd()) {
-  const compared = compareArtifactContext(input, cwd);
-  if (!compared.context_match) {
-    fail(`artifact repository context has changed: ${compared.differences.map(({ field }) => field).join(", ")}`);
+  const read = readArtifact(input, cwd);
+  const differences = contextDifferences(read.metadata, read.context);
+  if (differences.length > 0) {
+    fail(`artifact repository context has changed: ${differences.map(({ field }) => field).join(", ")}`);
   }
-  return compared;
+  validateLocalMarkdownLinks(read);
+  const { text, ...result } = read;
+  return { ...result, context_match: true, differences: [] };
 }
 
 function main() {

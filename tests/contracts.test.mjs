@@ -48,6 +48,8 @@ test("discovery preserves adaptive RPIV interview behavior", () => {
   assert.match(combined, /valid roster is zero, one, or two agents/i);
   assert.match(combined, /“At most two” must never become “always two.”/);
   assert.match(combined, /at most five files/i);
+  assert.match(combined, /stop before surfacing more distinct repository files than its displayed `max_files`/i);
+  assert.match(combined, /final authorized probe evidence in its own response/i);
   assert.match(combined, /no codebase precedent/);
   assert.match(combined, /Batch two to four independent leaves into one compact numbered checkpoint/);
   assert.match(combined, /at most one such checkpoint/i);
