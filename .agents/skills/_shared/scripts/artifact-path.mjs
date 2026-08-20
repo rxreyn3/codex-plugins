@@ -5,7 +5,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { contextSnapshot } from "./context-snapshot.mjs";
 
-const allowedStages = new Set(["discover"]);
+const stageSources = new Map([
+  ["discover", "packages/rpiv-pi/skills/discover/SKILL.md"],
+  ["research", "packages/rpiv-pi/skills/research/SKILL.md"],
+]);
 
 export function slugify(value) {
   const slug = value
@@ -18,8 +21,8 @@ export function slugify(value) {
 }
 
 export function artifactPath(stage, topic, cwd = process.cwd(), now = new Date()) {
-  if (!allowedStages.has(stage)) {
-    throw new Error(`stage must be one of: ${[...allowedStages].join(", ")}`);
+  if (!stageSources.has(stage)) {
+    throw new Error(`stage must be one of: ${[...stageSources.keys()].join(", ")}`);
   }
 
   const context = contextSnapshot(cwd, now);
@@ -36,7 +39,7 @@ export function artifactPath(stage, topic, cwd = process.cwd(), now = new Date()
   const commonFrontmatter = {
     stage,
     status: "review",
-    rpiv_source: "packages/rpiv-pi/skills/discover/SKILL.md",
+    rpiv_source: stageSources.get(stage),
     rpiv_commit: "d0eb55371f622ac524b3355711a482f95feb14d4",
     supersedes: null,
     source_artifacts: [],
@@ -66,7 +69,7 @@ if (invokedDirectly) {
   try {
     const [, , stage, ...topicParts] = process.argv;
     if (!stage || topicParts.length === 0) {
-      throw new Error("usage: artifact-path.mjs <discover> <topic>");
+      throw new Error("usage: artifact-path.mjs <discover|research> <topic>");
     }
     process.stdout.write(`${JSON.stringify(artifactPath(stage, topicParts.join(" ")), null, 2)}\n`);
   } catch (error) {

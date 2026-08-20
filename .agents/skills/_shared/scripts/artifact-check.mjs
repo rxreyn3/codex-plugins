@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -82,30 +83,62 @@ function readArtifact(input, cwd) {
   }
   if (metadata.status !== "review") fail('artifact frontmatter status must be "review"');
   if (metadata.stage !== location.stage) fail("artifact stage does not match its directory");
-  return { location, metadata, context, byte_length: bytes.length, text };
+  return {
+    location,
+    metadata,
+    context,
+    byte_length: bytes.length,
+    artifact_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+    text,
+  };
 }
 
-function localMarkdownTargets(text) {
-  return [...text.matchAll(/\[[^\]\n]+\]\((?:<([^>\n]+)>|(\/[^)\n]+))\)/g)]
-    .map((match) => match[1] || match[2]);
+function localMarkdownLinks(text) {
+  return [...text.matchAll(/\[([^\]\n]+)\]\((?:<([^>\n]+)>|(\/[^)\n]+))\)/g)]
+    .map((match) => ({ label: match[1], target: match[2] || match[3] }));
 }
 
 function targetFile(target) {
   return target.replace(/:[0-9]+(?:-[0-9]+)?$/, "");
 }
 
+function targetLineRange(target) {
+  const match = /:([0-9]+)(?:-([0-9]+))?$/.exec(target);
+  return match ? { start: Number(match[1]), end: Number(match[2] ?? match[1]) } : null;
+}
+
+function validateCitationLabel(read, link) {
+  const range = targetLineRange(link.target);
+  if (!range) return;
+  const file = fs.realpathSync(targetFile(link.target));
+  const relative = path.relative(read.context.repository, file);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) return;
+  const normalized = relative.split(path.sep).join("/");
+  const suffix = range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`;
+  const expected = `${normalized}:${suffix}`;
+  if (link.label !== expected) {
+    fail(`artifact citation label must be repository-relative: expected [${expected}]`);
+  }
+
+  const lineCount = fs.readFileSync(file, "utf8").split(/\r?\n/).length;
+  if (range.start < 1 || range.end < range.start || range.end > lineCount) {
+    fail(`artifact citation line is outside file bounds: ${link.target}`);
+  }
+}
+
 function validateLocalMarkdownLinks(read) {
-  const targets = localMarkdownTargets(read.text);
-  for (const target of targets) {
-    if (!fs.existsSync(targetFile(target))) {
-      fail(`artifact Markdown link target does not exist: ${target}`);
+  const links = localMarkdownLinks(read.text);
+  for (const link of links) {
+    if (!fs.existsSync(targetFile(link.target))) {
+      fail(`artifact Markdown link target does not exist: ${link.target}`);
     }
+    validateCitationLabel(read, link);
   }
 
   const lineage = [read.metadata.supersedes, ...read.metadata.source_artifacts]
     .filter((value) => typeof value === "string" && value.length > 0)
     .map((value) => path.resolve(read.context.repository, value));
-  const linkedFiles = new Set(targets.map(targetFile).map((target) => path.resolve(target)));
+  const linkedFiles = new Set(links.map(({ target }) => targetFile(target)).map((target) => path.resolve(target)));
   for (const expected of lineage) {
     if (!linkedFiles.has(expected)) {
       fail(`artifact lineage is missing a body Markdown link: ${expected}`);
@@ -126,7 +159,27 @@ export function compareArtifactContext(input, cwd = process.cwd()) {
   return {
     artifact: read.location.relative,
     byte_length: read.byte_length,
+    artifact_sha256: read.artifact_sha256,
     metadata: read.metadata,
+    context: read.context,
+    context_match: differences.length === 0,
+    differences,
+  };
+}
+
+export function preflightDiscoveryArtifact(input, cwd = process.cwd()) {
+  const read = readArtifact(input, cwd);
+  if (read.location.stage !== "discover") {
+    fail("research preflight requires a discovery artifact");
+  }
+  validateLocalMarkdownLinks(read);
+  const differences = contextDifferences(read.metadata, read.context);
+  return {
+    artifact: read.location.relative,
+    byte_length: read.byte_length,
+    artifact_sha256: read.artifact_sha256,
+    metadata: read.metadata,
+    artifact_content: read.text,
     context: read.context,
     context_match: differences.length === 0,
     differences,
@@ -146,10 +199,12 @@ export function inspectArtifact(input, cwd = process.cwd()) {
 
 function main() {
   const [, , command, ...args] = process.argv;
-  if (!["inspect", "compare"].includes(command) || args.length !== 1) {
-    fail("usage: artifact-check.mjs <inspect|compare> <artifact-path>");
+  if (!["inspect", "compare", "preflight-discovery"].includes(command) || args.length !== 1) {
+    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery> <artifact-path>");
   }
-  return command === "inspect" ? inspectArtifact(args[0]) : compareArtifactContext(args[0]);
+  if (command === "inspect") return inspectArtifact(args[0]);
+  if (command === "preflight-discovery") return preflightDiscoveryArtifact(args[0]);
+  return compareArtifactContext(args[0]);
 }
 
 const invokedDirectly = process.argv[1]

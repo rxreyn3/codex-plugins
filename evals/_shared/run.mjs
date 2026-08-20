@@ -12,7 +12,10 @@ import {
 
 const sharedDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(sharedDirectory, "../..");
-const configPath = path.join(repositoryRoot, "evals", "discover", "promptfooconfig.yaml");
+const requestedStage = process.argv[3] ?? "discover";
+const allowedStages = new Set(["discover", "research"]);
+if (!allowedStages.has(requestedStage)) throw new Error(`unknown evaluation stage: ${requestedStage}`);
+const configPath = path.join(repositoryRoot, "evals", requestedStage, "promptfooconfig.yaml");
 const promptfooBinary = path.join(repositoryRoot, "node_modules", ".bin", "promptfoo");
 
 function evaluationId() {

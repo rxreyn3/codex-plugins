@@ -58,6 +58,8 @@ test("Promptfoo is pinned and exposed through explicit local commands", () => {
   assert.equal(pkg.engines.node, ">=22.22.0");
   assert.equal(pkg.scripts["eval:discover:validate"], "node evals/_shared/run.mjs validate");
   assert.equal(pkg.scripts["eval:discover"], "node evals/_shared/run.mjs eval");
+  assert.equal(pkg.scripts["eval:research:validate"], "node evals/_shared/run.mjs validate research");
+  assert.equal(pkg.scripts["eval:research"], "node evals/_shared/run.mjs eval research");
   assert.equal(pkg.scripts["eval:view"], "node evals/_shared/run.mjs view");
   assert.equal(fs.existsSync(path.join(root, "package-lock.json")), true);
 });

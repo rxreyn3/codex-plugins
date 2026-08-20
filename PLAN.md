@@ -218,7 +218,7 @@ Ryan chooses:
 
 The response authorizes only the displayed cards. It does not authorize later agents or another wave.
 
-The displayed card is the authoritative Codex role instance. Dispatch uses its `task_name`, explicit model and reasoning arguments, `fork_turns: none`, and a JSON envelope containing the card. Evaluation captures the spawn and child lifecycle before Promptfoo sanitization, then resumes the persisted evaluation child to verify its effective model, reasoning, inherited sandbox, completion, output, and absence of nested spawns. Codex encrypts the child payload before protocol evidence exposes it, so the evaluator records the displayed-card hash and opaque transport hash separately; it does not claim byte-for-byte plaintext prompt verification.
+The displayed card is the authoritative Codex role instance. An initial dispatch uses `agent_type` equal to its displayed role, its `task_name`, explicit model and reasoning arguments, `fork_turns: none`, and a JSON envelope containing the card. Research may later send a separately approved dependent card to the same completed role-and-runtime profile; that follow-up retains the task name and effective settings instead of requesting a new child. Evaluation captures either dispatch and the child lifecycle before Promptfoo sanitization, then resumes the persisted evaluation child to verify its originating role, effective model, reasoning, inherited sandbox, completion, output, and absence of nested spawns. Codex encrypts the child payload before protocol evidence exposes it, so the evaluator records the displayed-card hash and opaque transport hash separately; it does not claim byte-for-byte plaintext prompt verification.
 
 ### Dependent dispatches
 
@@ -342,7 +342,10 @@ Nothing commits or pushes automatically.
 
 ## Incremental Implementation Order
 
-### 1. Discovery simplification and correction
+### 1. Discovery simplification and correction — accepted
+
+Completed and accepted at commit `bc94805` after the two-case Promptfoo baseline,
+runtime subagent attestation, contract tests, and manual review.
 
 Update only the existing discovery vertical unit:
 
@@ -357,17 +360,25 @@ Update only the existing discovery vertical unit:
 - Preserve adaptive zero/one/two-agent discovery.
 - Preserve truthful sandbox disclosure.
 - Update deterministic product tests and the Promptfoo discovery cases.
-- Run one Promptfoo baseline and stop for Ryan’s review and decision.
+- Run one Promptfoo baseline and stop for Ryan’s review and decision. Completed.
 
-Do not begin `rpivc-research`.
+The discovery checkpoint is closed. No research implementation was included in it.
 
-### 2. Research
+### 2. Research — single-draft revision validation in progress
+
+The accepted unit contract is [the `rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Ryan accepted it on 2026-08-19, including the external-web deferral. Implementation remains bounded to this independently reviewable unit.
 
 - Add `rpivc-research`.
 - Add scope-tracer, pattern, integration, precedent, and analysis specialists.
 - Test conversational scope-tracer and research-wave gates.
 - Test Feature Requirements Document decision inheritance.
 - Stop for manual review.
+
+Stop after the one-shot evaluation and manual review evidence. Do not implement `rpivc-design`.
+
+The first research baseline ran once on 2026-08-19 and passed 1/2 cases. The narrow case exposed omitted explicit model/reasoning spawn arguments plus two deterministic evaluator defects. Those bounded corrections were applied. Ryan separately authorized a fresh baseline on 2026-08-20; it again passed 1/2, with the narrow case fully passing and the cross-cutting case stopping when the fifth direct child was rejected by the runtime's four-child ceiling.
+
+The three-card candidate's 2026-08-20 baseline passed 2/2. Ryan then rejected timestamp-distinct research files for minor revisions because they force downstream consumers to resolve lineage. Research now creates one review draft, edits and revalidates that same path on **Revise**, and freezes it on **Accept**. Evaluation-only observations prove the path remained constant, inspection passed, and the artifact hash changed. A fresh two-case baseline is authorized to exercise the revision path; it must not repair and rerun itself.
 
 ### 3. Design
 
@@ -425,8 +436,11 @@ No later unit is scaffolded early.
 
 - Every skill passes `quick_validate.py`.
 - Generated `openai.yaml` matches the skill contract.
-- Stage outputs are timestamp-distinct and immutable after presentation.
-- Revisions use `supersedes:` rather than editing reviewed artifacts.
+- Accepted stage outputs are immutable.
+- Research keeps one review-draft path before acceptance. A revision changes and
+  reinspects that path; evaluation evidence proves the hash changed without
+  adding workflow artifacts. Existing discovery lifecycle behavior is unchanged
+  by this research-only correction.
 - Human-facing paths render as Markdown links.
 - Source citations link to the exact local `file:line`.
 - Long paths do not appear in body tables.
@@ -502,17 +516,13 @@ A strict approval mode may be reconsidered only if a concrete future use case re
 
 ## Current Assumptions
 
-- `rpiv-codex` now exists and contains the uncommitted discovery unit.
+- `rpiv-codex` now exists; the accepted discovery unit is committed at `bc94805`.
 - The previous assumption that it remains empty is obsolete.
 - Historical discovery, dispatch, and approval artifacts from the superseded gate design have been deleted at Ryan’s explicit request.
 - `rpiv-mono` remains read-only and untouched.
 - Initial use is Ryan’s local Codex environment.
 - No global installation or plugin packaging is included.
 - Skills never modify `.gitignore`, commit, push, or choose whether artifacts should be committed.
-- The next implementation checkpoint is complete only when the simplified `rpivc-discover` can be exercised through the Promptfoo baseline and reviewed for:
-  - no-probe discovery;
-  - conversational locator approval;
-  - evidence-dependent conversational analyzer approval;
-  - clickable final artifact presentation;
-  - final **Accept / Revise / Stop**.
-- `rpivc-research` must not exist at that checkpoint.
+- The discovery checkpoint is complete and accepted.
+- The `rpivc-research` candidate and its evaluation files exist in the working tree. Its latest bounded runtime-capacity correction has deterministic validation but no fresh behavioral pass.
+- `rpivc-design` must not exist at the research checkpoint.

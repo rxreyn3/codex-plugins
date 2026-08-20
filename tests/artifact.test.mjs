@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   compareArtifactContext,
   inspectArtifact,
+  preflightDiscoveryArtifact,
 } from "../.agents/skills/_shared/scripts/artifact-check.mjs";
 import { artifactPath, slugify } from "../.agents/skills/_shared/scripts/artifact-path.mjs";
 import { contextSnapshot } from "../.agents/skills/_shared/scripts/context-snapshot.mjs";
@@ -138,6 +139,7 @@ test("artifact preflight validates a fresh final artifact without writing sideca
   assert.equal(inspected.location.relative, ".rpiv-codex/artifacts/discover/fixture.md");
   assert.equal(inspected.context_match, true);
   assert.equal(inspected.metadata.supersedes, null);
+  assert.match(inspected.artifact_sha256, /^[0-9a-f]{64}$/);
   assert.equal(fs.existsSync(path.join(root, ".rpiv-codex", "approvals")), false);
   assert.equal(fs.existsSync(path.join(root, ".rpiv-codex", "dispatch")), false);
 });
@@ -154,6 +156,39 @@ test("artifact preflight validates local Markdown targets and required lineage l
 
   appendBody(root, target, "[missing.md]({{ROOT}}/missing.md)\n");
   assert.throws(() => inspectArtifact(target, root), /Markdown link target does not exist/);
+});
+
+test("research preflight emits the complete validated discovery artifact", () => {
+  const root = repositoryFixture();
+  const { target } = writeArtifact(root, "research-input.md");
+  appendBody(root, target, "Complete dependency body.\n");
+  const preflight = preflightDiscoveryArtifact(target, root);
+  assert.equal(preflight.artifact, ".rpiv-codex/artifacts/discover/research-input.md");
+  assert.match(preflight.artifact_content, /Complete dependency body\./);
+  assert.equal(Buffer.byteLength(preflight.artifact_content), preflight.byte_length);
+  assert.match(preflight.artifact_sha256, /^[0-9a-f]{64}$/);
+
+  const researchDirectory = path.join(root, ".rpiv-codex", "artifacts", "research");
+  fs.mkdirSync(researchDirectory, { recursive: true });
+  const wrongStage = path.join(researchDirectory, "wrong-stage.md");
+  fs.writeFileSync(wrongStage, artifactMarkdown(contextSnapshot(root), { stage: "research" }));
+  assert.throws(() => preflightDiscoveryArtifact(wrongStage, root), /requires a discovery artifact/);
+});
+
+test("artifact inspection enforces repository-relative citation labels and line bounds", () => {
+  const root = repositoryFixture();
+  const { target } = writeArtifact(root, "citations.md");
+  appendBody(root, target, "[fixture.txt:1]({{ROOT}}/fixture.txt:1)\n");
+  assert.equal(inspectArtifact(target, root).context_match, true);
+
+  appendBody(root, target, "[wrong-label:1]({{ROOT}}/fixture.txt:1)\n");
+  assert.throws(() => inspectArtifact(target, root), /citation label must be repository-relative/);
+
+  fs.writeFileSync(target, fs.readFileSync(target, "utf8").replace(
+    "[wrong-label:1]({{ROOT}}/fixture.txt:1)".replace("{{ROOT}}", root),
+    `[fixture.txt:99](${root}/fixture.txt:99)`,
+  ));
+  assert.throws(() => inspectArtifact(target, root), /citation line is outside file bounds/);
 });
 
 test("repository drift is reported for a conversational Refresh, Continue, or Stop choice", () => {

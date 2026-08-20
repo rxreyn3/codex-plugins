@@ -10,10 +10,16 @@ import path from "node:path";
 const EVIDENCE_PATHS = [
   "PARITY.md",
   ".agents/skills/rpivc-discover",
+  ".agents/skills/rpivc-research",
   ".agents/skills/_shared/scripts",
   ".codex/agents/rpivc-codebase-locator.toml",
   ".codex/agents/rpivc-codebase-analyzer.toml",
+  ".codex/agents/rpivc-scope-tracer.toml",
+  ".codex/agents/rpivc-codebase-pattern-finder.toml",
+  ".codex/agents/rpivc-integration-scanner.toml",
+  ".codex/agents/rpivc-precedent-locator.toml",
   ".rpiv-codex/artifacts/discover",
+  ".rpiv-codex/artifacts/research",
 ];
 
 const RETAINED_LATEST_FIELDS = ["adapter_phase", "drift_events", "turn_count"];
@@ -71,9 +77,10 @@ function splitLineSuffix(target) {
 // into retained evidence and rewrite only paths inside the disposable workspace;
 // external and sensitive paths remain untouched rather than being exfiltrated.
 function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
-  const artifactRoot = path.join(evidenceWorkspace, ".rpiv-codex", "artifacts", "discover");
-  if (!fs.existsSync(artifactRoot)) return;
-  for (const entry of fs.readdirSync(artifactRoot, { withFileTypes: true })) {
+  for (const stage of ["discover", "research"]) {
+    const artifactRoot = path.join(evidenceWorkspace, ".rpiv-codex", "artifacts", stage);
+    if (!fs.existsSync(artifactRoot)) continue;
+    for (const entry of fs.readdirSync(artifactRoot, { withFileTypes: true })) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
     const artifact = path.join(artifactRoot, entry.name);
     const markdown = fs.readFileSync(artifact, "utf8");
@@ -86,7 +93,8 @@ function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
       copyEntry(workspace, evidenceWorkspace, relative);
       return `[${label}](${path.join(evidenceWorkspace, relative)}${suffix})`;
     });
-    if (rewritten !== markdown) fs.writeFileSync(artifact, rewritten);
+      if (rewritten !== markdown) fs.writeFileSync(artifact, rewritten);
+    }
   }
 }
 

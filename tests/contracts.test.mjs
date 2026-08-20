@@ -6,14 +6,14 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 
-test("only the simplified discovery vertical unit is present", () => {
+test("only the accepted discovery and research vertical units are present", () => {
   const entries = fs.readdirSync(path.join(root, ".agents", "skills"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .sort();
-  assert.deepEqual(entries, ["_shared", "rpivc-discover"]);
+  assert.deepEqual(entries, ["_shared", "rpivc-discover", "rpivc-research"]);
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "rpivc-approve")), false);
-  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "rpivc-research")), false);
+  assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "rpivc-research")), true);
 });
 
 test("skill frontmatter and generated metadata match the discovery contract", () => {
@@ -263,6 +263,6 @@ test("runtime data contains final artifacts but no obsolete dispatch or approval
     .filter((entry) => entry.isFile())
     .map((entry) => path.relative(runtimeRoot, path.join(entry.parentPath, entry.name)).split(path.sep).join("/"));
   for (const file of files) {
-    assert.match(file, /^(?:artifacts\/discover\/[^/]+\.md|evals\/|promptfoo\/)/);
+    assert.match(file, /^(?:artifacts\/(?:discover|research)\/[^/]+\.md|evals\/|promptfoo\/)/);
   }
 });

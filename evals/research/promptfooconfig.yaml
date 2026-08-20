@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: RPIV-Codex research behavior through the Codex app-server path
+sharing: false
+writeLatestResults: true
+prompts:
+  - label: rpivc-research-conversation
+    raw: rpivc-research conversation
+providers:
+  - id: file://provider.mjs
+    label: rpivc-research-app-server
+    config:
+      source_root: ../..
+tests: file://cases.yaml
+outputPath:
+  - "{{ env.RPIVC_EVIDENCE_ROOT }}/promptfoo.json"
+  - "{{ env.RPIVC_EVIDENCE_ROOT }}/promptfoo.html"
+commandLineOptions:
+  cache: false
+  maxConcurrency: 1
+  repeat: 1
