@@ -252,7 +252,7 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(config, /repeat: 1/);
   const provider = read("evals", "research", "provider.mjs");
   const assertions = read("evals", "research", "assertions.mjs");
-  assert.match(provider, /const turnTimeoutMs = 1800000/);
+  assert.match(provider, /const turnTimeoutMs = 2700000/);
   assert.match(provider, /two 600-second same-child/);
   assert.match(provider, /openai:codex-app-server:gpt-5\.6-luna/);
   assert.match(provider, /model_reasoning_effort: "low"/);

@@ -294,7 +294,10 @@ export default class RpivcResearchProvider {
     // A single approved child may legitimately use two 600-second same-child
     // waits before the parent can synthesize its terminal payload. Keep the
     // outer turn ceiling above that path in both input modes.
-    const turnTimeoutMs = 1800000;
+    // One approved analysis turn can run three sequential ten-minute children
+    // before the parent validates and renders the compiled scan. Leave real
+    // synthesis margin beyond that thirty-minute child-wait budget.
+    const turnTimeoutMs = 2700000;
     const discoveryArtifact = inputMode === "discovery"
       ? createDiscoveryFixture(workspaceState.workspace, caseId)
       : null;
