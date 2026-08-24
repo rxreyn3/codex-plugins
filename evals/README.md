@@ -29,6 +29,14 @@ npm run eval:view
 
 `npm run eval:discover` is deliberately one pass: two cases, one trial each, no cache, no sharing, and maximum concurrency one. It never repairs `rpivc-discover`, reruns a failed case, invokes RPIV-Pi, or starts another workflow stage.
 
+The Research release evaluation uses `npm run eval:research`. Its latest fresh
+three-case run on 2026-08-24 passed 0/3 with zero harness errors. The failures
+were product-behavior failures in skill rereading, evidence classification,
+projection verification, snapshot authority, and invalid citation handling.
+That result is not accepted release evidence; Research and plugin packaging
+remain gated until a later fresh run passes all three cases and is manually
+accepted.
+
 ## Discovery cases
 
 - `no-probe-discovery` is the smallest realistic branch. It captures intent for a hypothetical spinner, justifies zero agents, completes the Feature Requirements Document, accepts it, and stops.

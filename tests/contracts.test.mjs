@@ -261,7 +261,8 @@ test("runtime data contains final artifacts but no obsolete dispatch or approval
 
   const files = fs.readdirSync(runtimeRoot, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())
-    .map((entry) => path.relative(runtimeRoot, path.join(entry.parentPath, entry.name)).split(path.sep).join("/"));
+    .map((entry) => path.relative(runtimeRoot, path.join(entry.parentPath, entry.name)).split(path.sep).join("/"))
+    .filter((file) => path.basename(file) !== ".DS_Store");
   for (const file of files) {
     assert.match(file, /^(?:artifacts\/(?:discover|research)\/[^/]+\.md|evals\/|promptfoo\/)/);
   }

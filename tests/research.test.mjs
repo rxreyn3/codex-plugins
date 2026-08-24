@@ -12,6 +12,7 @@ import {
   extractAgentCards,
 } from "../evals/research/runtime-attestation.mjs";
 import { artifactPath } from "../.agents/skills/_shared/scripts/artifact-path.mjs";
+import { verifyResearchProjection } from "../.agents/skills/_shared/scripts/artifact-check.mjs";
 import RpivcResearchProvider, {
   observeResearchArtifact,
   retainArtifactRevisionObservation,
@@ -126,6 +127,8 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /never invoke (?:this|the) command bare/i);
   assert.match(combined, /replace the complete start-end range/);
   assert.match(combined, /exactly one `working_tree_sha256` key/);
+  assert.match(combined, /literal field `reasoning: medium`/);
+  assert.match(combined, /`reasoning_effort`.*forbidden as a displayed card field/);
   assert.match(combined, /summary of card identifiers is not an approval surface/);
   assert.match(combined, /inspect no target source before this decision/);
   assert.match(combined, /\*\*Run\*\*, \*\*Edit\*\*, \*\*Omit\*\*, or \*\*Stop\*\*/);
@@ -149,6 +152,9 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /worst clause/);
   assert.match(combined, /claim.*source_excerpt/s);
   assert.match(combined, /complete rendered scan byte-for-byte|entire rendered scan byte-for-byte/);
+  assert.match(combined, /verify-research-projection/);
+  assert.match(combined, /Preserve every inherited discovery decision/);
+  assert.match(combined, /`file:\/\/` targets.*invalid/);
   assert.match(combined, /introduce no new current-code claim or citation|must not introduce a new current-code factual claim/);
   assert.doesNotMatch(combined, /followup_task|dispatch_mode: followup/);
   assert.match(combined, /`agent_type` (?:from|equal to).*`role`/);
@@ -182,7 +188,7 @@ test("research specialist definitions are adaptive and childless", () => {
   assert.match(scopeTracer, /direct-prompt mode/);
   assert.match(scopeTracer, /do not request, assume, or invent a discovery artifact/);
   assert.match(scopeTracer, /model_reasoning_effort = "medium"/);
-  assert.match(scopeTracer, /full repository-relative label/);
+  assert.match(scopeTracer, /full repository-relative.*label/);
   assert.match(scopeTracer, /propose four groups/);
   assert.match(scopeTracer, /all five literal Markdown headings/);
   assert.match(scopeTracer, /self-check that all five headings exist/);
@@ -261,6 +267,9 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /terminal analysis child omits the required literal-clause matrix/i);
   assert.match(provider, /continue the already-approved turn directly into synthesis/i);
   assert.match(provider, /never parent-author replacement scope for an invalid tracer/i);
+  assert.match(provider, /file:\/\/ targets.*invalid/i);
+  assert.match(provider, /verify-research-projection/);
+  assert.match(provider, /literal card field reasoning: medium/);
   assert.match(provider, /return claims cite the return object/i);
   assert.match(assertions, /no skill reread before scope Run/i);
   assert.match(provider, /do not access SKILL\.md through cat, sed, rg, find/i);
@@ -324,6 +333,31 @@ test("compiled research scan projection allows nested scan headings and excludes
   )), false);
 });
 
+test("research projection verification binds the artifact to the complete rendered scan", () => {
+  const { workspace, artifact } = researchWorkspaceFixture();
+  const scan = [
+    "# Research Scan",
+    "- Coverage snapshot: Q1=Unanswered | Totals: Answered=0, Partial=0, Conflicted=0, Unanswered=1",
+    "- Q1 — **Unanswered** — Clauses: fixture evidence remains unavailable.",
+    `- Fixture evidence exists. [tracked.txt:1](${workspace}/tracked.txt:1)`,
+  ].join("\n");
+  fs.writeFileSync(artifact, fs.readFileSync(artifact, "utf8").replace("Initial reviewed draft.", scan));
+
+  assert.equal(verifyResearchProjection(artifact, scan, workspace).projection_match, true);
+  assert.throws(
+    () => verifyResearchProjection(artifact, scan.replace("Fixture evidence exists.", "Different claim."), workspace),
+    /Detailed Findings must equal the complete rendered scan byte-for-byte/,
+  );
+  fs.writeFileSync(artifact, fs.readFileSync(artifact, "utf8").replace(
+    "No discovery decisions were supplied.",
+    `No discovery decisions were supplied.\n- Extra claim. [tracked.txt:1](${workspace}/tracked.txt:1)`,
+  ));
+  assert.throws(
+    () => verifyResearchProjection(artifact, scan, workspace),
+    /citation lines outside the rendered scan/,
+  );
+});
+
 test("tracer scope checkpoint rejects parent-authored recovery from an invalid tracer", async () => {
   const { tracerScopeCheckpointIsValid } = await import("../evals/research/assertions.mjs");
   const links = [1, 2, 3].map((line) => `[src/file-${line}.mjs:${line}](/tmp/repository/src/file-${line}.mjs:${line})`).join(" ");
@@ -342,6 +376,7 @@ test("tracer scope checkpoint rejects parent-authored recovery from an invalid t
 
   assert.equal(tracerScopeCheckpointIsValid(valid), true);
   assert.equal(tracerScopeCheckpointIsValid(valid.replace("Bounded scope.", "The tracer returned an invalid scope.")), false);
+  assert.equal(tracerScopeCheckpointIsValid(valid.replaceAll("(/tmp/", "(file:///tmp/")), false);
 });
 
 test("research attestation recognizes every dispatchable research role", () => {

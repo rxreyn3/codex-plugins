@@ -2,7 +2,7 @@
 
 A lightweight, human-gated Codex port of valuable RPIV-Pi workflow behavior.
 
-Current checkpoint: `rpivc-discover` is accepted at commit `bc94805`. The independently reviewable `rpivc-research` candidate is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Its three-card 2026-08-20 baseline passed 2/2. Research now preserves RPIV-Pi's two entry modes: a lightweight direct prompt or one accepted discovery artifact. A run owns one review-draft path, **Revise** changes and revalidates those bytes in place, and **Accept** freezes them. A fresh three-case baseline is authorized to cover both input modes and the revision lifecycle. No later workflow stage is implemented.
+Current checkpoint: `rpivc-discover` is accepted at commit `bc94805`. The independently reviewable `rpivc-research` candidate is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Research preserves RPIV-Pi's two entry modes: a lightweight direct prompt or one accepted discovery artifact. A run owns one review-draft path, **Revise** changes and revalidates those bytes in place, and **Accept** freezes them. The fresh three-case release evaluation on 2026-08-24 remains unaccepted: the latest run passed 0/3 with zero harness errors, so Research and plugin packaging remain gated pending workflow reliability fixes. No later workflow stage is implemented.
 
 Discovery keeps review inside the conversation:
 

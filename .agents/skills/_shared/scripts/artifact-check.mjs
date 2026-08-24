@@ -386,6 +386,40 @@ export function prepareResearchScan(text, cwd = process.cwd()) {
   };
 }
 
+export function verifyResearchProjection(input, scanText, cwd = process.cwd()) {
+  const read = readArtifact(input, cwd);
+  if (read.metadata.stage !== "research") fail("research projection verification requires a research artifact");
+  const prepared = prepareResearchScan(scanText, cwd);
+  const expected = prepared.normalized_markdown.trim();
+  const lines = read.text.split(/\r?\n/);
+  const detailedStart = lines.findIndex((line) => line.trim() === "## Detailed Findings");
+  const detailedEnd = lines.findIndex((line, index) =>
+    index > detailedStart && line.trim() === "## Code References");
+  if (detailedStart < 0 || detailedEnd < 0) {
+    fail("research artifact must place Detailed Findings before Code References");
+  }
+  const actual = lines.slice(detailedStart + 1, detailedEnd).join("\n").trim();
+  if (actual !== expected) {
+    fail("research artifact Detailed Findings must equal the complete rendered scan byte-for-byte");
+  }
+
+  const scanLineSet = new Set(expected.split(/\r?\n/).map((line) => line.trimEnd()).filter(Boolean));
+  const extraCitationLines = lines
+    .map((line) => line.trimEnd())
+    .filter((line) => /\]\((?:<)?\/[^)\n]+:[0-9]+(?:-[0-9]+)?(?:>)?\)/.test(line))
+    .filter((line) => !/\/\.rpiv-codex\/artifacts\//.test(line))
+    .filter((line) => !scanLineSet.has(line));
+  if (extraCitationLines.length > 0) {
+    fail(`research artifact contains current-code citation lines outside the rendered scan:\n- ${extraCitationLines.join("\n- ")}`);
+  }
+  return {
+    artifact: read.location.relative,
+    artifact_sha256: read.artifact_sha256,
+    rendered_scan_sha256: crypto.createHash("sha256").update(expected).digest("hex"),
+    projection_match: true,
+  };
+}
+
 function targetFile(target) {
   return target
     .replace(/:[0-9]+(?:-[0-9]+)?$/, "")
@@ -635,7 +669,7 @@ function readStandardInput(timeoutMs = 2000) {
     let text = "";
     const timer = setTimeout(() => {
       process.stdin.pause();
-      reject(new Error("prepare-research-scan requires redirected input; use a quoted heredoc and never invoke it bare"));
+      reject(new Error("this command requires redirected input; use a quoted heredoc and never invoke it bare"));
     }, timeoutMs);
     process.stdin.setEncoding("utf8");
     process.stdin.on("data", (chunk) => { text += chunk; });
@@ -658,8 +692,12 @@ async function main() {
     const prepared = prepareResearchScan(await readStandardInput());
     return command === "render-research-scan" ? prepared.normalized_markdown : prepared;
   }
+  if (command === "verify-research-projection") {
+    if (args.length !== 1) fail("usage: artifact-check.mjs verify-research-projection <artifact> < scan.md");
+    return verifyResearchProjection(args[0], await readStandardInput());
+  }
   if (!["inspect", "compare", "preflight-discovery", "preflight-research", "normalize-citations"].includes(command) || args.length !== 1) {
-    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations> <input>");
+    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations|verify-research-projection> <input>");
   }
   if (command === "inspect") return inspectArtifact(args[0]);
   if (command === "preflight-discovery") return preflightDiscoveryArtifact(args[0]);
