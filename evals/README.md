@@ -53,12 +53,13 @@ Each run writes beneath `.rpiv-codex/evals/<evaluation-id>/`:
 - one evidence directory per case
 - complete target turns with app-server metadata and raw events
 - `runtime-attestations.jsonl` for every approved child dispatch, containing hashes and runtime facts but no prompt or output text
+- `transport-retries.jsonl` when an app-server turn times out; Research permits one evidence-visible retry of the same decision, grants no new authority, and reuses an already-completed child instead of spawning a duplicate
 - the relevant skill, agent, parity, and generated-artifact files
 - deterministic assertion components
 - separate contract/evidence and interaction/parity grader results
 - a cleanup record for the disposable workspace
 
-A product case passes only when its deterministic assertion and both independent agent rubrics pass. The wrapper also fails when the source checkout changes or a disposable workspace is not removed.
+A product case passes only when its deterministic assertion and both independent agent rubrics pass. Research transport recovery also requires every scheduled retry to succeed, permits at most one retry per turn, and rejects any failed or unmatched retry record. The wrapper fails when the source checkout changes or a disposable workspace is not removed.
 
 Literal click behavior in the Codex Desktop renderer is outside Promptfoo's app-server boundary. The automated suite verifies Markdown-link syntax and target existence; renderer interaction remains a small human calibration check.
 

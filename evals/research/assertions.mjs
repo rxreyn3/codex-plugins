@@ -127,6 +127,7 @@ export default function assertResearchContract(output, context) {
   const cardValidations = readJsonLines(path.join(directory, "card-validations.jsonl"));
   const scopeValidations = readJsonLines(path.join(directory, "scope-validations.jsonl"));
   const revisionObservations = readJsonLines(path.join(directory, "artifact-revisions.jsonl"));
+  const transportRetries = readJsonLines(path.join(directory, "transport-retries.jsonl"));
   const artifactDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "research");
   const discoveryDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "discover");
   const artifacts = fs.existsSync(artifactDirectory)
@@ -144,6 +145,13 @@ export default function assertResearchContract(output, context) {
   const revisionPaths = new Set(revisionObservations.map((item) => item.relative_path));
   const revisionHashes = new Set(revisionObservations.map((item) => item.artifact_sha256));
   const observationsValidate = revisionObservations.every((item) => item.artifact_count === 1 && item.inspection_passed);
+  const scheduledTransportRetries = transportRetries.filter((item) => item.event === "scheduled");
+  const succeededTransportRetries = transportRetries.filter((item) => item.event === "succeeded");
+  const transportRetryTurns = new Set(scheduledTransportRetries.map((item) => item.turn));
+  const transportRetriesPass = !transportRetries.some((item) => item.event === "failed")
+    && scheduledTransportRetries.length === succeededTransportRetries.length
+    && scheduledTransportRetries.every((item) => item.retry_attempt === 1)
+    && transportRetryTurns.size === scheduledTransportRetries.length;
   const revisionLifecyclePasses = expectsRevision
     ? revisionObservations.length === 2
       && revisionPaths.size === 1
@@ -171,6 +179,7 @@ export default function assertResearchContract(output, context) {
     && !/##\s+(?:Discovery Summary|Proposed Execution Plan)/i.test(firstOutput);
 
   components.push(result("input preflight first command", preflightWasFirstCommand, preflightWasFirstCommand ? "successful deterministic input preflight preceded all shell reads" : `first command: ${firstCommand?.status ?? "none"}/${firstCommand?.exitCode ?? "none"} ${firstCommand?.command ?? "none"}`));
+  components.push(result("bounded transport recovery", transportRetriesPass, `${scheduledTransportRetries.length} scheduled; ${succeededTransportRetries.length} succeeded; ${transportRetries.filter((item) => item.event === "failed").length} failed`));
   components.push(result("initial scope tracer gate", initialTracerGatePasses, initialTracerGatePasses ? "initial turn displayed one snapshot-bound S1 approval card" : initialCardError ?? "initial turn did not preserve the S1 card-before-tracing boundary"));
   const tracerScopeValidation = scopeValidations.find((item) => item.pass === true);
   components.push(result("valid tracer scope checkpoint", Boolean(tracerScopeValidation), tracerScopeValidation ? "live tracer validation confirmed repository citations and exact question coverage" : scopeValidations.at(-1)?.error ?? "live tracer validation was not retained"));

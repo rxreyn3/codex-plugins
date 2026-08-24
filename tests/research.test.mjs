@@ -21,7 +21,9 @@ import {
   verifyResearchProjection,
 } from "../.agents/skills/_shared/scripts/artifact-check.mjs";
 import RpivcResearchProvider, {
+  isResearchTransportTimeout,
   observeResearchArtifact,
+  researchTransportRetryMarker,
   retainArtifactRevisionObservation,
   retainUniqueAttestation,
   shouldCaptureRuntimeSnapshot,
@@ -551,6 +553,43 @@ test("research provider captures authoritative context for scope use, refresh, a
   assert.equal(shouldCaptureRuntimeSnapshot("Use scope", []), true);
   assert.equal(shouldCaptureRuntimeSnapshot("Refresh the cards.", []), true);
   assert.equal(shouldCaptureRuntimeSnapshot("Run", [{ id: "A1" }]), true);
+});
+
+test("research provider retries one timed-out turn without granting new authority", async () => {
+  const evidenceDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "rpivc-transport-retry-")));
+  const calls = [];
+  const state = {
+    evidenceDir,
+    turn: 1,
+    pendingCards: [{ id: "S1" }],
+    delegate: {
+      async callApi(prompt) {
+        calls.push(JSON.parse(prompt));
+        if (calls.length === 1) throw new Error("codex app-server turn timed out after 2700000ms");
+        return { output: "validated scope" };
+      },
+    },
+  };
+  const provider = new RpivcResearchProvider();
+  const response = await provider.callDelegateWithTransportRetry({
+    state,
+    appServerInput: [{ type: "text", text: "Run" }],
+    delegateContext: {},
+    callOptions: {},
+    decision: "run",
+  });
+
+  assert.equal(response.output, "validated scope");
+  assert.equal(calls.length, 2);
+  const marker = calls[1].at(-1).text;
+  assert.match(marker, /retry grants no new authority/i);
+  assert.match(marker, /do not spawn another child/i);
+  assert.match(marker, /approved_card_ids: \["S1"\]/);
+  const events = fs.readFileSync(path.join(evidenceDir, "transport-retries.jsonl"), "utf8")
+    .trim().split("\n").map((line) => JSON.parse(line));
+  assert.deepEqual(events.map((event) => event.event), ["scheduled", "succeeded"]);
+  assert.equal(isResearchTransportTimeout(new Error("other failure")), false);
+  assert.match(researchTransportRetryMarker({ decision: "run", pendingCardIds: ["S1"] }), /same user decision/i);
 });
 
 test("research provider supplements a raw dispatch when the notification handler misses it", () => {

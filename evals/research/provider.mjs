@@ -78,6 +78,24 @@ function appendJsonLine(target, value) {
   fs.appendFileSync(target, `${JSON.stringify(value)}\n`);
 }
 
+export function isResearchTransportTimeout(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /codex app-server turn timed out after \d+ms/i.test(message);
+}
+
+export function researchTransportRetryMarker({ decision, pendingCardIds }) {
+  return [
+    "<rpivc-evaluation-transport-retry>",
+    "The previous app-server turn for this same user decision was interrupted by a transport timeout and produced no checkpoint response.",
+    "This retry grants no new authority. Continue the original decision exactly.",
+    "If the interrupted turn already spawned an approved child and its terminal completion notification is present in task history, do not spawn another child; consume that exact retained payload and continue to the required checkpoint.",
+    "Otherwise continue the original approved decision without widening its scope.",
+    `decision: ${JSON.stringify(decision)}`,
+    `approved_card_ids: ${JSON.stringify(pendingCardIds)}`,
+    "</rpivc-evaluation-transport-retry>",
+  ].join("\n");
+}
+
 function childRolloutEvidence(rolloutPath) {
   if (typeof rolloutPath !== "string" || !fs.existsSync(rolloutPath)) {
     return { completed: false, error: null, output: null, nestedSpawns: null };
@@ -419,6 +437,71 @@ export default class RpivcResearchProvider {
     return [...(state.delegate.connections?.values?.() ?? [])][0] ?? null;
   }
 
+  async callDelegateWithTransportRetry({
+    state,
+    appServerInput,
+    delegateContext,
+    callOptions,
+    decision,
+  }) {
+    const evidencePath = path.join(state.evidenceDir, "transport-retries.jsonl");
+    const turn = state.turn + 1;
+    let retryAttempt = 0;
+    let input = appServerInput;
+    while (true) {
+      try {
+        const response = await state.delegate.callApi(
+          JSON.stringify(input),
+          delegateContext,
+          callOptions,
+        );
+        if (retryAttempt > 0) {
+          appendJsonLine(evidencePath, {
+            event: "succeeded",
+            turn,
+            retry_attempt: retryAttempt,
+            decision,
+            approved_card_ids: state.pendingCards.map((card) => card.id),
+          });
+        }
+        return response;
+      } catch (error) {
+        if (!isResearchTransportTimeout(error) || retryAttempt >= 1) {
+          if (retryAttempt > 0) {
+            appendJsonLine(evidencePath, {
+              event: "failed",
+              turn,
+              retry_attempt: retryAttempt,
+              decision,
+              approved_card_ids: state.pendingCards.map((card) => card.id),
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+          throw error;
+        }
+        retryAttempt += 1;
+        appendJsonLine(evidencePath, {
+          event: "scheduled",
+          turn,
+          retry_attempt: retryAttempt,
+          decision,
+          approved_card_ids: state.pendingCards.map((card) => card.id),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        input = [
+          ...appServerInput,
+          {
+            type: "text",
+            text: researchTransportRetryMarker({
+              decision,
+              pendingCardIds: state.pendingCards.map((card) => card.id),
+            }),
+          },
+        ];
+      }
+    }
+  }
+
   // Child settings notifications are not reliably routed through the active
   // parent turn. Resume the persisted child to ask Codex for the effective
   // model, effort, sandbox, and approval policy, then archive it immediately.
@@ -630,9 +713,10 @@ export default class RpivcResearchProvider {
           { type: "text", text: modelInput },
         ]
       : [{ type: "text", text: modelInput }];
-    const response = await state.delegate.callApi(
-      JSON.stringify(appServerInput),
-      {
+    const response = await this.callDelegateWithTransportRetry({
+      state,
+      appServerInput,
+      delegateContext: {
         ...context,
         prompt: {
           ...context?.prompt,
@@ -642,7 +726,8 @@ export default class RpivcResearchProvider {
         },
       },
       callOptions,
-    );
+      decision,
+    });
     state.turn += 1;
     const output = typeof response.output === "string" ? response.output : JSON.stringify(response.output ?? "");
     if (isFirstTurn) {
