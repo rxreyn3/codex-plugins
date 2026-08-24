@@ -374,6 +374,20 @@ function equalJson(left, right) {
   return stableJson(left) === stableJson(right);
 }
 
+export function compareSandboxPolicies(childPolicy, parentPolicy) {
+  if (!childPolicy || !parentPolicy) return { pass: false, status: "missing-policy" };
+  if (equalJson(childPolicy, parentPolicy)) return { pass: true, status: "exact-match" };
+  const visibleFields = ["type", "networkAccess", "excludeTmpdirEnvVar", "excludeSlashTmp"];
+  const visibleFieldsMatch = visibleFields.every((field) => childPolicy[field] === parentPolicy[field]);
+  if (visibleFieldsMatch && parentPolicy.writableRoots === "[...]") {
+    return {
+      pass: true,
+      status: "visible-policy-match-parent-roots-redacted",
+    };
+  }
+  return { pass: false, status: "mismatch" };
+}
+
 /**
  * Join independent protocol events into one verdict for an approved card.
  *
@@ -427,11 +441,17 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   const nestedSpawnObservation = childThreadId
     ? events.findLast((event) => event.kind === "nested-spawn-observation" && event.thread_id === childThreadId)
     : null;
+  const sandboxVerification = compareSandboxPolicies(
+    childSettings?.sandbox_policy,
+    parentSettings?.sandbox_policy,
+  );
 
   const checks = {
     dispatch_observed: Boolean(dispatch),
     dispatch_mode_matches: dispatch?.dispatch_mode === dispatchMode,
     prompt_transport_observed: Boolean(dispatch?.message_sha256 && dispatch?.message_bytes > 0),
+    prompt_envelope_matches_or_is_opaque: dispatch?.canonical_envelope_sha256 == null
+      || dispatch.canonical_envelope_sha256 === expectedEnvelopeSha256,
     task_name_matches: dispatch?.task_name === expectedName,
     requested_role_matches: dispatch?.agent_type === card?.role,
     context_mode_matches: dispatch?.fork_turns === "none",
@@ -440,8 +460,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     child_thread_observed: Boolean(childThreadId),
     effective_model_matches: childSettings?.model === card?.model,
     effective_reasoning_matches: childSettings?.effort === card?.reasoning,
-    sandbox_inherits_parent: Boolean(childSettings && parentSettings)
-      && equalJson(childSettings.sandbox_policy, parentSettings.sandbox_policy),
+    sandbox_inherits_parent: sandboxVerification.pass,
     child_completed: completion?.status === "completed" && completion?.error == null,
     child_output_observed: Boolean(childOutput?.content_sha256),
     no_child_fanout: nestedSpawnObservation
@@ -460,15 +479,17 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
       displayed_card_sha256: expectedEnvelopeSha256,
       transport_sha256: dispatch?.message_sha256 ?? null,
       transport_bytes: dispatch?.message_bytes ?? null,
-      status: dispatch?.canonical_envelope_sha256 === expectedEnvelopeSha256
-        ? "plaintext-envelope-matched"
-        : "opaque-encrypted-transport",
+      status: dispatch?.canonical_envelope_sha256 == null
+        ? "opaque-encrypted-transport"
+        : dispatch.canonical_envelope_sha256 === expectedEnvelopeSha256
+          ? "plaintext-envelope-matched"
+          : "plaintext-envelope-mismatch",
       // This flag must remain false when Codex exposes only ciphertext. Treating
       // an opaque transport hash as a plaintext match would manufacture proof.
       exact_plaintext_observed: dispatch?.canonical_envelope_sha256 === expectedEnvelopeSha256,
-      limitation: dispatch?.canonical_envelope_sha256 === expectedEnvelopeSha256
-        ? null
-        : "Codex encrypts the child payload before app-server and rollout evidence expose it",
+      limitation: dispatch?.canonical_envelope_sha256 == null
+        ? "Codex encrypts the child payload before app-server and rollout evidence expose it"
+        : null,
     },
     dispatch: dispatch ?? null,
     child: {
@@ -487,6 +508,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
       nested_spawn_count: nestedSpawns.length,
     },
     parent: parentSettings ? { sandbox_policy: parentSettings.sandbox_policy } : null,
+    sandbox_verification: sandboxVerification,
     checks,
     pass: Object.values(checks).every(Boolean),
   };

@@ -5,7 +5,6 @@ import {
   hasNoDiscoveryContext,
   parseCoverageProjection,
   parseFrontmatter,
-  validateResearchCard,
   validateResearchScope,
 } from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
 
@@ -90,7 +89,7 @@ function coverageProjectionMatches(compiledScan, markdown) {
 export function tracerScopeCheckpointIsValid(output, repository) {
   if (/tracer (?:returned|result|payload).{0,40}invalid|schema self-check is not satisfied/i.test(output)) return false;
   try {
-    return validateResearchScope(output, repository).valid;
+    return validateResearchScope(output, repository, { repository }).valid;
   } catch {
     return false;
   }
@@ -125,7 +124,8 @@ export default function assertResearchContract(output, context) {
   const latest = JSON.parse(fs.readFileSync(path.join(directory, "latest.json"), "utf8"));
   const turns = readJsonLines(path.join(directory, "turns.jsonl"));
   const attestations = readJsonLines(path.join(directory, "runtime-attestations.jsonl"));
-  const preDispatchSnapshots = readJsonLines(path.join(directory, "pre-dispatch-snapshots.jsonl"));
+  const cardValidations = readJsonLines(path.join(directory, "card-validations.jsonl"));
+  const scopeValidations = readJsonLines(path.join(directory, "scope-validations.jsonl"));
   const revisionObservations = readJsonLines(path.join(directory, "artifact-revisions.jsonl"));
   const artifactDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "research");
   const discoveryDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "discover");
@@ -162,15 +162,9 @@ export default function assertResearchContract(output, context) {
   const firstOutput = turns[0]?.output ?? "";
   const tracerOutput = turns.find((turn) => String(turn.input ?? "").trim().replaceAll("*", "").toLowerCase() === "run"
     && /^## Discovery Summary\b/m.test(turn.output))?.output ?? "";
-  let initialCardError = null;
-  try {
-    const initialSnapshot = preDispatchSnapshots.find((item) => item.before_turn === 1)?.context;
-    if (!initialSnapshot) throw new Error("initial authoritative snapshot was not retained");
-    validateResearchCard(firstOutput, path.join(directory, "workspace"), initialSnapshot);
-  } catch (error) {
-    initialCardError = error instanceof Error ? error.message : String(error);
-  }
-  const initialTracerGatePasses = initialCardError === null
+  const initialCardValidation = cardValidations.find((item) => item.turn === 1 && item.card_id === "S1");
+  const initialCardError = initialCardValidation?.error ?? (initialCardValidation ? null : "initial live card validation was not retained");
+  const initialTracerGatePasses = initialCardValidation?.pass === true
     && /(?:^|\n)\s*role:\s*["']?rpivc-scope-tracer["']?\s*(?:\n|$)/i.test(firstOutput)
     && /(?:^|\n)\s*id:\s*["']?S1["']?\s*(?:\n|$)/i.test(firstOutput)
     && /Run[\s\S]*Edit[\s\S]*Omit[\s\S]*Stop/i.test(firstOutput)
@@ -178,7 +172,8 @@ export default function assertResearchContract(output, context) {
 
   components.push(result("input preflight first command", preflightWasFirstCommand, preflightWasFirstCommand ? "successful deterministic input preflight preceded all shell reads" : `first command: ${firstCommand?.status ?? "none"}/${firstCommand?.exitCode ?? "none"} ${firstCommand?.command ?? "none"}`));
   components.push(result("initial scope tracer gate", initialTracerGatePasses, initialTracerGatePasses ? "initial turn displayed one snapshot-bound S1 approval card" : initialCardError ?? "initial turn did not preserve the S1 card-before-tracing boundary"));
-  components.push(result("valid tracer scope checkpoint", tracerScopeCheckpointIsValid(tracerOutput, path.join(directory, "workspace")), "tracer supplied valid repository citations and exact 5-9-question coverage across at most three named-specialist groups"));
+  const tracerScopeValidation = scopeValidations.find((item) => item.pass === true);
+  components.push(result("valid tracer scope checkpoint", Boolean(tracerScopeValidation), tracerScopeValidation ? "live tracer validation confirmed repository citations and exact question coverage" : scopeValidations.at(-1)?.error ?? "live tracer validation was not retained"));
   components.push(result("one research artifact", artifacts.length === 1, `${artifacts.length} research artifacts`));
   components.push(result("single-draft revision lifecycle", revisionLifecyclePasses, `${revisionObservations.length} validated observations; ${revisionPaths.size} paths; ${revisionHashes.size} hashes`));
   components.push(result("write scope", unexpected.length === 0, unexpected.length ? unexpected.join(", ") : "only research artifact changed"));

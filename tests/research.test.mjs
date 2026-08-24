@@ -9,6 +9,7 @@ import { inheritsExternalWebDeferral, repositoryRelativeCitationLabels } from ".
 import {
   buildDispatchAttestation,
   captureAttestationEvent,
+  compareSandboxPolicies,
   extractAgentCards,
 } from "../evals/research/runtime-attestation.mjs";
 import { artifactPath } from "../.agents/skills/_shared/scripts/artifact-path.mjs";
@@ -573,9 +574,13 @@ test("research provider supplements a raw dispatch when the notification handler
   assert.equal(supplementRawAttestationEvents(state, { notifications: [notification] }, 0), 1);
   assert.equal(state.attestationEvents.some((event) => event.kind === "dispatch-call"), true);
 
-  const alreadyCaptured = { attestationEvents: [{ kind: "dispatch-call", call_id: "handler-spawn" }] };
+  const alreadyCaptured = { attestationEvents: [captureAttestationEvent(notification)] };
   assert.equal(supplementRawAttestationEvents(alreadyCaptured, { notifications: [notification] }, 0), 0);
   assert.equal(alreadyCaptured.attestationEvents.length, 1);
+
+  const partiallyCaptured = { attestationEvents: [{ kind: "dispatch-call", call_id: "different-spawn" }] };
+  assert.equal(supplementRawAttestationEvents(partiallyCaptured, { notifications: [notification] }, 0), 1);
+  assert.equal(partiallyCaptured.attestationEvents.length, 2);
 });
 
 test("research revision evidence proves changed bytes at one validated path", () => {
@@ -644,6 +649,26 @@ test("runtime reducer captures only fresh spawn dispatches without plaintext", (
   assert.equal(JSON.stringify(spawn).includes("encrypted-spawn-envelope"), false);
 });
 
+test("runtime attestation compares visible sandbox policy when parent roots are redacted", () => {
+  const child = {
+    type: "workspaceWrite",
+    writableRoots: [],
+    networkAccess: false,
+    excludeTmpdirEnvVar: false,
+    excludeSlashTmp: false,
+  };
+  const parent = { ...child, writableRoots: "[...]" };
+  assert.deepEqual(compareSandboxPolicies(child, child), { pass: true, status: "exact-match" });
+  assert.deepEqual(compareSandboxPolicies(child, parent), {
+    pass: true,
+    status: "visible-policy-match-parent-roots-redacted",
+  });
+  assert.deepEqual(compareSandboxPolicies(child, { ...parent, networkAccess: true }), {
+    pass: false,
+    status: "mismatch",
+  });
+});
+
 test("runtime reducer resolves the yielded spawn payload variable structurally", () => {
   const card = {
     id: "S1",
@@ -708,6 +733,25 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
   assert.equal(result.child_thread_id, "child-thread");
   assert.equal(attestation.prompt_verification.status, "plaintext-envelope-matched");
   assert.equal(attestation.pass, true);
+
+  dispatch.canonical_envelope_sha256 = "c".repeat(64);
+  const mismatchedEnvelope = buildDispatchAttestation({
+    parentThreadId: "parent",
+    card,
+    events: [
+      { kind: "thread-settings", thread_id: "parent", sandbox_policy: sandbox },
+      dispatch,
+      result,
+      { kind: "thread-settings", thread_id: "child-thread", model: "gpt-5.6-terra", effort: "medium", sandbox_policy: sandbox },
+      { kind: "turn-completed", thread_id: "child-thread", status: "completed", error: null },
+      { kind: "agent-output", author: "child-thread", content_sha256: "b".repeat(64), content_bytes: 64 },
+      { kind: "nested-spawn-observation", thread_id: "child-thread", count: 0 },
+    ],
+  });
+  assert.equal(mismatchedEnvelope.prompt_verification.status, "plaintext-envelope-mismatch");
+  assert.equal(mismatchedEnvelope.checks.prompt_envelope_matches_or_is_opaque, false);
+  assert.equal(mismatchedEnvelope.pass, false);
+  dispatch.canonical_envelope_sha256 = attestation.prompt_verification.displayed_card_sha256;
 
   const shorthandDispatch = captureAttestationEvent({
     method: "rawResponseItem/completed",

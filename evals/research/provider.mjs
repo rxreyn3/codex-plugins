@@ -17,7 +17,11 @@ import {
   extractAgentCards,
 } from "./runtime-attestation.mjs";
 import { contextSnapshot } from "../../.agents/skills/_shared/scripts/context-snapshot.mjs";
-import { inspectArtifact } from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
+import {
+  inspectArtifact,
+  validateResearchCard,
+  validateResearchScope,
+} from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
 
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -57,15 +61,14 @@ export function shouldCaptureRuntimeSnapshot(input, pendingCards = [], isFirstTu
 }
 
 export function supplementRawAttestationEvents(state, raw, start = 0) {
-  const handlerCapturedDispatch = state.attestationEvents
-    .slice(start)
-    .some((event) => event.kind === "dispatch-call");
-  if (handlerCapturedDispatch || !Array.isArray(raw?.notifications)) return 0;
+  if (!Array.isArray(raw?.notifications)) return 0;
+  const existing = new Set(state.attestationEvents.slice(start).map((event) => JSON.stringify(event)));
   let capturedCount = 0;
   for (const notification of raw.notifications) {
     const captured = captureAttestationEvent(notification);
-    if (!captured) continue;
+    if (!captured || existing.has(JSON.stringify(captured))) continue;
     state.attestationEvents.push(captured);
+    existing.add(JSON.stringify(captured));
     capturedCount += 1;
   }
   return capturedCount;
@@ -350,11 +353,12 @@ export default class RpivcResearchProvider {
     const invalidChildCorrection = "If a terminal analysis child omits the required literal-clause matrix or answers a different task, do not spawn a replacement, silently repair its answer, ask for synthesis authorization, or end with only an acknowledgement. Record the invalid child as an evidence gap, mark every clause assigned only to that card Unanswered, and continue the already-approved turn directly into synthesis and the compiled-scan preparation.";
     const tracerAndEvidenceCorrection = "Treat a discovery path in the approved tracer card as already absolute and pass it literally; never prepend repository or duplicate .rpiv-codex. Before offering Use scope, validate the tracer's five headings, 5-9 numbered questions, three concrete artifact links per question, exact group coverage, and smallest roster. Never parent-author replacement scope for an invalid tracer; stop before analysis. Fold Git precedent into the analyzer whenever it concerns the same files, never a standalone precedent locator merely for history. During citation excerpt review, cite the lines that perform each claimed action: return claims cite the return object, check or verdict claims cite the check expressions, and multi-file claims become separate one-file bullets. Lines that merely select or stage values do not prove they are returned, hashed, or checked. An unknown-stage claim cites both the stage guard and throw. Scan normalization, coverage validation, citation checks, and the normalized_markdown return are separate claims with separate evidence. In parseCoverageProjection, snapshot recognition, contiguous identifiers and totals, and clause-row checks are separate evidence blocks. In validateLocalMarkdownLinks, target and label checks are separate from the later research-width check. In runtime-attestation, no-history, completion, output, and no-fan-out claims must each cite their individual context_mode_matches, child_completed, child_output_observed, or no_child_fanout check expression; selection of those values is not the verdict. An overall runtime pass claim cites Object.values(checks).every(Boolean). A passing-attestation claim cites attestations.every, while bounded-spawn behavior is a separate claim citing the direct-child budget expression. When writing the artifact, start from the complete research template and preserve every template ## section heading exactly once, including Research Questions, Evidence Conflicts and Gaps, and Dispatch Ledger; never compress or omit empty sections. Summary contains the snapshot but no Q clause rows; Q rows belong only in Coverage Ledger and the copied Detailed Findings scan.";
     const strictTracerLinksCorrection = "Every tracer citation must use a full repository-relative path:line label and a literal absolute local target beginning with /. file:// targets, basename labels, and targets without a line or range are invalid. Reject an invalid tracer before offering Use scope.";
+    const transportEnvelopeCorrection = "Immediately before every spawn, validate the exact transport envelope again with artifact-check.mjs validate-research-card, then reuse those validated bytes as message. Never retype or reconstruct a card between dispatch-time validation and the spawn call.";
     const deterministicValidationCorrection = "Preserve every inherited discovery decision in Developer Context, including negative workflow boundaries such as no automatic successor stage. Before displaying S1 or any A-card, pass each complete card through a quoted heredoc to artifact-check.mjs validate-research-card. Before offering Use scope, pass the complete tracer payload through a quoted heredoc to artifact-check.mjs validate-research-scope; any validator failure stops before the gate. Begin every current-code evidence bullet with its question identifier such as - Q1:, and give every Answered question at least one labeled evidence bullet. Copy the allocator's emitted absolute artifact path and never rebuild it from relative output. After writing or revising, pass the exact rendered scan through a quoted heredoc to artifact-check.mjs finalize-research on that absolute path. The finalizer verifies projection before normalization and inspection, so a projection failure does not consume an inspection attempt. Use no separate inspect call.";
     const configuredDeveloperInstructions = delegateConfigs[0].config.developer_instructions;
     const correctedDeveloperInstructions = configuredDeveloperInstructions
       .replace(previousWaitInstructions, keyedWaitInstructions)
-      .concat(" ", evaluationCorrections, " ", exactPreflightCorrection, " ", initialGateCorrection, " ", scopeCheckpointCorrection, " ", aggregateScanCorrection, " ", invalidChildCorrection, " ", tracerAndEvidenceCorrection, " ", strictTracerLinksCorrection, " ", deterministicValidationCorrection);
+      .concat(" ", evaluationCorrections, " ", exactPreflightCorrection, " ", initialGateCorrection, " ", scopeCheckpointCorrection, " ", aggregateScanCorrection, " ", invalidChildCorrection, " ", tracerAndEvidenceCorrection, " ", strictTracerLinksCorrection, " ", transportEnvelopeCorrection, " ", deterministicValidationCorrection);
     if (correctedDeveloperInstructions === configuredDeveloperInstructions) {
       throw new Error("research evaluation wait instructions were not corrected");
     }
@@ -634,13 +638,40 @@ export default class RpivcResearchProvider {
     );
     state.turn += 1;
     const output = typeof response.output === "string" ? response.output : JSON.stringify(response.output ?? "");
+    if (isFirstTurn) {
+      let error = null;
+      try {
+        validateResearchCard(output, state.workspace, runtimeSnapshot);
+      } catch (caught) {
+        error = caught instanceof Error ? caught.message : String(caught);
+      }
+      appendJsonLine(path.join(state.evidenceDir, "card-validations.jsonl"), {
+        turn: state.turn,
+        card_id: "S1",
+        pass: error === null,
+        error,
+      });
+    }
+    if (/^## Discovery Summary\b/m.test(output)) {
+      let error = null;
+      try {
+        validateResearchScope(output, state.workspace);
+      } catch (caught) {
+        error = caught instanceof Error ? caught.message : String(caught);
+      }
+      appendJsonLine(path.join(state.evidenceDir, "scope-validations.jsonl"), {
+        turn: state.turn,
+        pass: error === null,
+        error,
+      });
+    }
     this.afterTurn(state, output);
     const raw = typeof response.raw === "string"
       ? (() => { try { return JSON.parse(response.raw); } catch { return response.raw; } })()
       : response.raw;
-    // Some provider versions route collaboration notifications around the
-    // callable handler. Supplement from the raw turn only when the handler
-    // missed this turn's dispatch, avoiding duplicate dispatch evidence.
+    // Some provider versions route only part of the collaboration stream around
+    // the callable handler. Supplement every missing raw event by exact value,
+    // avoiding duplicates while retaining partially missed dispatches.
     supplementRawAttestationEvents(state, raw, attestationEventStart);
     const currentAttestationEvents = state.attestationEvents.slice(attestationEventStart);
     if (state.pendingCards.length > 0 && currentAttestationEvents.some((event) => event.kind === "dispatch-call")) {

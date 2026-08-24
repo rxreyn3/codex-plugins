@@ -482,7 +482,7 @@ function questionIdentifiers(text) {
   return identifiers;
 }
 
-export function validateResearchScope(text, cwd = process.cwd()) {
+export function validateResearchScope(text, cwd = process.cwd(), authoritativeContext = null) {
   const output = String(text);
   const required = ["Discovery Summary", "Research Questions", "Shared Files", "Evidence Gaps", "Proposed Execution Plan"];
   if (!required.every((heading) => output.split(/\r?\n/).some((line) => line.trim() === `## ${heading}`))) {
@@ -497,7 +497,7 @@ export function validateResearchScope(text, cwd = process.cwd()) {
   if (questionMatches.some((match, index) => Number(match[1]) !== expectedNumbers[index])) {
     fail("research scope questions must be contiguous from 1");
   }
-  const read = { context: contextSnapshot(cwd) };
+  const read = { context: authoritativeContext ?? contextSnapshot(cwd) };
   for (const [index, match] of questionMatches.entries()) {
     const blockStart = match.index;
     const blockEnd = questionMatches[index + 1]?.index ?? questionSection.length;
