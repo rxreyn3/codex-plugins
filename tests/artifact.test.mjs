@@ -365,7 +365,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   const root = repositoryFixture();
   const scan = [
     "# Research Scan",
-    `- Claim. [ fixture.txt:1](${root}/fixture.txt#L1)`,
+    `- Q1: Claim. [ fixture.txt:1](${root}/fixture.txt#L1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: fixture claim is directly evidenced.",
   ].join("\n");
@@ -374,7 +374,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   assert.equal(prepared.normalized_citation_count, 1);
   assert.equal(prepared.normalized_markdown, [
     "# Research Scan",
-    `- Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
+    `- Q1: Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: fixture claim is directly evidenced.",
   ].join("\n"));
@@ -382,7 +382,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
     label: "fixture.txt:1",
     target: `${root}/fixture.txt:1`,
     claim_line: 2,
-    claim: `- Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
+    claim: `- Q1: Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
     source_excerpt: "1: baseline",
   }]);
 
@@ -390,7 +390,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   git(root, "add", "wide.txt");
   git(root, "commit", "-m", "add wide fixture");
   const wideScan = [
-    `- Broad claim. [wide.txt:1-16](${root}/wide.txt:1-16)`,
+    `- Q1: Broad claim. [wide.txt:1-16](${root}/wide.txt:1-16)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: broad claim is directly evidenced.",
   ].join("\n");
@@ -400,7 +400,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   );
 
   const crowdedScan = [
-    `- Two ranges. [fixture.txt:1](${root}/fixture.txt:1) [fixture.txt:1](${root}/fixture.txt:1)`,
+    `- Q1: Two ranges. [fixture.txt:1](${root}/fixture.txt:1) [fixture.txt:1](${root}/fixture.txt:1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: fixture claim is directly evidenced.",
   ].join("\n");
@@ -410,7 +410,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   );
 
   const historicalScan = [
-    `- Git precedent introduced this behavior. [fixture.txt:1](${root}/fixture.txt:1)`,
+    `- Q1: Git precedent introduced this behavior. [fixture.txt:1](${root}/fixture.txt:1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: current behavior is directly evidenced; history is recorded separately.",
   ].join("\n");
@@ -420,7 +420,7 @@ test("compiled scan preparation canonicalizes labels and returns numbered eviden
   );
 
   const aggregateDefectsScan = [
-    `- Broad evidence. [wide.txt:1-16](${root}/wide.txt:1-16)`,
+    `- Q1: Broad evidence. [wide.txt:1-16](${root}/wide.txt:1-16)`,
     `- Missing evidence. [missing.txt:1](${root}/missing.txt:1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: evidence is claimed for both lines.",
@@ -493,7 +493,7 @@ test("compiled scan preparation rejects known verdict claims that cite only stag
   ].join("\n"));
 
   const scan = (claim) => [
-    claim,
+    claim.replace(/^- /, "- Q1: "),
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: verdict is directly evidenced.",
   ].join("\n");
@@ -544,7 +544,7 @@ test("compiled scan preparation rejects known verdict claims that cite only stag
 test("compiled scan render command emits only validated canonical Markdown", () => {
   const root = repositoryFixture();
   const scan = [
-    `- Claim. [ wrong:1](${root}/fixture.txt#L1)`,
+    `- Q1: Claim. [ wrong:1](${root}/fixture.txt#L1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: fixture claim is directly evidenced.",
   ].join("\n");
@@ -553,7 +553,7 @@ test("compiled scan render command emits only validated canonical Markdown", () 
     "render-research-scan",
   ], { cwd: root, input: scan, encoding: "utf8" });
   assert.equal(output, [
-    `- Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
+    `- Q1: Claim. [fixture.txt:1](${root}/fixture.txt:1)`,
     "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
     "- Q1 — **Answered** — Clauses: fixture claim is directly evidenced.",
   ].join("\n"));

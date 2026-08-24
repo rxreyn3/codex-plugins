@@ -12,12 +12,19 @@ import {
   extractAgentCards,
 } from "../evals/research/runtime-attestation.mjs";
 import { artifactPath } from "../.agents/skills/_shared/scripts/artifact-path.mjs";
-import { verifyResearchProjection } from "../.agents/skills/_shared/scripts/artifact-check.mjs";
+import {
+  finalizeResearch,
+  prepareResearchScan,
+  validateResearchCard,
+  validateResearchScope,
+  verifyResearchProjection,
+} from "../.agents/skills/_shared/scripts/artifact-check.mjs";
 import RpivcResearchProvider, {
   observeResearchArtifact,
   retainArtifactRevisionObservation,
   retainUniqueAttestation,
   shouldCaptureRuntimeSnapshot,
+  supplementRawAttestationEvents,
 } from "../evals/research/provider.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -110,14 +117,14 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /non-empty free-text research prompt or one.*absolute path/s);
   assert.match(combined, /Never silently reinterpret an invalid artifact path as free text/);
   assert.match(combined, /no discovery decisions were supplied/i);
-  assert.match(combined, /Copy its emitted `relative` path and `common_frontmatter` values literally/);
+  assert.match(combined, /Copy its emitted `absolute` path and `common_frontmatter` values literally/);
   assert.match(combined, /discovery mode has exactly one declared discovery source and prompt mode has none/);
   assert.match(combined, /analyzer and pattern finder use Terra\/high/);
   assert.match(combined, /integration scanner and precedent locator use Luna\/low/);
   assert.match(combined, /`functions\.wait` with that exact cell identifier/);
   assert.match(combined, /inner.*(?:wait|same-child).*600|timeout_ms: 600000/s);
   assert.match(combined, /keyed child state is absent or non-final.*same wait again|non-final timeout.*same child/s);
-  assert.match(combined, /artifact-check\.mjs normalize-citations/);
+  assert.match(combined, /artifact-check\.mjs finalize-research/);
   assert.match(combined, /compiled scan as well as the artifact.*basename-only label/s);
   assert.match(combined, /prepare-research-scan/);
   assert.match(combined, /source_excerpt/);
@@ -152,14 +159,14 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /worst clause/);
   assert.match(combined, /claim.*source_excerpt/s);
   assert.match(combined, /complete rendered scan byte-for-byte|entire rendered scan byte-for-byte/);
-  assert.match(combined, /verify-research-projection/);
+  assert.match(combined, /projection failure cannot consume an inspection invocation/i);
   assert.match(combined, /Preserve every inherited discovery decision/);
   assert.match(combined, /`file:\/\/` targets.*invalid/);
   assert.match(combined, /introduce no new current-code claim or citation|must not introduce a new current-code factual claim/);
   assert.doesNotMatch(combined, /followup_task|dispatch_mode: followup/);
   assert.match(combined, /`agent_type` (?:from|equal to).*`role`/);
   assert.match(combined, /requested runtime settings/);
-  assert.match(combined, /updates that same draft path/);
+  assert.match(combined, /updates that same absolute draft path/);
   assert.match(combined, /Never attempt a third inspection/);
   assert.match(combined, /Never invent filesystem links such as `.git\/commit\/<sha>`/);
   assert.match(combined, /changed before\/after `artifact_sha256` values/);
@@ -268,10 +275,11 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /continue the already-approved turn directly into synthesis/i);
   assert.match(provider, /never parent-author replacement scope for an invalid tracer/i);
   assert.match(provider, /file:\/\/ targets.*invalid/i);
-  assert.match(provider, /verify-research-projection/);
+  assert.match(provider, /validate-research-card/);
+  assert.match(provider, /validate-research-scope/);
+  assert.match(provider, /finalize-research/);
   assert.match(provider, /literal card field reasoning: medium/);
   assert.match(provider, /return claims cite the return object/i);
-  assert.match(assertions, /no skill reread before scope Run/i);
   assert.match(provider, /do not access SKILL\.md through cat, sed, rg, find/i);
   assert.match(provider, /Never use a current-file citation to claim Git history/i);
   assert.match(provider, /120-second outer yield is not a child deadline/);
@@ -287,7 +295,7 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(assertions, /Coverage snapshot.*Write artifact/s);
   assert.match(assertions, /coverage projection/);
   assert.match(assertions, /compiled scan projection/);
-  assert.match(provider, /run artifact-check\.mjs normalize-citations/);
+  assert.match(provider, /artifact-check\.mjs finalize-research/);
   assert.equal((cases.match(/model_reasoning_effort: xhigh/g) ?? []).length, 1, "YAML anchor keeps both graders on extra-high reasoning");
   assert.doesNotMatch(`${cases}\n${config}`, /web-search|network_access_enabled: true/);
 });
@@ -358,9 +366,105 @@ test("research projection verification binds the artifact to the complete render
   );
 });
 
+test("research scan requires question-labeled evidence for every Answered question", () => {
+  const { workspace } = researchWorkspaceFixture();
+  const base = [
+    "# Research Scan",
+    "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
+    "- Q1 — **Answered** — Clauses: fixture behavior is supported.",
+  ];
+  const citation = `[tracked.txt:1](${workspace}/tracked.txt:1)`;
+  assert.throws(
+    () => prepareResearchScan([...base, `- Fixture behavior is supported. ${citation}`].join("\n"), workspace),
+    /Q1 is Answered but has no evidence bullet beginning/,
+  );
+  assert.equal(
+    prepareResearchScan([...base, `- Q1: Fixture behavior is supported. ${citation}`].join("\n"), workspace).citations.length,
+    1,
+  );
+});
+
+test("research card validation binds profile and context to the authoritative snapshot", () => {
+  const { workspace } = researchWorkspaceFixture();
+  const snapshot = JSON.parse(execFileSync(
+    process.execPath,
+    [path.join(root, ".agents/skills/_shared/scripts/context-snapshot.mjs")],
+    { cwd: workspace, encoding: "utf8" },
+  ));
+  const card = [
+    "id: S1",
+    "role: rpivc-scope-tracer",
+    `repository: ${snapshot.repository}`,
+    `branch: ${snapshot.branch}`,
+    `commit: ${snapshot.commit}`,
+    `working_tree_sha256: ${snapshot.working_tree_sha256}`,
+    "model: gpt-5.6-terra",
+    "reasoning: medium",
+  ].join("\n");
+
+  assert.equal(validateResearchCard(card, workspace).valid, true);
+  assert.throws(
+    () => validateResearchCard(card.replace(snapshot.working_tree_sha256, snapshot.working_tree_sha256.slice(0, 61)), workspace),
+    /does not match the authoritative repository snapshot/,
+  );
+  assert.throws(
+    () => validateResearchCard(card.replace("reasoning: medium", "reasoning: high"), workspace),
+    /must use gpt-5\.6-terra\/medium/,
+  );
+});
+
+test("research scope validation checks citations and exact plan coverage", () => {
+  const { workspace } = researchWorkspaceFixture();
+  const citation = `[tracked.txt:1](${workspace}/tracked.txt:1)`;
+  const valid = [
+    "## Discovery Summary",
+    "Bounded scope.",
+    "## Research Questions",
+    ...[1, 2, 3, 4, 5].map((question) => `${question}. What remains to trace? ${citation} ${citation} ${citation}`),
+    "## Shared Files",
+    "- tracked.txt",
+    "## Evidence Gaps",
+    "- None yet.",
+    "## Proposed Execution Plan",
+    "1. Analyzer: Q1-Q5.",
+  ].join("\n");
+
+  assert.equal(validateResearchScope(valid, workspace).valid, true);
+  assert.throws(
+    () => validateResearchScope(valid.replaceAll("[tracked.txt:1]", "[file.txt:1]"), workspace),
+    /citation label must be repository-relative/,
+  );
+  assert.throws(
+    () => validateResearchScope(valid.replaceAll(`${workspace}/tracked.txt:1`, `${workspace}/missing.txt:1`), workspace),
+    /citation target does not exist/,
+  );
+  assert.throws(
+    () => validateResearchScope(valid.replace("Q1-Q5", "Q1-Q4"), workspace),
+    /cover Q5 exactly once/,
+  );
+});
+
+test("research finalization projects before normalization and inspection", () => {
+  const { workspace, artifact } = researchWorkspaceFixture();
+  const scan = [
+    "# Research Scan",
+    "- Coverage snapshot: Q1=Unanswered | Totals: Answered=0, Partial=0, Conflicted=0, Unanswered=1",
+    "- Q1 — **Unanswered** — Clauses: fixture evidence remains unavailable.",
+    `- Fixture evidence exists. [tracked.txt:1](${workspace}/tracked.txt:1)`,
+  ].join("\n");
+  fs.writeFileSync(artifact, fs.readFileSync(artifact, "utf8").replace("Initial reviewed draft.", scan));
+
+  assert.equal(finalizeResearch(artifact, scan, workspace).context_match, true);
+  assert.throws(
+    () => finalizeResearch(artifact, scan.replace("Fixture evidence exists.", "Different claim."), workspace),
+    /Detailed Findings must equal the complete rendered scan byte-for-byte/,
+  );
+});
+
 test("tracer scope checkpoint rejects parent-authored recovery from an invalid tracer", async () => {
   const { tracerScopeCheckpointIsValid } = await import("../evals/research/assertions.mjs");
-  const links = [1, 2, 3].map((line) => `[src/file-${line}.mjs:${line}](/tmp/repository/src/file-${line}.mjs:${line})`).join(" ");
+  const { workspace } = researchWorkspaceFixture();
+  const links = [1, 2, 3].map(() => `[tracked.txt:1](${workspace}/tracked.txt:1)`).join(" ");
   const valid = [
     "## Discovery Summary",
     "Bounded scope.",
@@ -374,9 +478,9 @@ test("tracer scope checkpoint rejects parent-authored recovery from an invalid t
     "1. Analyzer: Q1-Q5.",
   ].join("\n");
 
-  assert.equal(tracerScopeCheckpointIsValid(valid), true);
-  assert.equal(tracerScopeCheckpointIsValid(valid.replace("Bounded scope.", "The tracer returned an invalid scope.")), false);
-  assert.equal(tracerScopeCheckpointIsValid(valid.replaceAll("(/tmp/", "(file:///tmp/")), false);
+  assert.equal(tracerScopeCheckpointIsValid(valid, workspace), true);
+  assert.equal(tracerScopeCheckpointIsValid(valid.replace("Bounded scope.", "The tracer returned an invalid scope."), workspace), false);
+  assert.equal(tracerScopeCheckpointIsValid(valid.replaceAll(`(${workspace}/`, `(file://${workspace}/`), workspace), false);
 });
 
 test("research attestation recognizes every dispatchable research role", () => {
@@ -438,9 +542,40 @@ test("research provider clears stale cards and retains each child call once", ()
 
 test("research provider captures authoritative context for scope use, refresh, and approved dispatch", () => {
   assert.equal(shouldCaptureRuntimeSnapshot("ordinary answer", []), false);
+  assert.equal(shouldCaptureRuntimeSnapshot("initial prompt", [], true), true);
   assert.equal(shouldCaptureRuntimeSnapshot("Use scope", []), true);
   assert.equal(shouldCaptureRuntimeSnapshot("Refresh the cards.", []), true);
   assert.equal(shouldCaptureRuntimeSnapshot("Run", [{ id: "A1" }]), true);
+});
+
+test("research provider supplements a raw dispatch when the notification handler misses it", () => {
+  const notification = {
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-1",
+      item: {
+        type: "function_call",
+        name: "spawn_agent",
+        call_id: "raw-spawn",
+        arguments: JSON.stringify({
+          agent_type: "rpivc-codebase-analyzer",
+          task_name: "analysis_profile",
+          fork_turns: "none",
+          model: "gpt-5.6-terra",
+          reasoning_effort: "high",
+          message: "approved-envelope",
+        }),
+      },
+    },
+  };
+  const state = { attestationEvents: [{ kind: "agent-output" }] };
+  assert.equal(supplementRawAttestationEvents(state, { notifications: [notification] }, 0), 1);
+  assert.equal(state.attestationEvents.some((event) => event.kind === "dispatch-call"), true);
+
+  const alreadyCaptured = { attestationEvents: [{ kind: "dispatch-call", call_id: "handler-spawn" }] };
+  assert.equal(supplementRawAttestationEvents(alreadyCaptured, { notifications: [notification] }, 0), 0);
+  assert.equal(alreadyCaptured.attestationEvents.length, 1);
 });
 
 test("research revision evidence proves changed bytes at one validated path", () => {

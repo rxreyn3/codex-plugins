@@ -31,7 +31,7 @@ npm run eval:view
 
 The Research release evaluation uses `npm run eval:research`. Its latest fresh
 three-case run on 2026-08-24 passed 0/3 with zero harness errors. The failures
-were product-behavior failures in skill rereading, evidence classification,
+were product-behavior failures in evidence classification,
 projection verification, snapshot authority, and invalid citation handling.
 That result is not accepted release evidence; Research and plugin packaging
 remain gated until a later fresh run passes all three cases and is manually

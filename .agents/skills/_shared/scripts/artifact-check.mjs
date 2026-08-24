@@ -240,6 +240,10 @@ function semanticEvidenceDefects(relativeTarget, claim, sourceExcerpt) {
       && !/normalized_markdown/.test(sourceExcerpt)) {
       defects.push("normalized-Markdown return claim does not cite the returned field");
     }
+    if (/\breturns?\b[^.\n]*\b(?:citation review metadata|citation metadata|citations)\b/i.test(claim)
+      && !/return\s*\{[\s\S]*normalized_markdown[\s\S]*citations/.test(sourceExcerpt)) {
+      defects.push("citation-metadata return claim does not cite the returned normalized_markdown and citations fields");
+    }
     if (/\bcitation validation\b/i.test(claim)
       && /\b(?:format|labels?|evidence[- ]line counts?)\b/i.test(claim)) {
       if (/\blabels?\b/i.test(claim) && !/validateCitationLabel/.test(sourceExcerpt)) {
@@ -263,6 +267,17 @@ function semanticEvidenceDefects(relativeTarget, claim, sourceExcerpt) {
     if (/\b(?:clause|question|coverage)[- ]rows?\b/i.test(claim)
       && !/(?:const rows|coverage rows|row\.status|rows\.length)/.test(sourceExcerpt)) {
       defects.push("coverage-row claim does not cite a row check");
+    }
+  }
+  if (relativeTarget.endsWith("evals/research/provider.mjs")) {
+    const claimsArtifactCount = /\b(?:one|single|exactly one) (?:Markdown )?research artifact\b/i.test(claim);
+    const claimsInspectionResult = /\b(?:records?|returns?|reports?)\b[^.\n]*\binspection (?:result|status|outcome)\b/i.test(claim);
+    if (claimsArtifactCount && claimsInspectionResult) {
+      defects.push("artifact-count and inspection-result behavior require separate evidence bullets");
+    } else if (claimsArtifactCount && !/(?:artifacts\.length\s*!==\s*1|artifact_count)/.test(sourceExcerpt)) {
+      defects.push("single-artifact claim does not cite the artifact-count check");
+    } else if (claimsInspectionResult && !/(?:inspection_passed|inspection_error)/.test(sourceExcerpt)) {
+      defects.push("inspection-result claim does not cite the returned inspection fields");
     }
   }
   if (relativeTarget.endsWith("evals/research/runtime-attestation.mjs")) {
@@ -315,7 +330,7 @@ export function prepareResearchScan(text, cwd = process.cwd()) {
       return replacement;
     },
   );
-  parseCoverageProjection(normalizedMarkdown, "research compiled scan");
+  const coverage = parseCoverageProjection(normalizedMarkdown, "research compiled scan");
   const links = localMarkdownLinks(normalizedMarkdown);
   if (links.length === 0) fail("research compiled scan must contain current-code citations");
   const errors = new Set();
@@ -330,10 +345,18 @@ export function prepareResearchScan(text, cwd = process.cwd()) {
     }
   }
   const normalizedLines = normalizedMarkdown.split(/\r?\n/);
+  const citedQuestions = new Set();
   for (const lineNumber of citationCountByLine.keys()) {
     const claimLine = normalizedLines[lineNumber - 1] ?? "";
+    const questionLabel = /^\s*-\s*Q([0-9]+):\s+/.exec(claimLine);
+    if (questionLabel) citedQuestions.add(`Q${Number(questionLabel[1])}`);
     if (/\b(?:Git precedent|historical(?:ly)?|introduced by|inherited from|commit [0-9a-f]{7,40})\b/i.test(claimLine)) {
       errors.add(`research compiled scan line ${lineNumber} uses a current-file citation to support Git history; split current behavior from a plain verified commit statement`);
+    }
+  }
+  for (const [question, status] of Object.entries(coverage.status_by_question)) {
+    if (status === "Answered" && !citedQuestions.has(question)) {
+      errors.add(`research compiled scan ${question} is Answered but has no evidence bullet beginning \"- ${question}: \" with one current-code citation`);
     }
   }
   const citations = [];
@@ -383,6 +406,143 @@ export function prepareResearchScan(text, cwd = process.cwd()) {
     normalized_markdown: normalizedMarkdown,
     normalized_citation_count: normalizedCitationCount,
     citations,
+  };
+}
+
+function flatYamlFields(text) {
+  const fields = new Map();
+  for (const line of String(text).split(/\r?\n/)) {
+    const match = /^([a-zA-Z0-9_]+):\s*(.*?)\s*$/.exec(line);
+    if (!match) continue;
+    const values = fields.get(match[1]) ?? [];
+    values.push(match[2].replace(/^(?:"([\s\S]*)"|'([\s\S]*)')$/, (_source, double, single) => double ?? single));
+    fields.set(match[1], values);
+  }
+  return fields;
+}
+
+function exactlyOneField(fields, key) {
+  const values = fields.get(key) ?? [];
+  if (values.length !== 1) fail(`research card must contain exactly one ${key} field`);
+  return values[0];
+}
+
+const researchProfiles = {
+  "rpivc-scope-tracer": ["gpt-5.6-terra", "medium"],
+  "rpivc-codebase-analyzer": ["gpt-5.6-terra", "high"],
+  "rpivc-codebase-pattern-finder": ["gpt-5.6-terra", "high"],
+  "rpivc-integration-scanner": ["gpt-5.6-luna", "low"],
+  "rpivc-precedent-locator": ["gpt-5.6-luna", "low"],
+};
+
+export function validateResearchCard(text, cwd = process.cwd(), authoritativeSnapshot = null) {
+  const fields = flatYamlFields(text);
+  const snapshot = authoritativeSnapshot ?? contextSnapshot(cwd);
+  const id = exactlyOneField(fields, "id");
+  const role = exactlyOneField(fields, "role");
+  const repository = exactlyOneField(fields, "repository");
+  const branch = exactlyOneField(fields, "branch");
+  const commit = exactlyOneField(fields, "commit");
+  const workingTreeSha256 = exactlyOneField(fields, "working_tree_sha256");
+  const model = exactlyOneField(fields, "model");
+  const reasoning = exactlyOneField(fields, "reasoning");
+  if (fields.has("reasoning_effort")) fail("research card must not contain reasoning_effort");
+  if (!/^S1$|^A[1-9][0-9]*$/.test(id)) fail(`research card id is invalid: ${id}`);
+  const expectedProfile = researchProfiles[role];
+  if (!expectedProfile) fail(`research card role is invalid: ${role}`);
+  if (id === "S1" && role !== "rpivc-scope-tracer") fail("research card S1 must use role rpivc-scope-tracer");
+  if (id !== "S1" && role === "rpivc-scope-tracer") fail("analysis research cards cannot use role rpivc-scope-tracer");
+  if (model !== expectedProfile[0] || reasoning !== expectedProfile[1]) {
+    fail(`research card ${role} must use ${expectedProfile[0]}/${expectedProfile[1]}`);
+  }
+  for (const [key, value] of Object.entries({ repository, branch, commit, working_tree_sha256: workingTreeSha256 })) {
+    if (value !== snapshot[key]) fail(`research card ${key} does not match the authoritative repository snapshot`);
+  }
+  if (!/^[0-9a-f]{64}$/.test(workingTreeSha256)) {
+    fail("research card working_tree_sha256 must be exactly 64 lowercase hexadecimal characters");
+  }
+  return {
+    valid: true,
+    id,
+    role,
+    model,
+    reasoning,
+    context: snapshot,
+  };
+}
+
+function questionIdentifiers(text) {
+  const identifiers = [];
+  for (const match of String(text).matchAll(/\bQ([1-9][0-9]*)(?:\s*[-–—]\s*Q([1-9][0-9]*))?\b/g)) {
+    const start = Number(match[1]);
+    const end = Number(match[2] ?? start);
+    if (end < start || end - start > 20) return [];
+    for (let question = start; question <= end; question += 1) identifiers.push(question);
+  }
+  return identifiers;
+}
+
+export function validateResearchScope(text, cwd = process.cwd()) {
+  const output = String(text);
+  const required = ["Discovery Summary", "Research Questions", "Shared Files", "Evidence Gaps", "Proposed Execution Plan"];
+  if (!required.every((heading) => output.split(/\r?\n/).some((line) => line.trim() === `## ${heading}`))) {
+    fail("research scope must contain all five required headings");
+  }
+  const questionSection = markdownSection(output, "Research Questions");
+  const questionMatches = [...questionSection.matchAll(/^([1-9][0-9]*)\.\s+(.+)$/gm)];
+  if (questionMatches.length < 5 || questionMatches.length > 9) {
+    fail("research scope must contain 5-9 numbered questions");
+  }
+  const expectedNumbers = questionMatches.map((_match, index) => index + 1);
+  if (questionMatches.some((match, index) => Number(match[1]) !== expectedNumbers[index])) {
+    fail("research scope questions must be contiguous from 1");
+  }
+  const read = { context: contextSnapshot(cwd) };
+  for (const [index, match] of questionMatches.entries()) {
+    const blockStart = match.index;
+    const blockEnd = questionMatches[index + 1]?.index ?? questionSection.length;
+    const links = localMarkdownLinks(questionSection.slice(blockStart, blockEnd));
+    if (links.length < 3) fail(`research scope Q${index + 1} must contain at least three citations`);
+    for (const link of links) {
+      if (!path.isAbsolute(targetFile(link.target)) || link.target.startsWith("file://")) {
+        fail(`research scope Q${index + 1} citation target must be a literal absolute path`);
+      }
+      if (!targetLineRange(link.target)) fail(`research scope Q${index + 1} citation target must include a line or range`);
+      if (!fs.existsSync(targetFile(link.target))) fail(`research scope citation target does not exist: ${link.target}`);
+      validateCitationLabel(read, link);
+    }
+  }
+  const plan = markdownSection(output, "Proposed Execution Plan");
+  const groups = [...plan.matchAll(/^([1-9][0-9]*)\.\s+(.+)$/gm)].map((match) => match[2]);
+  if (groups.length < 1 || groups.length > 3) fail("research scope plan must contain 1-3 numbered groups");
+  const specialist = /\b(?:analyzer|pattern finder|integration scanner|precedent locator|rpivc-(?:codebase-analyzer|codebase-pattern-finder|integration-scanner|precedent-locator))\b/i;
+  if (groups.some((group) => !specialist.test(group))) fail("every research scope group must name a specialist");
+  const planned = groups.flatMap(questionIdentifiers);
+  for (const question of expectedNumbers) {
+    const count = planned.filter((candidate) => candidate === question).length;
+    if (count !== 1) fail(`research scope plan must cover Q${question} exactly once`);
+  }
+  if (planned.some((question) => !expectedNumbers.includes(question))) {
+    fail("research scope plan references a question outside the approved set");
+  }
+  return {
+    valid: true,
+    question_count: questionMatches.length,
+    group_count: groups.length,
+    context: read.context,
+  };
+}
+
+export function finalizeResearch(input, scanText, cwd = process.cwd()) {
+  const projection = verifyResearchProjection(input, scanText, cwd);
+  const normalization = normalizeLocalMarkdownCitations(input, cwd);
+  const inspection = inspectArtifact(input, cwd);
+  return {
+    artifact: inspection.location.relative,
+    artifact_sha256: inspection.artifact_sha256,
+    projection_match: projection.projection_match,
+    normalized_citation_count: normalization.normalized_citation_count,
+    context_match: inspection.context_match,
   };
 }
 
@@ -687,6 +847,13 @@ function readStandardInput(timeoutMs = 2000) {
 
 async function main() {
   const [, , command, ...args] = process.argv;
+  if (["validate-research-card", "validate-research-scope"].includes(command)) {
+    if (args.length !== 0) fail(`usage: artifact-check.mjs ${command} < input`);
+    const input = await readStandardInput();
+    return command === "validate-research-card"
+      ? validateResearchCard(input)
+      : validateResearchScope(input);
+  }
   if (["prepare-research-scan", "render-research-scan"].includes(command)) {
     if (args.length !== 0) fail(`usage: artifact-check.mjs ${command} < scan.md`);
     const prepared = prepareResearchScan(await readStandardInput());
@@ -696,8 +863,12 @@ async function main() {
     if (args.length !== 1) fail("usage: artifact-check.mjs verify-research-projection <artifact> < scan.md");
     return verifyResearchProjection(args[0], await readStandardInput());
   }
+  if (command === "finalize-research") {
+    if (args.length !== 1) fail("usage: artifact-check.mjs finalize-research <artifact> < scan.md");
+    return finalizeResearch(args[0], await readStandardInput());
+  }
   if (!["inspect", "compare", "preflight-discovery", "preflight-research", "normalize-citations"].includes(command) || args.length !== 1) {
-    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations|verify-research-projection> <input>");
+    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations|verify-research-projection|validate-research-card|validate-research-scope|finalize-research> <input>");
   }
   if (command === "inspect") return inspectArtifact(args[0]);
   if (command === "preflight-discovery") return preflightDiscoveryArtifact(args[0]);

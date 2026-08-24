@@ -5,6 +5,8 @@ import {
   hasNoDiscoveryContext,
   parseCoverageProjection,
   parseFrontmatter,
+  validateResearchCard,
+  validateResearchScope,
 } from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
 
 function result(name, pass, reason) {
@@ -85,19 +87,13 @@ function coverageProjectionMatches(compiledScan, markdown) {
   }
 }
 
-export function tracerScopeCheckpointIsValid(output) {
-  const required = ["Discovery Summary", "Research Questions", "Shared Files", "Evidence Gaps", "Proposed Execution Plan"];
-  if (!required.every((heading) => output.includes(`## ${heading}`))) return false;
+export function tracerScopeCheckpointIsValid(output, repository) {
   if (/tracer (?:returned|result|payload).{0,40}invalid|schema self-check is not satisfied/i.test(output)) return false;
-  const questionSection = markdownSection(output, "Research Questions");
-  const questionStarts = [...questionSection.matchAll(/^\d+\.\s+/gm)].map((match) => match.index);
-  if (questionStarts.length < 5 || questionStarts.length > 9) return false;
-  const questionBlocks = questionStarts.map((start, index) =>
-    questionSection.slice(start, questionStarts[index + 1] ?? questionSection.length));
-  if (!questionBlocks.every((question) => (question.match(/\]\((?:<)?\/[^)\n]+\)/g) ?? []).length >= 3)) return false;
-  const plan = markdownSection(output, "Proposed Execution Plan");
-  const groups = (plan.match(/^\d+\.\s+/gm) ?? []).length;
-  return groups >= 1 && groups <= 3;
+  try {
+    return validateResearchScope(output, repository).valid;
+  } catch {
+    return false;
+  }
 }
 
 export function compiledScanProjectedExactly(compiledScan, markdown) {
@@ -129,6 +125,7 @@ export default function assertResearchContract(output, context) {
   const latest = JSON.parse(fs.readFileSync(path.join(directory, "latest.json"), "utf8"));
   const turns = readJsonLines(path.join(directory, "turns.jsonl"));
   const attestations = readJsonLines(path.join(directory, "runtime-attestations.jsonl"));
+  const preDispatchSnapshots = readJsonLines(path.join(directory, "pre-dispatch-snapshots.jsonl"));
   const revisionObservations = readJsonLines(path.join(directory, "artifact-revisions.jsonl"));
   const artifactDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "research");
   const discoveryDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "discover");
@@ -162,20 +159,26 @@ export default function assertResearchContract(output, context) {
   const preflightWasFirstCommand = firstCommand?.status === "completed"
     && firstCommand.exitCode === 0
     && /node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research\b/.test(firstCommand.command);
-  const skillWasNotReread = initialCommands.every((command) =>
-    !command.command.includes(".agents/skills/rpivc-research/SKILL.md"));
   const firstOutput = turns[0]?.output ?? "";
   const tracerOutput = turns.find((turn) => String(turn.input ?? "").trim().replaceAll("*", "").toLowerCase() === "run"
     && /^## Discovery Summary\b/m.test(turn.output))?.output ?? "";
-  const initialTracerGatePasses = /(?:^|\n)\s*role:\s*["']?rpivc-scope-tracer["']?\s*(?:\n|$)/i.test(firstOutput)
+  let initialCardError = null;
+  try {
+    const initialSnapshot = preDispatchSnapshots.find((item) => item.before_turn === 1)?.context;
+    if (!initialSnapshot) throw new Error("initial authoritative snapshot was not retained");
+    validateResearchCard(firstOutput, path.join(directory, "workspace"), initialSnapshot);
+  } catch (error) {
+    initialCardError = error instanceof Error ? error.message : String(error);
+  }
+  const initialTracerGatePasses = initialCardError === null
+    && /(?:^|\n)\s*role:\s*["']?rpivc-scope-tracer["']?\s*(?:\n|$)/i.test(firstOutput)
     && /(?:^|\n)\s*id:\s*["']?S1["']?\s*(?:\n|$)/i.test(firstOutput)
     && /Run[\s\S]*Edit[\s\S]*Omit[\s\S]*Stop/i.test(firstOutput)
     && !/##\s+(?:Discovery Summary|Proposed Execution Plan)/i.test(firstOutput);
 
   components.push(result("input preflight first command", preflightWasFirstCommand, preflightWasFirstCommand ? "successful deterministic input preflight preceded all shell reads" : `first command: ${firstCommand?.status ?? "none"}/${firstCommand?.exitCode ?? "none"} ${firstCommand?.command ?? "none"}`));
-  components.push(result("no skill reread before scope Run", skillWasNotReread, skillWasNotReread ? "loaded skill was not reread through the shell" : "initial turn accessed rpivc-research/SKILL.md through the shell"));
-  components.push(result("initial scope tracer gate", initialTracerGatePasses, initialTracerGatePasses ? "initial turn displayed only the S1 approval card" : "initial turn did not preserve the S1 card-before-tracing boundary"));
-  components.push(result("valid tracer scope checkpoint", tracerScopeCheckpointIsValid(tracerOutput), "tracer supplied five sections, 5-9 questions with three artifact links each, and at most three groups"));
+  components.push(result("initial scope tracer gate", initialTracerGatePasses, initialTracerGatePasses ? "initial turn displayed one snapshot-bound S1 approval card" : initialCardError ?? "initial turn did not preserve the S1 card-before-tracing boundary"));
+  components.push(result("valid tracer scope checkpoint", tracerScopeCheckpointIsValid(tracerOutput, path.join(directory, "workspace")), "tracer supplied valid repository citations and exact 5-9-question coverage across at most three named-specialist groups"));
   components.push(result("one research artifact", artifacts.length === 1, `${artifacts.length} research artifacts`));
   components.push(result("single-draft revision lifecycle", revisionLifecyclePasses, `${revisionObservations.length} validated observations; ${revisionPaths.size} paths; ${revisionHashes.size} hashes`));
   components.push(result("write scope", unexpected.length === 0, unexpected.length ? unexpected.join(", ") : "only research artifact changed"));
