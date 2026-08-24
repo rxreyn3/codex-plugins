@@ -125,6 +125,8 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /`functions\.wait` with that exact cell identifier/);
   assert.match(combined, /inner.*(?:wait|same-child).*600|timeout_ms: 600000/s);
   assert.match(combined, /keyed child state is absent or non-final.*same wait again|non-final timeout.*same child/s);
+  assert.match(combined, /do not append, stringify, or otherwise echo the full terminal child state/i);
+  assert.match(combined, /canonical payload from (?:the|that) (?:completion )?notification/i);
   assert.match(combined, /artifact-check\.mjs finalize-research/);
   assert.match(combined, /compiled scan as well as the artifact.*basename-only label/s);
   assert.match(combined, /prepare-research-scan/);
@@ -261,6 +263,8 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /waited\.status\?\.\[spawned\.agent_id\]/);
   assert.match(provider, /Object\.hasOwn\(state, \\"completed\\"\)/);
   assert.match(provider, /never poll a terminal keyed child again/i);
+  assert.match(provider, /Do not text, append, stringify, or otherwise echo the full terminal child state/i);
+  assert.match(provider, /canonical payload from the notification/i);
   assert.match(provider, /first command must be artifact-check\.mjs preflight-research/i);
   assert.match(provider, /exact first command executable path is node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research/i);
   assert.match(provider, /first command must exit zero/i);
