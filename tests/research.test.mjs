@@ -256,8 +256,8 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   const assertions = read("evals", "research", "assertions.mjs");
   assert.match(provider, /const turnTimeoutMs = 2700000/);
   assert.match(provider, /two 600-second same-child/);
-  assert.match(provider, /openai:codex-app-server:gpt-5\.6-luna/);
-  assert.match(provider, /model_reasoning_effort: "low"/);
+  assert.match(provider, /openai:codex-app-server:gpt-5\.6-sol/);
+  assert.match(provider, /model_reasoning_effort: "xhigh"/);
   assert.match(provider, /Begin every functions\.exec spawn-and-wait script/);
   assert.match(provider, /timeout_ms: 600000/);
   assert.match(provider, /waited\.status\?\.\[spawned\.agent_id\]/);
