@@ -24,6 +24,7 @@ import {
   cleanupDisposableWorkspace,
   createDisposableWorkspace,
   inventoryChanges,
+  retainWorkspaceReferences,
   snapshotRepository,
   syncEvidence,
 } from "../evals/_shared/workspace.mjs";
@@ -259,7 +260,8 @@ test("disposable workspace mirrors current nonignored state and cleans only its 
 
   const artifactDirectory = path.join(state.workspace, ".rpiv-codex", "artifacts", "discover");
   fs.mkdirSync(artifactDirectory, { recursive: true });
-  fs.writeFileSync(path.join(artifactDirectory, "retained.md"), `[source](${path.join(state.workspace, "tracked.txt")}:1)\n`);
+  const canonicalWorkspace = fs.realpathSync(state.workspace);
+  fs.writeFileSync(path.join(artifactDirectory, "retained.md"), `[source](${path.join(canonicalWorkspace, "tracked.txt")}:1)\n`);
   syncEvidence({
     workspace: state.workspace,
     evidenceDir: state.evidenceDir,
@@ -270,6 +272,13 @@ test("disposable workspace mirrors current nonignored state and cleans only its 
   const retainedArtifact = path.join(state.evidenceDir, "workspace", ".rpiv-codex", "artifacts", "discover", "retained.md");
   const retainedSource = path.join(state.evidenceDir, "workspace", "tracked.txt");
   assert.match(fs.readFileSync(retainedArtifact, "utf8"), new RegExp(retainedSource.replaceAll("/", "\\/")));
+  assert.equal(
+    retainWorkspaceReferences(`[source](${path.join(canonicalWorkspace, "tracked.txt")}:1)`, state.workspace, state.evidenceDir),
+    `[source](${retainedSource}:1)`,
+  );
+  fs.writeFileSync(path.join(artifactDirectory, "retained.md"), `[source:1-1](${path.join(canonicalWorkspace, "tracked.txt")}:1-1)\n`);
+  syncEvidence({ workspace: state.workspace, evidenceDir: state.evidenceDir, baseline: state.baseline });
+  assert.match(fs.readFileSync(retainedArtifact, "utf8"), new RegExp(`${retainedSource.replaceAll("/", "\\/")}:1-1`));
   const latest = JSON.parse(fs.readFileSync(path.join(state.evidenceDir, "latest.json"), "utf8"));
   assert.equal(latest.adapter_phase, "complete");
   assert.equal(latest.turn_count, 4);

@@ -16,6 +16,7 @@ import RpivcResearchProvider, {
   observeResearchArtifact,
   retainArtifactRevisionObservation,
   retainUniqueAttestation,
+  shouldCaptureRuntimeSnapshot,
 } from "../evals/research/provider.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -55,7 +56,47 @@ function researchWorkspaceFixture() {
     "",
     "# Research: Revision Fixture",
     "",
-    "Initial reviewed draft.\n",
+    "## Source Feature",
+    "Direct fixture prompt.",
+    "",
+    "## Research Questions",
+    "1. What changed?",
+    "",
+    "## Summary",
+    "- Coverage snapshot: Q1=Unanswered | Totals: Answered=0, Partial=0, Conflicted=0, Unanswered=1",
+    "",
+    "## Coverage Ledger",
+    "- Q1 — **Unanswered** — Clauses: fixture evidence is unavailable.",
+    "",
+    "## Detailed Findings",
+    "Initial reviewed draft.",
+    "",
+    "## Code References",
+    "No current-code evidence.",
+    "",
+    "## Integration Points",
+    "No additional finding.",
+    "",
+    "## Architecture Insights",
+    "No additional finding.",
+    "",
+    "## Precedents & Lessons",
+    "No precedent inspected.",
+    "",
+    "## Developer Context",
+    "No discovery decisions were supplied.",
+    "",
+    "## Evidence Conflicts and Gaps",
+    "Fixture evidence is unavailable.",
+    "",
+    "## Historical Context",
+    "No history inspected.",
+    "",
+    "## Open Questions",
+    "What changed?",
+    "",
+    "## Dispatch Ledger",
+    "No child dispatches.\n",
   ].join("\n"));
   return { workspace, artifact: allocation.absolute };
 }
@@ -65,16 +106,56 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   const contract = read(".agents", "skills", "rpivc-research", "references", "research-contract.md");
   const combined = `${skill}\n${contract}`;
   assert.deepEqual(skill.split("---")[1].trim().split("\n").map((line) => line.split(":")[0]), ["name", "description"]);
-  assert.match(combined, /exactly one manually supplied absolute path/);
+  assert.match(combined, /non-empty free-text research prompt or one.*absolute path/s);
+  assert.match(combined, /Never silently reinterpret an invalid artifact path as free text/);
+  assert.match(combined, /no discovery decisions were supplied/i);
+  assert.match(combined, /Copy its emitted `relative` path and `common_frontmatter` values literally/);
+  assert.match(combined, /discovery mode has exactly one declared discovery source and prompt mode has none/);
+  assert.match(combined, /analyzer and pattern finder use Terra\/high/);
+  assert.match(combined, /integration scanner and precedent locator use Luna\/low/);
+  assert.match(combined, /`functions\.wait` with that exact cell identifier/);
+  assert.match(combined, /inner.*(?:wait|same-child).*600|timeout_ms: 600000/s);
+  assert.match(combined, /keyed child state is absent or non-final.*same wait again|non-final timeout.*same child/s);
+  assert.match(combined, /artifact-check\.mjs normalize-citations/);
+  assert.match(combined, /compiled scan as well as the artifact.*basename-only label/s);
+  assert.match(combined, /prepare-research-scan/);
+  assert.match(combined, /source_excerpt/);
+  assert.match(combined, /question as a question, not as evidence|question is not evidence/);
+  assert.match(combined, /every clause|every named clause/);
+  assert.match(combined, /ranges? (?:no wider than|of at most) 15 lines/);
+  assert.match(combined, /never invoke (?:this|the) command bare/i);
+  assert.match(combined, /replace the complete start-end range/);
+  assert.match(combined, /exactly one `working_tree_sha256` key/);
+  assert.match(combined, /summary of card identifiers is not an approval surface/);
   assert.match(combined, /inspect no target source before this decision/);
   assert.match(combined, /\*\*Run\*\*, \*\*Edit\*\*, \*\*Omit\*\*, or \*\*Stop\*\*/);
   assert.match(combined, /\*\*Use scope\*\*, \*\*Revise scope\*\*, or \*\*Stop\*\*/);
   assert.match(combined, /no more than three independent cards per wave and three analysis cards total/);
   assert.match(combined, /complete approved scope must fit at most three analysis cards/);
+  assert.match(combined, /Never display a four-card plan and then silently regroup|Never present four groups/);
+  assert.match(combined, /five tracer sections|literal headings \*\*Discovery Summary\*\*/);
+  assert.match(combined, /at least three concrete artifact citations per question/);
+  assert.match(combined, /plan without the numbered questions is invalid|incomplete tracer payload/);
+  assert.match(combined, /full literal text of every assigned approved question/);
+  assert.match(combined, /Use scope authorizes card preparation only/i);
+  assert.match(combined, /Only a later \*\*Run\*\*|Only the subsequent \*\*Run\*\*/);
+  assert.match(combined, /scan-preparation failure does not consume either artifact-inspection invocation/);
+  assert.match(combined, /exact absolute validated path|exact validated absolute discovery/);
+  assert.match(combined, /Do not widen, join, or hand-rewrite|without hand-shortening, widening, joining/);
+  assert.match(combined, /complete current-code evidence inventory/);
+  assert.match(combined, /render-research-scan/);
+  assert.match(combined, /byte-for-byte/);
+  assert.match(combined, /Coverage snapshot/);
+  assert.match(combined, /worst clause/);
+  assert.match(combined, /claim.*source_excerpt/s);
+  assert.match(combined, /complete rendered scan byte-for-byte|entire rendered scan byte-for-byte/);
+  assert.match(combined, /introduce no new current-code claim or citation|must not introduce a new current-code factual claim/);
   assert.doesNotMatch(combined, /followup_task|dispatch_mode: followup/);
-  assert.match(combined, /`agent_type` equal to the displayed `role`/);
+  assert.match(combined, /`agent_type` (?:from|equal to).*`role`/);
   assert.match(combined, /requested runtime settings/);
   assert.match(combined, /updates that same draft path/);
+  assert.match(combined, /Never attempt a third inspection/);
+  assert.match(combined, /Never invent filesystem links such as `.git\/commit\/<sha>`/);
   assert.match(combined, /changed before\/after `artifact_sha256` values/);
   assert.doesNotMatch(combined, /timestamp-distinct artifact|writes a new artifact with `supersedes`/);
   assert.match(combined, /One wave never authorizes another/);
@@ -97,6 +178,27 @@ test("research specialist definitions are adaptive and childless", () => {
     assert.match(text, /spawn children/);
     assert.match(text, /behaviorally read-only|never mutate/i);
   }
+  const scopeTracer = read(".codex", "agents", "rpivc-scope-tracer.toml");
+  assert.match(scopeTracer, /direct-prompt mode/);
+  assert.match(scopeTracer, /do not request, assume, or invent a discovery artifact/);
+  assert.match(scopeTracer, /model_reasoning_effort = "medium"/);
+  assert.match(scopeTracer, /full repository-relative label/);
+  assert.match(scopeTracer, /propose four groups/);
+  assert.match(scopeTracer, /all five literal Markdown headings/);
+  assert.match(scopeTracer, /self-check that all five headings exist/);
+  assert.match(scopeTracer, /Do not open or reread `rpivc-research\/SKILL\.md`/);
+  assert.match(scopeTracer, /do not rerun `preflight-research`/);
+  assert.match(scopeTracer, /second `inputs` entry/);
+  assert.match(scopeTracer, /never dump an entire large file or more than 200 source lines/);
+  for (const file of [
+    "rpivc-codebase-analyzer.toml",
+    "rpivc-codebase-pattern-finder.toml",
+    "rpivc-integration-scanner.toml",
+  ]) {
+    const specialist = read(".codex", "agents", file);
+    assert.match(specialist, /full repository-relative/);
+    assert.match(specialist, /source excerpt|source_excerpt/i);
+  }
   assert.equal(fs.existsSync(path.join(root, ".codex", "agents", "rpivc-codebase-analyzer.toml")), true);
 });
 
@@ -110,20 +212,74 @@ test("research template is compressed planner context with complete coverage", (
   assert.match(template, /stage: research/);
   assert.match(template, /status: review/);
   assert.match(template, /source_artifacts:/);
+  assert.match(template, /EXACT_VALIDATED_ABSOLUTE_ARTIFACT_MARKDOWN_LINK/);
+  assert.match(template, /EVERY_NAMED_CLAUSE/);
+  assert.match(template, /EXACT_CANONICAL_COVERAGE_SNAPSHOT/);
+  assert.match(template, /COMPLETE_RENDERED_SCAN_COPIED_BYTE_FOR_BYTE/);
+  assert.match(template, /Do not create a second citation matrix/);
   assert.match(template, /^supersedes: null$/m);
+  assert.match(template, /External web research is deferred from this research unit/);
+  assert.match(template, /PLAIN_LOCALLY_VERIFIED_GIT_COMMIT_IDENTIFIERS_AND_ONLY_VERIFIED_EXISTING_LOCAL_LINKS/);
 });
 
-test("research evaluation is exactly two cases with two independent graders", () => {
+test("research evaluation covers direct prompt and discovery modes with two independent graders", () => {
   const cases = read("evals", "research", "cases.yaml");
   const config = read("evals", "research", "promptfooconfig.yaml");
-  assert.equal((cases.match(/^\s+case_id:/gm) ?? []).length, 2);
+  assert.equal((cases.match(/^\s+case_id:/gm) ?? []).length, 3);
   assert.equal((cases.match(/type: agent-rubric/g) ?? []).length, 2, "YAML anchor defines two graders reused by both cases");
   assert.match(cases, /maxTurns: 20/);
   assert.match(cases, /maxTurns: 30/);
   assert.match(cases, /exercise_revision: true/);
+  assert.match(cases, /input_mode: prompt/);
+  assert.match(cases, /input_mode: discovery/);
+  assert.match(cases, /direct-prompt-research/);
   assert.match(cases, /same revised artifact path/);
   assert.match(config, /maxConcurrency: 1/);
   assert.match(config, /repeat: 1/);
+  const provider = read("evals", "research", "provider.mjs");
+  const assertions = read("evals", "research", "assertions.mjs");
+  assert.match(provider, /const turnTimeoutMs = 1800000/);
+  assert.match(provider, /two 600-second same-child/);
+  assert.match(provider, /openai:codex-app-server:gpt-5\.6-luna/);
+  assert.match(provider, /model_reasoning_effort: "low"/);
+  assert.match(provider, /Begin every functions\.exec spawn-and-wait script/);
+  assert.match(provider, /timeout_ms: 600000/);
+  assert.match(provider, /waited\.status\?\.\[spawned\.agent_id\]/);
+  assert.match(provider, /Object\.hasOwn\(state, \\"completed\\"\)/);
+  assert.match(provider, /never poll a terminal keyed child again/i);
+  assert.match(provider, /first command must be artifact-check\.mjs preflight-research/i);
+  assert.match(provider, /exact first command executable path is node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research/i);
+  assert.match(provider, /first command must exit zero/i);
+  assert.match(provider, /initial turn must display only one complete YAML card with id S1/i);
+  assert.match(provider, /Do not answer the research questions/i);
+  assert.match(provider, /never human-readable aliases such as codebase analyzer/i);
+  assert.match(provider, /When a later Run authorizes S1/i);
+  assert.match(provider, /followed only by Use scope\/Revise scope\/Stop/i);
+  assert.match(provider, /Do not construct or display any A-card in the S1 Run response/i);
+  assert.match(provider, /every detectable citation defect in one aggregated correction set/i);
+  assert.match(provider, /repair every listed defect together/i);
+  assert.match(provider, /terminal analysis child omits the required literal-clause matrix/i);
+  assert.match(provider, /continue the already-approved turn directly into synthesis/i);
+  assert.match(provider, /never parent-author replacement scope for an invalid tracer/i);
+  assert.match(provider, /return claims cite the return object/i);
+  assert.match(assertions, /no skill reread before scope Run/i);
+  assert.match(provider, /do not access SKILL\.md through cat, sed, rg, find/i);
+  assert.match(provider, /Never use a current-file citation to claim Git history/i);
+  assert.match(provider, /120-second outer yield is not a child deadline/);
+  assert.match(provider, /full repository-relative citation labels in the compiled scan/);
+  assert.match(provider, /prepare-research-scan.*source_excerpt.*normalized_markdown/);
+  assert.match(provider, /Compiled-scan preparation is read-only and has no two-attempt ceiling/);
+  assert.match(provider, /Use scope authorizes card preparation only/);
+  assert.match(provider, /Source Feature must link the exact validated absolute discovery-artifact path/);
+  assert.match(provider, /complete current-code evidence inventory/);
+  assert.match(provider, /render-research-scan/);
+  assert.match(provider, /Coverage snapshot/);
+  assert.match(provider, /projection of that rendered scan|Copy the complete rendered scan byte-for-byte/);
+  assert.match(assertions, /Coverage snapshot.*Write artifact/s);
+  assert.match(assertions, /coverage projection/);
+  assert.match(assertions, /compiled scan projection/);
+  assert.match(provider, /run artifact-check\.mjs normalize-citations/);
+  assert.equal((cases.match(/model_reasoning_effort: xhigh/g) ?? []).length, 1, "YAML anchor keeps both graders on extra-high reasoning");
   assert.doesNotMatch(`${cases}\n${config}`, /web-search|network_access_enabled: true/);
 });
 
@@ -135,6 +291,57 @@ test("artifact allocator supports research without changing discovery provenance
   assert.equal(discover.common_frontmatter.rpiv_source, "packages/rpiv-pi/skills/discover/SKILL.md");
   assert.equal(research.common_frontmatter.rpiv_source, "packages/rpiv-pi/skills/research/SKILL.md");
   assert.match(research.relative, /^\.rpiv-codex\/artifacts\/research\//);
+});
+
+test("compiled research scan projection allows nested scan headings and excludes the appended write gate", async () => {
+  const { compiledScanProjectedExactly } = await import("../evals/research/assertions.mjs");
+  const citation = "- Evidence. [src/example.mjs:1-2](/tmp/repository/src/example.mjs:1-2)";
+  const scan = [
+    "# Compiled Research Scan",
+    "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
+    "- Q1 — **Answered** — Clauses: behavior (Supported).",
+    "## Evidence",
+    citation,
+    "**Gate:** Write artifact / Adjust / Stop",
+  ].join("\n");
+  const artifact = [
+    "## Source Feature",
+    "[.rpiv-codex/artifacts/discover/source.md:1-2](/tmp/repository/.rpiv-codex/artifacts/discover/source.md:1-2)",
+    "## Detailed Findings",
+    "# Compiled Research Scan",
+    "- Coverage snapshot: Q1=Answered | Totals: Answered=1, Partial=0, Conflicted=0, Unanswered=0",
+    "- Q1 — **Answered** — Clauses: behavior (Supported).",
+    "## Evidence",
+    citation,
+    "## Code References",
+    "See Detailed Findings.",
+  ].join("\n");
+
+  assert.equal(compiledScanProjectedExactly(scan, artifact), true);
+  assert.equal(compiledScanProjectedExactly(scan, artifact.replace(
+    "## Code References",
+    "- Invented code claim. [src/other.mjs:1](/tmp/repository/src/other.mjs:1)\n## Code References",
+  )), false);
+});
+
+test("tracer scope checkpoint rejects parent-authored recovery from an invalid tracer", async () => {
+  const { tracerScopeCheckpointIsValid } = await import("../evals/research/assertions.mjs");
+  const links = [1, 2, 3].map((line) => `[src/file-${line}.mjs:${line}](/tmp/repository/src/file-${line}.mjs:${line})`).join(" ");
+  const valid = [
+    "## Discovery Summary",
+    "Bounded scope.",
+    "## Research Questions",
+    ...[1, 2, 3, 4, 5].map((question) => `${question}. What remains to trace? ${links}`),
+    "## Shared Files",
+    "- src/",
+    "## Evidence Gaps",
+    "- None yet.",
+    "## Proposed Execution Plan",
+    "1. Analyzer: Q1-Q5.",
+  ].join("\n");
+
+  assert.equal(tracerScopeCheckpointIsValid(valid), true);
+  assert.equal(tracerScopeCheckpointIsValid(valid.replace("Bounded scope.", "The tracer returned an invalid scope.")), false);
 });
 
 test("research attestation recognizes every dispatchable research role", () => {
@@ -153,15 +360,32 @@ test("external-web deferral assertion accepts equivalent inherited wording", () 
 });
 
 test("research assertion requires repository-relative citation labels", () => {
-  const repository = "/tmp/evidence/workspace";
+  const base = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "rpivc-citation-label-")));
+  const repository = path.join(base, "workspace");
+  const alias = path.join(base, "workspace-alias");
+  fs.mkdirSync(path.join(repository, "src"), { recursive: true });
+  fs.writeFileSync(path.join(repository, "src", "provider.mjs"), Array.from({ length: 12 }, () => "line").join("\n"));
+  fs.symlinkSync(repository, alias);
   assert.equal(repositoryRelativeCitationLabels(
-    "[src/provider.mjs:12](/tmp/evidence/workspace/src/provider.mjs:12)",
+    `[src/provider.mjs:12](${repository}/src/provider.mjs:12)`,
     repository,
   ), true);
   assert.equal(repositoryRelativeCitationLabels(
-    "[provider.mjs:12](/tmp/evidence/workspace/src/provider.mjs:12)",
+    `[provider.mjs:12](${repository}/src/provider.mjs:12)`,
     repository,
   ), false);
+  assert.equal(repositoryRelativeCitationLabels(
+    `[src/provider.mjs:12-12](${repository}/src/provider.mjs:12)`,
+    repository,
+  ), true);
+  assert.equal(repositoryRelativeCitationLabels(
+    `[` + "`src/provider.mjs:12`" + `](${repository}/src/provider.mjs:12)`,
+    repository,
+  ), true);
+  assert.equal(repositoryRelativeCitationLabels(
+    `[src/provider.mjs:12](${alias}/src/provider.mjs:12)`,
+    repository,
+  ), true);
 });
 
 test("research provider clears stale cards and retains each child call once", () => {
@@ -175,6 +399,13 @@ test("research provider clears stale cards and retains each child call once", ()
   assert.equal(retainUniqueAttestation(state, attestation), true);
   assert.equal(retainUniqueAttestation(state, attestation), false);
   assert.equal(state.attestations.length, 1);
+});
+
+test("research provider captures authoritative context for scope use, refresh, and approved dispatch", () => {
+  assert.equal(shouldCaptureRuntimeSnapshot("ordinary answer", []), false);
+  assert.equal(shouldCaptureRuntimeSnapshot("Use scope", []), true);
+  assert.equal(shouldCaptureRuntimeSnapshot("Refresh the cards.", []), true);
+  assert.equal(shouldCaptureRuntimeSnapshot("Run", [{ id: "A1" }]), true);
 });
 
 test("research revision evidence proves changed bytes at one validated path", () => {
@@ -241,6 +472,272 @@ test("runtime reducer captures only fresh spawn dispatches without plaintext", (
   assert.equal(spawn.agent_type, "rpivc-codebase-analyzer");
   assert.equal(followup, null);
   assert.equal(JSON.stringify(spawn).includes("encrypted-spawn-envelope"), false);
+});
+
+test("runtime reducer resolves the yielded spawn payload variable structurally", () => {
+  const card = {
+    id: "S1",
+    dispatch_protocol: "rpivc-dispatch/v1",
+    dispatch_mode: "spawn",
+    depends_on: [],
+    task_name: "s1_scope_tracer",
+    role: "rpivc-scope-tracer",
+    model: "gpt-5.6-terra",
+    reasoning: "medium",
+  };
+  const cardYaml = [
+    "id: S1",
+    "dispatch_protocol: rpivc-dispatch/v1",
+    "dispatch_mode: spawn",
+    "depends_on: []",
+    "task_name: s1_scope_tracer",
+    "role: rpivc-scope-tracer",
+    "model: gpt-5.6-terra",
+    "reasoning: medium",
+  ].join("\n");
+  const dispatch = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-1",
+      item: {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "nested-call",
+        input: `// @exec: {"yield_time_ms": 120000}\nconst envelope = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, message: envelope, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
+      },
+    },
+  });
+  const result = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      item: {
+        type: "custom_tool_call_output",
+        call_id: "nested-call",
+        output: [{ type: "input_text", text: '{"agent_id":"child-thread","nickname":"Ada"}' }],
+      },
+    },
+  });
+  const sandbox = { type: "workspaceWrite", networkAccess: false };
+  const attestation = buildDispatchAttestation({
+    parentThreadId: "parent",
+    card,
+    events: [
+      { kind: "thread-settings", thread_id: "parent", sandbox_policy: sandbox },
+      dispatch,
+      result,
+      { kind: "thread-settings", thread_id: "child-thread", model: "gpt-5.6-terra", effort: "medium", sandbox_policy: sandbox },
+      { kind: "turn-completed", thread_id: "child-thread", status: "completed", error: null },
+      { kind: "agent-output", author: "child-thread", content_sha256: "b".repeat(64), content_bytes: 64 },
+      { kind: "nested-spawn-observation", thread_id: "child-thread", count: 0 },
+    ],
+  });
+
+  assert.equal(dispatch.spawn_schema, "multi-agent-v1");
+  assert.equal(dispatch.fork_turns, "none");
+  assert.equal(result.child_thread_id, "child-thread");
+  assert.equal(attestation.prompt_verification.status, "plaintext-envelope-matched");
+  assert.equal(attestation.pass, true);
+
+  const shorthandDispatch = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-2",
+      item: {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "shorthand-call",
+        input: `const message = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, model: "gpt-5.6-terra", reasoning_effort: "medium", message });`,
+      },
+    },
+  });
+  assert.equal(shorthandDispatch.task_name, "s1_scope_tracer");
+  assert.equal(shorthandDispatch.canonical_envelope_sha256, dispatch.canonical_envelope_sha256);
+
+  const objectDispatch = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-3",
+      item: {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "object-call",
+        input: `const card = {
+  id: "S1",
+  dispatch_protocol: "rpivc-dispatch/v1",
+  dispatch_mode: "spawn",
+  depends_on: [],
+  task_name: "s1_scope_tracer",
+  role: "rpivc-scope-tracer",
+  model: "gpt-5.6-terra",
+  reasoning: "medium"
+};
+const spawned = await tools.multi_agent_v1__spawn_agent({
+  agent_type: card.role,
+  fork_context: false,
+  message: JSON.stringify(card),
+  model: card.model,
+  reasoning_effort: card.reasoning
+});`,
+      },
+    },
+  });
+  assert.equal(objectDispatch.agent_type, "rpivc-scope-tracer");
+  assert.equal(objectDispatch.model, "gpt-5.6-terra");
+  assert.equal(objectDispatch.reasoning_effort, "medium");
+  assert.equal(objectDispatch.task_name, "s1_scope_tracer");
+  assert.equal(objectDispatch.canonical_envelope_sha256, dispatch.canonical_envelope_sha256);
+});
+
+test("runtime reducer preserves Markdown backticks inside a spawned YAML template", () => {
+  const card = {
+    id: "A1",
+    dispatch_protocol: "rpivc-dispatch/v1",
+    dispatch_mode: "spawn",
+    depends_on: [],
+    task_name: "a1_markdown_evidence",
+    role: "rpivc-codebase-analyzer",
+    purpose: "Trace cited evidence",
+    inputs: ["Question 1: Trace `source_artifacts` with [`path.js:1`](/repo/path.js:1)"],
+    repository: "/repo",
+    branch: "main",
+    commit: "abc",
+    working_tree_sha256: "a".repeat(64),
+    model: "gpt-5.6-terra",
+    reasoning: "high",
+  };
+  const yaml = [
+    'id: "A1"',
+    'dispatch_protocol: "rpivc-dispatch/v1"',
+    'dispatch_mode: "spawn"',
+    'depends_on: []',
+    'task_name: "a1_markdown_evidence"',
+    'role: "rpivc-codebase-analyzer"',
+    'purpose: "Trace cited evidence"',
+    'inputs:',
+    '  - "Question 1: Trace `source_artifacts` with [`path.js:1`](/repo/path.js:1)"',
+    'repository: "/repo"',
+    'branch: "main"',
+    'commit: "abc"',
+    `working_tree_sha256: "${"a".repeat(64)}"`,
+    'model: "gpt-5.6-terra"',
+    'reasoning: "high"',
+  ].join("\n");
+  const escapedYaml = yaml.replaceAll("`", "\\`");
+  const event = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn",
+      item: {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "call",
+        input: `const message = \`${escapedYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({agent_type:"rpivc-codebase-analyzer", fork_context:false, message, model:"gpt-5.6-terra", reasoning_effort:"high"});`,
+      },
+    },
+  });
+  assert.equal(event.kind, "dispatch-call");
+  assert.equal(event.task_name, card.task_name);
+  assert.equal(event.agent_type, card.role);
+  assert.equal(event.fork_turns, "none");
+  assert.equal(event.canonical_envelope_sha256, buildDispatchAttestation({
+    events: [],
+    parentThreadId: "parent",
+    card,
+  }).prompt_verification.displayed_card_sha256);
+});
+
+test("runtime reducer correlates wrapped spawn calls with native collaboration receivers", () => {
+  const event = captureAttestationEvent({
+    method: "item/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn",
+      item: {
+        type: "collabAgentToolCall",
+        id: "call",
+        tool: "spawnAgent",
+        status: "completed",
+        senderThreadId: "parent",
+        receiverThreadIds: ["child"],
+        model: "gpt-5.6-terra",
+        reasoningEffort: "high",
+      },
+    },
+  });
+  assert.equal(event.kind, "collaboration-call");
+  assert.equal(event.child_thread_id, "child");
+  assert.equal(event.agent_path, "child");
+});
+
+test("runtime reducer correlates an inline nested spawn with its child notification", () => {
+  const card = {
+    id: "S1",
+    dispatch_protocol: "rpivc-dispatch/v1",
+    dispatch_mode: "spawn",
+    depends_on: [],
+    task_name: "s1_scope_tracer",
+    role: "rpivc-scope-tracer",
+    model: "gpt-5.6-terra",
+    reasoning: "medium",
+  };
+  const cardYaml = [
+    "id: S1",
+    "dispatch_protocol: rpivc-dispatch/v1",
+    "dispatch_mode: spawn",
+    "depends_on: []",
+    "task_name: s1_scope_tracer",
+    "role: rpivc-scope-tracer",
+    "model: gpt-5.6-terra",
+    "reasoning: medium",
+  ].join("\n");
+  const dispatch = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-1",
+      item: {
+        type: "custom_tool_call",
+        name: "exec",
+        call_id: "nested-call",
+        input: `const spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, message: \`${cardYaml}\`, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
+      },
+    },
+  });
+  const notification = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "turn-1",
+      item: {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: '<subagent_notification>{"agent_path":"child-thread","status":{"completed":"traced scope"}}</subagent_notification>' }],
+      },
+    },
+  });
+  const sandbox = { type: "workspaceWrite", networkAccess: false };
+  const attestation = buildDispatchAttestation({
+    parentThreadId: "parent",
+    card,
+    events: [
+      { kind: "thread-settings", thread_id: "parent", sandbox_policy: sandbox },
+      dispatch,
+      notification,
+      { kind: "thread-settings", thread_id: "child-thread", model: "gpt-5.6-terra", effort: "medium", sandbox_policy: sandbox },
+      { kind: "nested-spawn-observation", thread_id: "child-thread", count: 0 },
+    ],
+  });
+
+  assert.equal(dispatch.task_name, "s1_scope_tracer");
+  assert.equal(notification.child_thread_id, "child-thread");
+  assert.equal(attestation.prompt_verification.status, "plaintext-envelope-matched");
+  assert.equal(attestation.checks.child_completed, true);
+  assert.equal(attestation.checks.child_output_observed, true);
+  assert.equal(attestation.pass, true);
 });
 
 test("dependent-card attestation requires a fresh explicitly configured child", () => {
@@ -338,4 +835,36 @@ test("research provider archives each child after effective settings capture", a
   ]);
   assert.deepEqual(requests.map((request) => request.method), ["thread/resume", "thread/archive"]);
   assert.equal(state.archivedThreadIds.has("child-thread"), true);
+});
+
+test("research provider queries effective parent settings when the stream omits them", async () => {
+  const requests = [];
+  const connection = {
+    async request(method, params) {
+      requests.push({ method, params });
+      return {
+        model: params.threadId === "parent-thread" ? "gpt-5.6-luna" : "gpt-5.6-terra",
+        reasoningEffort: params.threadId === "parent-thread" ? "low" : "medium",
+        sandbox: { type: "workspaceWrite", writableRoots: [], networkAccess: false },
+        approvalPolicy: "never",
+      };
+    },
+  };
+  const provider = new RpivcResearchProvider();
+  const state = {
+    delegate: { connections: new Map([["connection", connection]]) },
+    attestationEvents: [],
+    archivedThreadIds: new Set(),
+  };
+
+  await provider.captureEffectiveChildSettings(state, [
+    { kind: "child-notification", child_thread_id: "child-thread" },
+  ], "parent-thread");
+
+  assert.deepEqual(requests.map(({ method, params }) => [method, params.threadId]), [
+    ["thread/resume", "parent-thread"],
+    ["thread/resume", "child-thread"],
+    ["thread/archive", "child-thread"],
+  ]);
+  assert.equal(state.attestationEvents.find((event) => event.thread_id === "parent-thread")?.sandbox_policy?.type, "workspaceWrite");
 });

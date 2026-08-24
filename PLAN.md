@@ -364,12 +364,13 @@ Update only the existing discovery vertical unit:
 
 The discovery checkpoint is closed. No research implementation was included in it.
 
-### 2. Research — single-draft revision validation in progress
+### 2. Research — free-text parity validation in progress
 
 The accepted unit contract is [the `rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Ryan accepted it on 2026-08-19, including the external-web deferral. Implementation remains bounded to this independently reviewable unit.
 
 - Add `rpivc-research`.
 - Add scope-tracer, pattern, integration, precedent, and analysis specialists.
+- Accept a direct research prompt or one accepted discovery artifact.
 - Test conversational scope-tracer and research-wave gates.
 - Test Feature Requirements Document decision inheritance.
 - Stop for manual review.
@@ -378,7 +379,7 @@ Stop after the one-shot evaluation and manual review evidence. Do not implement 
 
 The first research baseline ran once on 2026-08-19 and passed 1/2 cases. The narrow case exposed omitted explicit model/reasoning spawn arguments plus two deterministic evaluator defects. Those bounded corrections were applied. Ryan separately authorized a fresh baseline on 2026-08-20; it again passed 1/2, with the narrow case fully passing and the cross-cutting case stopping when the fifth direct child was rejected by the runtime's four-child ceiling.
 
-The three-card candidate's 2026-08-20 baseline passed 2/2. Ryan then rejected timestamp-distinct research files for minor revisions because they force downstream consumers to resolve lineage. Research now creates one review draft, edits and revalidates that same path on **Revise**, and freezes it on **Accept**. Evaluation-only observations prove the path remained constant, inspection passed, and the artifact hash changed. A fresh two-case baseline is authorized to exercise the revision path; it must not repair and rerun itself.
+The three-card candidate's 2026-08-20 baseline passed 2/2. Ryan then rejected timestamp-distinct research files for minor revisions because they force downstream consumers to resolve lineage. Research now creates one review draft, edits and revalidates that same path on **Revise**, and freezes it on **Accept**. Ryan subsequently rejected the discovery-only entry contract because small research tasks must not require a Feature Requirements Document. The parity correction accepts either a direct prompt or one accepted discovery artifact. A fresh three-case baseline covers direct-prompt, discovery-backed narrow, and cross-cutting revision behavior.
 
 ### 3. Design
 

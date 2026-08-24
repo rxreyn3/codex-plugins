@@ -108,6 +108,87 @@ function parsedArguments(item) {
   }
 }
 
+function assignedTemplateLiteral(input, variableName) {
+  if (!variableName) return null;
+  const escapedName = variableName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const assignment = new RegExp("\\bconst\\s+" + escapedName + "\\s*=\\s*`").exec(input);
+  if (!assignment) return null;
+  let value = "";
+  for (let index = assignment.index + assignment[0].length; index < input.length; index += 1) {
+    const character = input[index];
+    if (character === "`") return value;
+    if (character === "\\" && index + 1 < input.length) {
+      const next = input[index + 1];
+      if (["`", "\\", "$"].includes(next)) {
+        value += next;
+        index += 1;
+        continue;
+      }
+    }
+    value += character;
+  }
+  return null;
+}
+
+function nestedSpawnArguments(item) {
+  if (item?.type !== "custom_tool_call" || item?.name !== "exec" || typeof item?.input !== "string") return null;
+  if (!item.input.includes("multi_agent_v1__spawn_agent")) return null;
+  const stringField = (name) => item.input.match(new RegExp(`\\b${name}:\\s*[\"']([^\"']+)[\"']`))?.[1] ?? null;
+  const explicitMessageVariable = item.input.match(/\bmessage:\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*[,}]/)?.[1] ?? null;
+  const serializedMessageVariable = item.input.match(/\bmessage:\s*JSON\.stringify\(\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\)\s*[,}]/)?.[1] ?? null;
+  const usesMessageShorthand = /multi_agent_v1__spawn_agent\s*\(\{[\s\S]*?\bmessage\s*[,}]/.test(item.input);
+  const messageVariable = explicitMessageVariable ?? serializedMessageVariable ?? (usesMessageShorthand ? "message" : null);
+  const escapedMessageVariable = messageVariable?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") ?? null;
+  const variableCardText = assignedTemplateLiteral(item.input, messageVariable);
+  let cardText = variableCardText
+    ?? item.input.match(/\bmessage:\s*`([\s\S]*?)`\s*[,}]/)?.[1]
+    ?? null;
+  let card = null;
+  if (cardText) {
+    try {
+      card = parseYaml(cardText);
+    } catch {
+      // Malformed child input is retained as an observed but failing dispatch.
+    }
+  }
+  if (!card && serializedMessageVariable && escapedMessageVariable) {
+    const objectText = item.input.match(new RegExp(`const\\s+${escapedMessageVariable}\\s*=\\s*(\\{[\\s\\S]*?\\});`))?.[1] ?? null;
+    if (objectText) {
+      try {
+        card = parseYaml(objectText);
+        cardText = JSON.stringify(card);
+      } catch {
+        // Malformed child input is retained as an observed but failing dispatch.
+      }
+    }
+  }
+  const cardMember = (name, member) => {
+    if (!escapedMessageVariable || !card) return null;
+    const reference = new RegExp(`\\b${name}:\\s*${escapedMessageVariable}\\.${member}\\s*[,}]`);
+    return reference.test(item.input) ? card[member] ?? null : null;
+  };
+  const forkContext = item.input.match(/\bfork_context:\s*(true|false)/)?.[1] ?? null;
+  return {
+    agent_type: stringField("agent_type") ?? cardMember("agent_type", "role"),
+    fork_context: forkContext === null ? null : forkContext === "true",
+    model: stringField("model") ?? cardMember("model", "model"),
+    reasoning_effort: stringField("reasoning_effort") ?? cardMember("reasoning_effort", "reasoning"),
+    card,
+    card_text: cardText,
+  };
+}
+
+function outputText(item) {
+  if (typeof item?.output === "string") return item.output;
+  if (!Array.isArray(item?.output)) return "";
+  return item.output.map((entry) => typeof entry?.text === "string" ? entry.text : "").join("\n");
+}
+
+function messageText(item) {
+  if (!Array.isArray(item?.content)) return "";
+  return item.content.map((entry) => typeof entry?.text === "string" ? entry.text : "").join("\n");
+}
+
 function contentDigest(content) {
   const serialized = stableJson(content ?? null);
   return { sha256: sha256(serialized), bytes: Buffer.byteLength(serialized) };
@@ -159,6 +240,7 @@ export function captureAttestationEvent(message) {
       };
     }
     if (item.type === "collabAgentToolCall") {
+      const receiverThreadIds = item.receiverThreadIds ?? [];
       return {
         kind: "collaboration-call",
         event: message.method,
@@ -167,7 +249,13 @@ export function captureAttestationEvent(message) {
         tool: item.tool ?? null,
         status: item.status ?? null,
         sender_thread_id: item.senderThreadId ?? null,
-        receiver_thread_ids: item.receiverThreadIds ?? [],
+        receiver_thread_ids: receiverThreadIds,
+        child_thread_id: item.tool === "spawnAgent" && receiverThreadIds.length === 1
+          ? receiverThreadIds[0]
+          : null,
+        agent_path: item.tool === "spawnAgent" && receiverThreadIds.length === 1
+          ? receiverThreadIds[0]
+          : null,
         model: item.model ?? null,
         reasoning_effort: item.reasoningEffort ?? null,
       };
@@ -177,6 +265,63 @@ export function captureAttestationEvent(message) {
 
   if (message?.method !== "rawResponseItem/completed") return null;
   const item = params.item ?? {};
+  const nestedArgs = nestedSpawnArguments(item);
+  if (nestedArgs) {
+    const messageSha256 = nestedArgs.card_text ? sha256(nestedArgs.card_text) : null;
+    return {
+      kind: "dispatch-call",
+      dispatch_mode: "spawn",
+      spawn_schema: "multi-agent-v1",
+      tool: "multi_agent_v1__spawn_agent",
+      thread_id: params.threadId ?? null,
+      turn_id: params.turnId ?? null,
+      call_id: item.call_id ?? null,
+      task_name: nestedArgs.card?.task_name ?? null,
+      agent_type: nestedArgs.agent_type,
+      fork_turns: nestedArgs.fork_context === false
+        ? "none"
+        : nestedArgs.fork_context === true ? "all" : null,
+      model: nestedArgs.model,
+      reasoning_effort: nestedArgs.reasoning_effort,
+      message_sha256: messageSha256,
+      message_bytes: nestedArgs.card_text ? Buffer.byteLength(nestedArgs.card_text) : null,
+      canonical_envelope_sha256: nestedArgs.card
+        ? sha256(stableJson(dispatchEnvelope(nestedArgs.card)))
+        : null,
+    };
+  }
+  if (item.type === "custom_tool_call_output") {
+    const match = outputText(item).match(/"agent_id"\s*:\s*"([^"]+)"/);
+    if (match) {
+      return {
+        kind: "spawn-result",
+        call_id: item.call_id ?? null,
+        child_thread_id: match[1],
+        agent_path: match[1],
+      };
+    }
+  }
+  if (item.type === "message" && item.role === "user") {
+    const text = messageText(item);
+    if (text.includes("<subagent_notification>")) {
+      const jsonText = text.slice(text.indexOf("{")).replace(/\s*<\/subagent_notification>[\s\S]*$/, "").trim();
+      try {
+        const notification = JSON.parse(jsonText);
+        const completedOutput = notification?.status?.completed;
+        return {
+          kind: "child-notification",
+          child_thread_id: notification?.agent_path ?? null,
+          agent_path: notification?.agent_path ?? null,
+          status: typeof completedOutput === "string" ? "completed" : null,
+          error: notification?.status?.errored ?? null,
+          content_sha256: typeof completedOutput === "string" ? sha256(completedOutput) : null,
+          content_bytes: typeof completedOutput === "string" ? Buffer.byteLength(completedOutput) : null,
+        };
+      } catch {
+        // A malformed notification cannot attest child completion.
+      }
+    }
+  }
   if (item.type === "function_call" && item.name === "spawn_agent") {
     const args = parsedArguments(item);
     let canonicalEnvelopeSha256 = null;
@@ -247,8 +392,19 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     && event.thread_id === parentThreadId
     && event.dispatch_mode === dispatchMode
     && event.task_name === expectedName);
+  const dispatchIndex = dispatch ? events.lastIndexOf(dispatch) : -1;
+  const nextDispatchIndex = dispatchIndex < 0
+    ? -1
+    : events.findIndex((event, index) => index > dispatchIndex && event.kind === "dispatch-call");
+  const subsequentEvents = dispatchIndex < 0
+    ? []
+    : events.slice(dispatchIndex + 1, nextDispatchIndex < 0 ? undefined : nextDispatchIndex);
   const activity = dispatch
-    ? events.find((event) => event.kind === "subagent-activity" && event.call_id === dispatch.call_id && event.child_thread_id)
+    ? events.find((event) => ["subagent-activity", "spawn-result", "collaboration-call"].includes(event.kind)
+      && event.call_id === dispatch.call_id && event.child_thread_id)
+      ?? subsequentEvents.find((event) => event.kind === "collaboration-call"
+        && event.tool === "spawnAgent" && event.child_thread_id)
+      ?? subsequentEvents.find((event) => event.kind === "child-notification" && event.child_thread_id)
     : null;
   const childThreadId = activity?.child_thread_id ?? null;
   // Use the last settings record because the provider may append a stronger
@@ -259,13 +415,18 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   const parentSettings = events.findLast((event) => event.kind === "thread-settings" && event.thread_id === parentThreadId);
   const completion = childThreadId
     ? events.findLast((event) => event.kind === "turn-completed" && event.thread_id === childThreadId)
+      ?? (activity?.kind === "child-notification" ? activity : null)
     : null;
   const childOutput = activity?.agent_path
     ? events.findLast((event) => event.kind === "agent-output" && event.author === activity.agent_path)
+      ?? (activity?.kind === "child-notification" ? activity : null)
     : null;
   const nestedSpawns = childThreadId
     ? events.filter((event) => event.kind === "dispatch-call" && event.dispatch_mode === "spawn" && event.thread_id === childThreadId)
     : [];
+  const nestedSpawnObservation = childThreadId
+    ? events.findLast((event) => event.kind === "nested-spawn-observation" && event.thread_id === childThreadId)
+    : null;
 
   const checks = {
     dispatch_observed: Boolean(dispatch),
@@ -283,7 +444,9 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
       && equalJson(childSettings.sandbox_policy, parentSettings.sandbox_policy),
     child_completed: completion?.status === "completed" && completion?.error == null,
     child_output_observed: Boolean(childOutput?.content_sha256),
-    no_child_fanout: nestedSpawns.length === 0,
+    no_child_fanout: nestedSpawnObservation
+      ? nestedSpawnObservation.count === 0
+      : nestedSpawns.length === 0,
   };
 
   return {

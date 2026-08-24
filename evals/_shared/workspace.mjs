@@ -69,7 +69,7 @@ function copyEntry(sourceRoot, destinationRoot, relative) {
 }
 
 function splitLineSuffix(target) {
-  const match = target.match(/^(.*?)(:\d+(?::\d+)?)?$/);
+  const match = target.match(/^(.*?)(:\d+(?:-\d+|:\d+)?)?$/);
   return { file: match?.[1] ?? target, suffix: match?.[2] ?? "" };
 }
 
@@ -77,6 +77,7 @@ function splitLineSuffix(target) {
 // into retained evidence and rewrite only paths inside the disposable workspace;
 // external and sensitive paths remain untouched rather than being exfiltrated.
 function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
+  const canonicalWorkspace = fs.realpathSync(workspace);
   for (const stage of ["discover", "research"]) {
     const artifactRoot = path.join(evidenceWorkspace, ".rpiv-codex", "artifacts", stage);
     if (!fs.existsSync(artifactRoot)) continue;
@@ -86,8 +87,9 @@ function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
     const markdown = fs.readFileSync(artifact, "utf8");
     const rewritten = markdown.replaceAll(/\[([^\]]+)\]\((\/[^)]+)\)/g, (whole, label, target) => {
       const { file, suffix } = splitLineSuffix(target);
-      const relative = path.relative(workspace, file);
-      if (relative.startsWith("..") || path.isAbsolute(relative) || isSensitivePath(relative) || !fs.existsSync(file)) {
+      if (!fs.existsSync(file)) return whole;
+      const relative = path.relative(canonicalWorkspace, fs.realpathSync(file));
+      if (relative.startsWith("..") || path.isAbsolute(relative) || isSensitivePath(relative)) {
         return whole;
       }
       copyEntry(workspace, evidenceWorkspace, relative);
@@ -100,7 +102,10 @@ function rewriteRetainedArtifactLinks(workspace, evidenceWorkspace) {
 
 export function retainWorkspaceReferences(value, workspace, evidenceDir) {
   if (typeof value !== "string") return value;
-  return value.replaceAll(workspace, path.join(evidenceDir, "workspace"));
+  const retainedWorkspace = path.join(evidenceDir, "workspace");
+  const aliases = [...new Set([fs.realpathSync(workspace), path.resolve(workspace)])]
+    .sort((left, right) => right.length - left.length);
+  return aliases.reduce((rewritten, alias) => rewritten.replaceAll(alias, retainedWorkspace), value);
 }
 
 function listedWorkingTreePaths(root) {
@@ -175,7 +180,10 @@ export function inventoryChanges(before, after) {
 export function createDisposableWorkspace({ sourceRoot, evaluationId, caseId, evidenceDir }) {
   assertSafeSegment(evaluationId, "evaluationId");
   assertSafeSegment(caseId, "caseId");
-  const temporaryParent = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), `rpivc-eval-${caseId}-`)));
+  // Preserve macOS's short /tmp spelling for model-visible artifact paths. The
+  // cleanup guard resolves it back to the real system temporary directory.
+  const shortTemporaryRoot = fs.existsSync("/tmp") ? "/tmp" : os.tmpdir();
+  const temporaryParent = fs.mkdtempSync(path.join(shortTemporaryRoot, `rpivc-eval-${caseId}-`));
   const workspace = path.join(temporaryParent, "workspace");
   execFileSync("git", ["clone", "--quiet", "--no-hardlinks", sourceRoot, workspace], {
     encoding: "utf8",
@@ -242,7 +250,8 @@ export function cleanupDisposableWorkspace(temporaryParent) {
   // realpath plus the exact prefix prevents a bad variable from turning test
   // cleanup into a surprisingly ambitious filesystem operation.
   const resolved = fs.realpathSync(temporaryParent);
-  const temporaryRoot = fs.realpathSync(os.tmpdir());
+  const allocatedRoot = fs.existsSync("/tmp") ? "/tmp" : os.tmpdir();
+  const temporaryRoot = fs.realpathSync(allocatedRoot);
   if (path.dirname(resolved) !== temporaryRoot || !path.basename(resolved).startsWith("rpivc-eval-")) {
     throw new Error(`refusing to remove unverified temporary path: ${resolved}`);
   }

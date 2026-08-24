@@ -51,8 +51,45 @@ function normalizedDecision(input) {
   return input.trim().replaceAll("*", "").toLowerCase();
 }
 
+export function shouldCaptureRuntimeSnapshot(input, pendingCards = []) {
+  const decision = normalizedDecision(input);
+  return pendingCards.length > 0 || decision === "use scope" || decision.startsWith("refresh");
+}
+
 function appendJsonLine(target, value) {
   fs.appendFileSync(target, `${JSON.stringify(value)}\n`);
+}
+
+function childRolloutEvidence(rolloutPath) {
+  if (typeof rolloutPath !== "string" || !fs.existsSync(rolloutPath)) {
+    return { completed: false, error: null, output: null, nestedSpawns: null };
+  }
+  let completed = false;
+  let error = null;
+  let output = null;
+  let nestedSpawns = 0;
+  for (const line of fs.readFileSync(rolloutPath, "utf8").split("\n").filter(Boolean)) {
+    let entry;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    const item = entry?.payload ?? {};
+    if (entry.type === "event_msg" && item.type === "task_complete") completed = true;
+    if (entry.type === "event_msg" && item.type === "turn_aborted") error = "turn aborted";
+    if (entry.type !== "response_item") continue;
+    if (item.type === "message" && item.role === "assistant") {
+      const text = Array.isArray(item.content)
+        ? item.content.map((part) => part?.text ?? "").join("\n")
+        : item.text;
+      if (typeof text === "string" && text.length > 0) output = text;
+    }
+    if (item.type === "function_call" && item.name === "spawn_agent") nestedSpawns += 1;
+    if (item.type === "custom_tool_call" && item.name === "exec"
+      && typeof item.input === "string" && item.input.includes("multi_agent_v1__spawn_agent")) nestedSpawns += 1;
+  }
+  return { completed, error, output, nestedSpawns };
 }
 
 export function retainUniqueAttestation(state, attestation) {
@@ -217,6 +254,7 @@ export default class RpivcResearchProvider {
 
   async createState(context) {
     const caseId = String(context?.vars?.case_id ?? "");
+    const inputMode = String(context?.vars?.input_mode ?? "discovery");
     const evaluationId = process.env.RPIVC_EVAL_ID;
     const evidenceRoot = process.env.RPIVC_EVIDENCE_ROOT;
     const configuredSource = process.env.RPIVC_SOURCE_ROOT
@@ -232,20 +270,31 @@ export default class RpivcResearchProvider {
       caseId,
       evidenceDir,
     });
-    const discoveryArtifact = createDiscoveryFixture(workspaceState.workspace, caseId);
+    if (!["discovery", "prompt"].includes(inputMode)) {
+      throw new Error(`unsupported research input_mode: ${inputMode}`);
+    }
+    // A single approved child may legitimately use two 600-second same-child
+    // waits before the parent can synthesize its terminal payload. Keep the
+    // outer turn ceiling above that path in both input modes.
+    const turnTimeoutMs = 1800000;
+    const discoveryArtifact = inputMode === "discovery"
+      ? createDiscoveryFixture(workspaceState.workspace, caseId)
+      : null;
     workspaceState.baseline = snapshotRepository(workspaceState.workspace);
     fs.writeFileSync(
       path.join(evidenceDir, "baseline.json"),
       `${JSON.stringify(workspaceState.baseline, null, 2)}\n`,
     );
-    const [delegate] = await this.providerLoader([{
-      id: "openai:codex-app-server:gpt-5.6-sol",
+    const delegateConfigs = [{
+      id: "openai:codex-app-server:gpt-5.6-luna",
       config: {
         working_dir: workspaceState.workspace,
         codex_path_override: codexPath,
-        model: "gpt-5.6-sol",
-        model_reasoning_effort: "xhigh",
+        model: "gpt-5.6-luna",
+        model_reasoning_effort: "low",
         personality: "pragmatic",
+        base_instructions: "You are Codex performing an isolated repository skill evaluation. Follow the explicitly supplied skill and the user's visible decisions exactly. Use the available repository and collaboration tools as required, and return concise progress and gate output. A valid tracer response contains all five headings Discovery Summary, Research Questions, Shared Files, Evidence Gaps, and Proposed Execution Plan; 5-9 numbered questions with at least three artifact citations each; and exact coverage in at most three groups. Tell the tracer to self-check this schema before returning. The scope checkpoint must show that complete feasible plan before Use scope can approve it; never show four cards and silently regroup afterward. Use scope authorizes card preparation only: respond by displaying the complete analysis YAML cards, ask Run/Edit/Omit/Stop, and end the turn without inspecting source, dispatching, synthesizing, or preparing a compiled scan. Only the later Run authorizes dispatch. Copy the full literal approved question text into analysis-card inputs. Require each child result to end with one literal-clause matrix row per named clause, including status, finding, and exact evidence or gap. Derive each question status from its worst clause; never mark it Answered if any clause is missing, unsupported, or conflicted. The compiled scan must contain one canonical Coverage snapshot line plus one canonical Q clause row per question. Compiled-scan preparation is read-only and has no two-attempt ceiling: repair reported coverage or citation defects and rerun until it passes or evidence is unavailable. The prepare-research-scan result includes claim, claim_line, and source_excerpt for review; after that comparison, use only its normalized_markdown. Then run the exact final draft through artifact-check.mjs render-research-scan and present its plain Markdown output byte-for-byte; append only the write gate and never reconstruct a path or label from JSON. The two-invocation ceiling applies only to inspection after an artifact has been written. In discovery mode, Source Feature must link the exact validated absolute discovery-artifact path. Preserve prepared citation ranges exactly; never widen or join them when writing the artifact. Treat accepted rendered Markdown as the artifact's complete current-code evidence inventory. Copy the complete rendered scan byte-for-byte under Detailed Findings, its snapshot unchanged into Summary, and its Q rows unchanged into Coverage Ledger. Summary must not contain any Q clause row; those rows appear only in Coverage Ledger and the copied Detailed Findings scan. Add no new current-code prose or citations from child output. Code References points to Detailed Findings. Integration Points and Architecture Insights either copy a complete rendered-scan evidence line verbatim or state that there is no additional finding beyond Detailed Findings.",
+        developer_instructions: "Evaluation isolation: do not consult personal memory, external applications, or the network. The configured current working directory is the repository; run relative shell commands there and do not reconstruct an alternate workdir. Do not change source files. Follow the supplied rpivc-research skill as the authoritative workflow contract. When a user decision includes an rpivc-evaluation-runtime-snapshot block, it is the exact context-snapshot helper output captured immediately before that decision. Copy its repository, branch, commit, and working_tree_sha256 verbatim into every new or refreshed card. Never recompute or approximate those fields with git status, git ls-files, shasum, or another command. Before displaying a card, verify it contains exactly one working_tree_sha256 key and that the value is exactly 64 hexadecimal characters matching the authoritative snapshot. A refreshed gate must redisplay every complete YAML card; a summary is not an approvable card. Analysis profiles are fixed: codebase analyzer and pattern finder are gpt-5.6-terra/high; integration scanner and precedent locator are gpt-5.6-luna/low. Verify every displayed analysis role/model/reasoning triple before asking Run; never reuse the tracer's medium reasoning for analysis. Do not enumerate or search ALL_TOOLS for collaboration. The supported spawn surface is tools.multi_agent_v1__spawn_agent inside functions.exec; call it directly with the exact card role as agent_type, fork_context: false, the approved envelope as message, and the exact card model and reasoning_effort. Begin every functions.exec spawn-and-wait script with // @exec: {\"yield_time_ms\": 120000}. After spawn returns agent_id, call tools.multi_agent_v1__wait_agent({ targets: [spawned.agent_id], timeout_ms: 600000 }). If that returns a non-final timeout snapshot, call the same wait again on the same agent_id inside the same script. The 120-second outer yield is not a child deadline. If functions.exec returns Script running with cell ID, immediately call functions.wait with that exact cell_id until final output; do not dispatch another card, synthesize, or end the turn first. Never treat a wait timeout as terminal, spawn a replacement, or advance to the next approved card while the current child is non-final. Do not guess other parameter names and do not return an awaiting placeholder. For a multi-card wave, use one separate functions.exec spawn-and-wait call per card, in displayed order, so each approved envelope and result remains independently observable. Artifact citations may use only exact child-returned target-and-line pairs rechecked against current numbered source; never derive source lines from artifact line numbers. Treat each approved question as a hypothesis, split it into named clauses, and mark it Answered only when every clause has direct evidence; when every executed card has depends_on: [], do not claim that a dependent wave ran. Before displaying the compiled scan, pass its complete draft, including the canonical Coverage snapshot and Q clause rows, in a quoted heredoc to artifact-check.mjs prepare-research-scan; never invoke the command bare. Use one behavior and exactly one current-code citation per evidence bullet, split multi-range support into separate bullets, and keep ranges no wider than 15 lines. For every returned citation, compare claim to source_excerpt and repair any semantic mismatch before rendering. Present render-research-scan output exactly. Use full repository-relative citation labels in the compiled scan as well as the artifact; basename-only labels are invalid. The artifact is a projection of that rendered scan, not a second synthesis pass: preserve its exact coverage statuses, totals, Q rows, evidence lines, and citation ranges. After writing or revising the artifact, run artifact-check.mjs normalize-citations on the exact draft path before inspection; do not use sed or an ad hoc script to rebuild citation labels. If inspection reports an out-of-bounds range, re-read that target with numbered lines and replace the entire start-end range; never decrement only the end or clamp a start beyond EOF. Artifact inspection has a hard two-invocation ceiling for the initial draft: after one failed inspection, make one correction, normalize citations again, and inspect once more; if that second invocation fails, stop immediately.",
         sandbox_mode: "workspace-write",
         network_access_enabled: false,
         approval_policy: "never",
@@ -260,16 +309,40 @@ export default class RpivcResearchProvider {
         include_raw_events: true,
         inherit_process_env: false,
         reuse_server: true,
-        request_timeout_ms: 900000,
+        request_timeout_ms: turnTimeoutMs,
         startup_timeout_ms: 120000,
-        turn_timeout_ms: 900000,
+        turn_timeout_ms: turnTimeoutMs,
         cli_config: {
           features: {
             multi_agent: true,
+            memories: false,
+            apps: false,
+            plugins: false,
+            recommended_plugins: false,
+            browser_use: false,
+            in_app_browser: false,
           },
         },
       },
-    }]);
+    }];
+    const previousWaitInstructions = "After spawn returns agent_id, call tools.multi_agent_v1__wait_agent({ targets: [spawned.agent_id], timeout_ms: 600000 }). If that returns a non-final timeout snapshot, call the same wait again on the same agent_id inside the same script.";
+    const keyedWaitInstructions = "After spawn returns agent_id, call tools.multi_agent_v1__wait_agent({ targets: [spawned.agent_id], timeout_ms: 600000 }). Its status is a map: read only waited.status?.[spawned.agent_id]. The keyed child object is terminal when Object.hasOwn(state, \"completed\") || Object.hasOwn(state, \"failed\") || Object.hasOwn(state, \"cancelled\") || Object.hasOwn(state, \"terminated\"). Never compare the complete waited.status map with status strings and never poll a terminal keyed child again. Only if the keyed state is absent or non-final may the script call the same wait again on the same agent_id.";
+    const evaluationCorrections = "On the initial request, the first command must be artifact-check.mjs preflight-research with the exact input as its one literal argument. The invoked skill content is already supplied; do not access SKILL.md through cat, sed, rg, find, or any other shell command at any time. Do not cat, read, or combine the discovery artifact or target files in any command before preflight; use artifact_content returned by preflight. Read only the contract and template after preflight succeeds. Never use a current-file citation to claim Git history such as introduced, inherited, or changed behavior. Split that into one current-behavior bullet with one file citation and one separate history bullet with a locally verified plain commit identifier.";
+    const exactPreflightCorrection = "The exact first command executable path is node .agents/skills/_shared/scripts/artifact-check.mjs preflight-research <input>. Do not shorten, relocate, search for, or guess that helper path. The first command must exit zero; a failed attempt followed by discovery is not preflight-first.";
+    const initialGateCorrection = "After successful preflight and reading the contract and template, the initial turn must display only one complete YAML card with id S1, role rpivc-scope-tracer, task_name s1_scope_tracer, the approved explicit role/model/reasoning profile, and the Run/Edit/Omit/Stop gate, then end. Do not answer the research questions, produce Discovery Summary or Proposed Execution Plan, invoke the tracer, show analysis cards, or offer Use scope on the initial turn. Only the user's later Run authorizes spawning S1. Analysis card roles must also be exact callable rpivc-* role identifiers, never human-readable aliases such as codebase analyzer.";
+    const scopeCheckpointCorrection = "When a later Run authorizes S1, spawn and wait for S1, then present the complete tracer payload with all five required headings, its 5-9 numbered questions, and the complete feasible coverage plan, followed only by Use scope/Revise scope/Stop, then end. Do not construct or display any A-card in the S1 Run response. Only the user's subsequent Use scope authorizes preparing and displaying complete A-cards with Run/Edit/Omit/Stop; Use scope does not authorize dispatch.";
+    const aggregateScanCorrection = "prepare-research-scan returns every detectable citation defect in one aggregated correction set. After a failure, repair every listed defect together before one rerun; do not submit sequential one-defect retries.";
+    const invalidChildCorrection = "If a terminal analysis child omits the required literal-clause matrix or answers a different task, do not spawn a replacement, silently repair its answer, ask for synthesis authorization, or end with only an acknowledgement. Record the invalid child as an evidence gap, mark every clause assigned only to that card Unanswered, and continue the already-approved turn directly into synthesis and the compiled-scan preparation.";
+    const tracerAndEvidenceCorrection = "Treat a discovery path in the approved tracer card as already absolute and pass it literally; never prepend repository or duplicate .rpiv-codex. Before offering Use scope, validate the tracer's five headings, 5-9 numbered questions, three concrete artifact links per question, exact group coverage, and smallest roster. Never parent-author replacement scope for an invalid tracer; stop before analysis. Fold Git precedent into the analyzer whenever it concerns the same files, never a standalone precedent locator merely for history. During citation excerpt review, cite the lines that perform each claimed action: return claims cite the return object, check or verdict claims cite the check expressions, and multi-file claims become separate one-file bullets. Lines that merely select or stage values do not prove they are returned, hashed, or checked. An unknown-stage claim cites both the stage guard and throw. Scan normalization, coverage validation, citation checks, and the normalized_markdown return are separate claims with separate evidence. In parseCoverageProjection, snapshot recognition, contiguous identifiers and totals, and clause-row checks are separate evidence blocks. In validateLocalMarkdownLinks, target and label checks are separate from the later research-width check. In runtime-attestation, no-history, completion, output, and no-fan-out claims must each cite their individual context_mode_matches, child_completed, child_output_observed, or no_child_fanout check expression; selection of those values is not the verdict. An overall runtime pass claim cites Object.values(checks).every(Boolean). A passing-attestation claim cites attestations.every, while bounded-spawn behavior is a separate claim citing the direct-child budget expression. When writing the artifact, start from the complete research template and preserve every template ## section heading exactly once, including Research Questions, Evidence Conflicts and Gaps, and Dispatch Ledger; never compress or omit empty sections. Summary contains the snapshot but no Q clause rows; Q rows belong only in Coverage Ledger and the copied Detailed Findings scan.";
+    const configuredDeveloperInstructions = delegateConfigs[0].config.developer_instructions;
+    const correctedDeveloperInstructions = configuredDeveloperInstructions
+      .replace(previousWaitInstructions, keyedWaitInstructions)
+      .concat(" ", evaluationCorrections, " ", exactPreflightCorrection, " ", initialGateCorrection, " ", scopeCheckpointCorrection, " ", aggregateScanCorrection, " ", invalidChildCorrection, " ", tracerAndEvidenceCorrection);
+    if (correctedDeveloperInstructions === configuredDeveloperInstructions) {
+      throw new Error("research evaluation wait instructions were not corrected");
+    }
+    delegateConfigs[0].config.developer_instructions = correctedDeveloperInstructions;
+    const [delegate] = await this.providerLoader(delegateConfigs);
     const state = {
       ...workspaceState,
       caseId,
@@ -277,6 +350,7 @@ export default class RpivcResearchProvider {
       delegate,
       turn: 0,
       phase: "ordinary",
+      inputMode,
       discoveryArtifact,
       driftMarker: path.join(
         workspaceState.workspace,
@@ -321,11 +395,36 @@ export default class RpivcResearchProvider {
   // parent turn. Resume the persisted child to ask Codex for the effective
   // model, effort, sandbox, and approval policy, then archive it immediately.
   // Every approved research card creates a fresh child.
-  async captureEffectiveChildSettings(state, events) {
+  async captureEffectiveChildSettings(state, events, parentThreadId = null) {
     const connection = this.connectionFor(state);
     if (!connection || typeof connection.request !== "function") return;
+    if (parentThreadId
+      && !state.attestationEvents.some((event) => event.kind === "thread-settings" && event.thread_id === parentThreadId)) {
+      try {
+        const resumed = await connection.request("thread/resume", {
+          threadId: parentThreadId,
+          persistExtendedHistory: true,
+        }, { timeoutMs: 120000 });
+        state.attestationEvents.push({
+          kind: "thread-settings",
+          source: "thread/resume",
+          thread_id: parentThreadId,
+          model: resumed?.model ?? null,
+          effort: resumed?.reasoningEffort ?? null,
+          sandbox_policy: resumed?.sandbox ?? null,
+          approval_policy: resumed?.approvalPolicy ?? null,
+          collaboration_mode: null,
+        });
+      } catch (error) {
+        state.attestationEvents.push({
+          kind: "thread-settings-query-failed",
+          thread_id: parentThreadId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     const childThreadIds = [...new Set(events
-      .filter((event) => event.kind === "subagent-activity" && event.child_thread_id)
+      .filter((event) => ["subagent-activity", "spawn-result", "child-notification", "collaboration-call"].includes(event.kind) && event.child_thread_id)
       .map((event) => event.child_thread_id))];
     for (const childThreadId of childThreadIds) {
       try {
@@ -342,6 +441,40 @@ export default class RpivcResearchProvider {
           sandbox_policy: resumed?.sandbox ?? null,
           approval_policy: resumed?.approvalPolicy ?? null,
           collaboration_mode: null,
+        });
+        const thread = resumed?.thread ?? resumed ?? {};
+        const turns = Array.isArray(thread.turns) ? thread.turns : [];
+        const lastTurn = turns.at(-1) ?? null;
+        const lastAgentMessage = lastTurn?.items?.findLast?.((item) =>
+          ["agentMessage", "agent_message"].includes(item?.type) && typeof (item.text ?? item.content) === "string");
+        const rollout = childRolloutEvidence(thread.path);
+        const output = typeof (lastAgentMessage?.text ?? lastAgentMessage?.content) === "string"
+          ? lastAgentMessage.text ?? lastAgentMessage.content
+          : rollout.output;
+        const completed = lastTurn?.status === "completed" || rollout.completed;
+        state.attestationEvents.push({
+          kind: "turn-completed",
+          thread_id: childThreadId,
+          turn_id: lastTurn?.id ?? null,
+          status: completed ? "completed" : lastTurn?.status ?? null,
+          error: lastTurn?.error?.message ?? lastTurn?.error ?? rollout.error,
+        });
+        if (output) {
+          state.attestationEvents.push({
+            kind: "agent-output",
+            thread_id: childThreadId,
+            turn_id: lastTurn?.id ?? null,
+            author: childThreadId,
+            recipient: null,
+            content_sha256: crypto.createHash("sha256").update(output).digest("hex"),
+            content_bytes: Buffer.byteLength(output),
+          });
+        }
+        state.attestationEvents.push({
+          kind: "nested-spawn-observation",
+          thread_id: childThreadId,
+          count: rollout.nestedSpawns,
+          source: rollout.nestedSpawns === null ? "unavailable" : "child-rollout",
         });
       } catch (error) {
         state.attestationEvents.push({
@@ -438,19 +571,37 @@ export default class RpivcResearchProvider {
 
   async callApi(prompt, context, callOptions) {
     const state = await this.stateFor(context);
-    const input = parseLatestUserMessage(prompt).replaceAll("{{DISCOVERY_ARTIFACT}}", state.discoveryArtifact);
+    const latestInput = parseLatestUserMessage(prompt);
+    const input = state.discoveryArtifact
+      ? latestInput.replaceAll("{{DISCOVERY_ARTIFACT}}", state.discoveryArtifact)
+      : latestInput;
     this.beforeTurn(state, input);
+    const decision = normalizedDecision(input);
+    const runtimeSnapshot = shouldCaptureRuntimeSnapshot(input, state.pendingCards)
+      ? contextSnapshot(state.workspace)
+      : null;
+    if (runtimeSnapshot) {
+      appendJsonLine(path.join(state.evidenceDir, "pre-dispatch-snapshots.jsonl"), {
+        before_turn: state.turn + 1,
+        decision,
+        card_ids: state.pendingCards.map((card) => card.id),
+        context: runtimeSnapshot,
+      });
+    }
     // Slice the event stream at the turn boundary so an older spawn cannot make
     // a later Run appear authorized.
     const attestationEventStart = state.attestationEvents.length;
     const isFirstTurn = state.turn === 0;
     const skillPath = path.join(state.workspace, ".agents", "skills", "rpivc-research", "SKILL.md");
+    const modelInput = runtimeSnapshot
+      ? `${input}\n\n<rpivc-evaluation-runtime-snapshot>\n${JSON.stringify(runtimeSnapshot, null, 2)}\n</rpivc-evaluation-runtime-snapshot>`
+      : input;
     const appServerInput = isFirstTurn
       ? [
           { type: "skill", name: "rpivc-research", path: skillPath },
-          { type: "text", text: input },
+          { type: "text", text: modelInput },
         ]
-      : [{ type: "text", text: input }];
+      : [{ type: "text", text: modelInput }];
     const response = await state.delegate.callApi(
       JSON.stringify(appServerInput),
       {
@@ -480,11 +631,12 @@ export default class RpivcResearchProvider {
     }
     const currentAttestationEvents = state.attestationEvents.slice(attestationEventStart);
     if (state.pendingCards.length > 0 && currentAttestationEvents.some((event) => event.kind === "dispatch-call")) {
-      await this.captureEffectiveChildSettings(state, currentAttestationEvents);
+      const parentThreadId = response.sessionId ?? response.metadata?.codexAppServer?.threadId ?? null;
+      await this.captureEffectiveChildSettings(state, currentAttestationEvents, parentThreadId);
       for (const card of state.pendingCards) {
         const attestation = buildDispatchAttestation({
           events: state.attestationEvents,
-          parentThreadId: response.sessionId ?? response.metadata?.codexAppServer?.threadId ?? null,
+          parentThreadId,
           card,
         });
         if (!retainUniqueAttestation(state, attestation)) continue;

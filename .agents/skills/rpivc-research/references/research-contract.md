@@ -2,9 +2,14 @@
 
 This contract adapts RPIV-Pi `packages/rpiv-pi/skills/research/SKILL.md` at commit `d0eb55371f622ac524b3355711a482f95feb14d4`. Preserve research behavior and manual review boundaries, not Pi runtime machinery.
 
-## Required discovery input
+## Research input modes
 
-Accept one absolute discovery artifact path and no free-text substitute. Require `stage: discover`, `status: review`, the current discovery sections, source lineage, and repository context. The path itself is the human decision to continue. Inherit discovery decisions verbatim into Developer Context and keep unresolved questions open until evidence or a developer answer resolves them.
+Accept exactly one non-empty free-text research prompt or one absolute discovery artifact path. The explicit invocation is the human decision to start research.
+
+- **Direct prompt:** Remove invocation-padding whitespace, then preserve the complete normalized prompt as authoritative scope. Capture current repository context. Do not invent or request discovery goals, decisions, deferrals, acceptance criteria, or open questions.
+- **Discovery artifact:** Require `stage: discover`, `status: review`, the current discovery sections, source lineage, and repository context. Inherit discovery decisions verbatim into Developer Context and keep unresolved questions open until evidence or a developer answer resolves them.
+
+An input is path-shaped when it is whitespace-free and absolute, relative, home-relative, or Markdown-shaped. An absolute input containing whitespace is also path-shaped when it ends in `.md` or names `.rpiv-codex/artifacts/`; other sentence-like slash-prefixed text remains a prompt. Reject a path-shaped value if it is not one valid absolute discovery artifact path; never fall back to prompt mode after path validation fails.
 
 ## Scope tracer card
 
@@ -18,34 +23,38 @@ depends_on: []
 task_name: s1_scope_tracer
 role: rpivc-scope-tracer
 purpose: "Form trace-quality questions without answering them"
-prompt: "{{EXACT_DISCOVERY_SHAPED_PROMPT}}"
-inputs: ["{{ABSOLUTE_DISCOVERY_ARTIFACT}}", "{{INHERITED_FACTS}}"]
+prompt: "{{EXACT_RESEARCH_PROMPT}}"
+inputs: ["{{INPUT_MODE}}", "{{DIRECT_PROMPT_OR_ABSOLUTE_DISCOVERY_ARTIFACT}}", "{{INHERITED_FACTS_OR_NONE}}"]
 repository: "{{ABSOLUTE_REPOSITORY}}"
 branch: "{{BRANCH}}"
 commit: "{{COMMIT}}"
 working_tree_sha256: "{{SHA256}}"
 model: gpt-5.6-terra
-reasoning: high
+reasoning: medium
 sandbox_request: read-only
 sandbox_enforcement: "inherited-parent; project-agent configuration does not guarantee child-specific isolation"
 behavioral_permissions: [read, search, git-read]
 intended_tools: [read, search, git-read]
 child_agents: forbidden
 budget: {max_files: 10, max_anchor_slices: 9, min_questions: 5, max_questions: 9}
-expected_evidence: "Discovery Summary and numbered questions with repository-relative file:line citations"
-output_schema: "Discovery Summary; Research Questions; Shared Files; Search Gaps"
-stop_when: "Ten files or nine questions are reached, the scope is covered, or evidence is unavailable"
+expected_evidence: "Five mandatory sections; 5-9 numbered questions with at least three repository artifact citations each; exact question coverage in at most three groups"
+output_schema: "Discovery Summary; Research Questions; Shared Files; Evidence Gaps; Proposed Execution Plan"
+stop_when: "The five-section schema self-check passes within ten files and nine questions, or evidence is unavailable"
 ```
 
-The tracer reads the discovery artifact first, sweeps anchor terms sequentially, ranks definitions and wiring, reads no more than ten files, and emits 5–9 unanswered dense questions. Put the canonical definition first and cite at least three concrete artifacts per question.
+The card copies `repository`, `branch`, `commit`, and `working_tree_sha256` literally from one authoritative context snapshot. It contains exactly one `working_tree_sha256` key, whose value is the snapshot's exact 64-character hexadecimal hash. Do not substitute a hash of file names, Git status, or another approximation. If context changes, redisplay every complete refreshed YAML card; a card summary cannot receive **Run** approval.
+
+In discovery mode, the tracer reads the exact absolute discovery path from its approved input without joining or prepending the repository path. In prompt mode, it begins from the exact direct prompt and must not assume an unprovided Feature Requirements Document. It then sweeps anchor terms sequentially, ranks definitions and wiring, reads no more than ten files, and emits one response with the literal headings **Discovery Summary**, **Research Questions**, **Shared Files**, **Evidence Gaps**, and **Proposed Execution Plan**. The question section contains 5–9 explicitly numbered unanswered dense questions with at least three concrete artifact citations per question. The plan maps every question exactly once. The parent validates all five headings, question and group counts, citation coverage, and exact question-to-group coverage before presenting **Use scope**; it never substitutes parent-authored questions, citations, or a plan for an invalid tracer result. An invalid tracer stops before scope use or analysis. Its proposed execution plan must already be runtime-feasible: no more than three total groups, with related Git precedent folded into the current-behavior analyzer group whenever it concerns the same files and pattern or integration specialists substituting for rather than adding to the analyzer. Never create a standalone precedent group solely because a same-file question asks about history, present four groups, or rely on later silent regrouping.
 
 ## Analysis cards and selection
 
-Every analysis card uses the same fields, including `dispatch_mode` and `depends_on`. Its inputs contain only approved questions and evidence already returned. Group two or three questions only when they share at least two file references or one continuous code path. Keep unrelated questions separate. Maximum three cards per separately approved wave and three analysis cards total.
+**Use scope** authorizes preparation of analysis cards, not analysis. The parent must respond by displaying the complete first-wave YAML cards and the **Run / Edit / Omit / Stop** gate, then end the turn without source inspection, dispatch, synthesis, scan preparation, or artifact writing. Only the subsequent **Run** authorizes dispatch of those exact cards.
+
+Every analysis card uses the same fields, including `dispatch_mode` and `depends_on`. Its inputs contain the full literal text of every assigned approved question plus only evidence already returned. A question number, numeric range, paraphrase, or reference to tracer output does not transport the question's clauses. Group two or three questions only when they share at least two file references or one continuous code path. Keep unrelated questions separate. Maximum three cards per separately approved wave and three analysis cards total.
 
 The runtime allows four direct child threads for one parent. The scope tracer occupies one. Before analysis cards exist, plan complete question coverage across at most three analysis cards. If the approved questions need a fourth card, return to scope review with **Revise scope**, **Omit group**, or **Stop** instead of starting an impossible wave.
 
-For every authorized card, use `dispatch_mode: spawn` and call `spawn_agent` with `agent_type` equal to the card's `role`, plus its exact `task_name`, `fork_turns: "none"`, `model`, and `reasoning_effort` mapped from the displayed `reasoning`. The effective child profile does not substitute for those explicit requested arguments. A first-wave card uses `depends_on: []`.
+For every authorized card, use `dispatch_mode: spawn` and pass the exact approved envelope as the only child message. The named-task schema receives `agent_type` equal to the card's `role`, exact `task_name`, `fork_turns: "none"`, exact `model`, and `reasoning_effort` mapped from `reasoning`. The deferred `multi_agent_v1__spawn_agent` schema receives the same explicit role, model, and reasoning plus `fork_context: false`; because it has no task-name parameter, the approved envelope remains the task identity. Both mappings start with no inherited conversation. When this spawn-and-wait is nested inside `functions.exec`, set its outer yield to 120 seconds and its inner same-child wait to 600 seconds. These are separate clocks: the outer yield preserves responsiveness and is not a child deadline. The deferred result stores the child state at `waited.status?.[spawned.agent_id]`. That keyed object is final when it owns `completed`, `failed`, `cancelled`, or `terminated`; the complete `waited.status` map is never itself compared with those strings. Wait again on the same identifier only while its keyed state is absent or non-final, and never reread an already final child. Never advance to another card, spawn a replacement, or end the turn while the approved child is non-final. If the outer tool returns a cell identifier, call `functions.wait` on that exact cell until final output before continuing. Wait for the fresh child to reach a final status and incorporate its returned payload in the same turn; a spawn acknowledgement, running-cell response, timeout snapshot, or “awaiting” placeholder is not completed research. The effective child profile does not substitute for explicit role, model, reasoning, and no-history requests. A first-wave card uses `depends_on: []`.
 
 A later dependent card lists the actual prior card identifiers in `depends_on`, includes their returned evidence, receives a separate **Run**, and spawns a fresh child in a remaining analysis slot. It counts toward the three-card total and must never reuse a prior child or the tracer, hide independent work, or imply authorization from an earlier wave.
 
@@ -54,16 +63,33 @@ A later dependent card lists the actual prior card identifiers in `depends_on`, 
 - Integration scanner: exhaustive bounded inbound, outbound, registration, event, job, or configuration map.
 - Precedent locator: credible Git anchors and usable local history. Never fetch.
 
+The custom-agent runtime profiles are exact, not suggestions:
+
+- `rpivc-codebase-analyzer`: `gpt-5.6-terra` / `high`
+- `rpivc-codebase-pattern-finder`: `gpt-5.6-terra` / `high`
+- `rpivc-integration-scanner`: `gpt-5.6-luna` / `low`
+- `rpivc-precedent-locator`: `gpt-5.6-luna` / `low`
+
+Verify every displayed role/model/reasoning triple against this table before asking for **Run**. The scope tracer's Terra/medium profile never carries into an analysis card.
+
 Pattern and integration specialists substitute for the analyzer; availability is not a reason to run them. Prefer the smallest set of at most three cards across the full approved scope. If analyzer, pattern, integration, and precedent cards are all independently necessary, expose the capacity conflict at scope review rather than silently substituting or failing during dispatch. External research is deferred and becomes an evidence gap.
 
 ## Evidence and synthesis
 
-Verify all citations before incorporation. A valid current-code citation has a repository-relative label and absolute target: `[path/to/file:line](/absolute/repository/path/to/file:line)`. Verify file existence and line bounds. Git commits support precedent, not current behavior.
+Verify all citations before incorporation. The parent may use only exact target-and-line pairs returned by a child and rechecked against current numbered source; never manufacture a range from the artifact's own line number. A valid current-code citation has a repository-relative label and absolute target: `[path/to/file:line](/absolute/repository/path/to/file:line)`. This rule applies to the compiled scan and the artifact; basename-only labels are invalid. Local targets use `:line` or `:start-end`, never GitHub-style `#L` fragments. One enclosing Markdown code-span pair is presentation markup and may surround the label; after removing it, the label must still exactly match the repository-relative path and line or range. Verify file existence and line bounds. For an out-of-bounds range, re-read the named file and replace the entire range; decrementing only the end does not repair a start beyond end-of-file. The inspector reports all Markdown defects together so the one permitted correction can address the complete set. Git commits support precedent, not current behavior.
 
-The Coverage Ledger contains every approved question exactly once. Answered questions require at least one verified current-code citation. Partial, Conflicted, and Unanswered questions remain visible in gaps or Open Questions. Exclude advice, prescriptions, and design choices.
+Write Git commit identifiers as plain code spans unless they are accompanied by a verified link to a real existing local file. Reverify each 40-character identifier in **Precedents & Lessons** and **Historical Context** against local Git. Artifact inspection rejects an identifier that does not resolve to a commit in the current repository, except the frontmatter's declared external `rpiv_commit` source pin. Never manufacture `.git/commit/<sha>` or another filesystem target for a commit object.
+
+A current-file citation proves current behavior only. It cannot support a claim that behavior was introduced by, inherited from, or changed in a Git commit. Split those claims: one current-behavior bullet with one file citation, then one separate history bullet with a locally verified plain commit identifier and no current-file citation.
+
+Source-selection lines and verdict checks are separate evidence. A range that only gathers or stages values cannot prove a later return, hash, comparison, or pass/fail result. Give separate single-citation bullets to coverage-snapshot recognition, contiguous-identifier and total checks, and clause-row checks. Give separate bullets to Markdown target/label validation and the later research-width check. Runtime-attestation verdicts cite the individual `context_mode_matches`, `child_completed`, `child_output_observed`, and `no_child_fanout` check expressions, not the earlier selection of dispatch, completion, output, or nested-spawn values. Split any sentence whose clauses require different source blocks.
+
+Every child ends with a literal-clause matrix: one row per named clause with Supported, Unsupported, or Conflicted status, the finding, and exact evidence or gap. A terminal payload that omits this schema or answers a different task is invalid. Do not replace or silently repair that child under the same approval. Record the invalid result as an evidence gap, mark clauses assigned only to it Unanswered, and continue the already-approved turn into synthesis without asking for a second authorization or ending on a bare acknowledgement. The compiled scan and artifact Coverage Ledger contain every approved question exactly once and enumerate every named clause. A question is not evidence that its premise is true. **Answered** requires direct current-code evidence for every clause; the worst clause determines the question status. Otherwise use Partial, Conflicted, or Unanswered and name the missing or contrary clause. When every executed card has `depends_on: []`, report that no dependent wave ran even if a question or simulator instruction mentions dependent waves. Partial, Conflicted, and Unanswered questions remain visible in gaps or Open Questions. Exclude advice, prescriptions, and design choices.
 
 ## Write and final review
 
-Only **Write artifact** authorizes one new research artifact. **Adjust** changes the compiled scan and repeats the gate. **Stop** writes nothing. Before acceptance, the one artifact is a review draft. **Revise** edits that same path, reruns inspection, and reports a changed artifact hash without creating another file. **Accept** freezes the current bytes; **Accept** and **Stop** create no additional files.
+Before the compiled-scan gate, derive a canonical question projection from the clause matrix: one `- Coverage snapshot: Q1=... | Totals: ...` line and one `- Qn — **Status** — Clauses: ...` row per question. Run `artifact-check.mjs prepare-research-scan` with the complete draft in a quoted heredoc; never invoke it with unredirected standard input. Use one behavior and exactly one current-code citation per evidence bullet, splitting multi-range support into separate independently supported bullets, and keep ranges at most 15 lines. Scan preparation is read-only, creates no artifact, validates the coverage projection, and is not governed by the later two-invocation artifact-inspection ceiling. Repair all reported scan defects and rerun until preparation passes or evidence is unavailable. Compare every returned `claim` and `claim_line` to its numbered `source_excerpt` and correct any mismatch. Then run the exact final draft through `artifact-check.mjs render-research-scan` with another quoted heredoc. It repeats deterministic validation and prints canonical Markdown only. Present that complete standard output byte-for-byte and append only the write gate; never reconstruct it from the longer JSON result. Do not widen, join, or hand-rewrite prepared ranges. The accepted rendered Markdown is the complete current-code evidence inventory for the artifact. When writing, start from the complete research template and preserve every `##` section heading exactly once. Under Detailed Findings, copy the entire rendered scan byte-for-byte. Copy its coverage snapshot unchanged into Summary and its Q rows unchanged into Coverage Ledger. Every other current-code claim-and-citation pair must likewise be a verbatim rendered-scan line; do not introduce current-code prose or citations from child output while writing. Code References points to Detailed Findings rather than rebuilding a citation table. Integration Points and Architecture Insights either reuse a complete rendered-scan evidence line verbatim or say no additional finding exists beyond Detailed Findings. A clause without scan evidence remains Partial or Unanswered. Only **Write artifact** authorizes one new research artifact. **Adjust** changes the compiled scan and repeats the gate. **Stop** writes nothing. The allocator creates the ignored stage directory and emits the authoritative path and frontmatter; copy those values literally and do not derive a filename from `created_at`. Discovery mode declares exactly one repository-relative discovery path in `source_artifacts` and links the exact validated absolute discovery path under Source Feature; prompt mode declares none. Before inspection, run the deterministic `normalize-citations` command once so local line citations use labels derived from their verified absolute targets. Inspection rejects missing template sections, inconsistent snapshots, totals, Q rows, and Answered rows that declare a gap. Before acceptance, the one artifact is a review draft. The initial draft permits at most two inspector invocations: correct once after the first failure, normalize citations again, then stop if the second invocation fails. **Revise** edits that same path, normalizes citations, reruns inspection, and reports a changed artifact hash without creating another file. **Accept** freezes the current bytes; **Accept** and **Stop** create no additional files.
+
+Preparation aggregates all detectable citation defects into one correction set. Repair that complete set before one rerun; sequential one-defect retries are not an acceptable substitute.
 
 No action in this unit authorizes `rpivc-design`, a commit, a push, a global installation, product-source changes, or network access.

@@ -33,6 +33,10 @@ export function artifactPath(stage, topic, cwd = process.cwd(), now = new Date()
     `${context.filename_timestamp}_${slugify(topic)}.md`,
   );
   const absolute = path.join(context.repository, ...relative.split("/"));
+  // Allocation happens only after the stage's explicit write gate. Ensure the
+  // ignored artifact directory exists so the returned path is immediately
+  // writable without requiring the caller to invent a separate setup step.
+  fs.mkdirSync(path.dirname(absolute), { recursive: true });
   if (fs.existsSync(absolute)) {
     throw new Error(`refusing to overwrite existing path: ${relative}`);
   }

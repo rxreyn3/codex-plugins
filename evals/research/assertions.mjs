@@ -1,6 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  hasNoDiscoveryContext,
+  parseCoverageProjection,
+  parseFrontmatter,
+} from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
+
 function result(name, pass, reason) {
   return { name, pass, score: pass ? 1 : 0, reason };
 }
@@ -8,6 +14,16 @@ function result(name, pass, reason) {
 function readJsonLines(target) {
   if (!fs.existsSync(target)) return [];
   return fs.readFileSync(target, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
+}
+
+function commandExecutions(turn) {
+  return (turn?.metadata?.codexAppServer?.items ?? [])
+    .filter((item) => item?.type === "commandExecution")
+    .map((item) => ({
+      command: String(item.command ?? ""),
+      status: String(item.status ?? ""),
+      exitCode: item.exitCode,
+    }));
 }
 
 export function inheritsExternalWebDeferral(markdown) {
@@ -21,23 +37,101 @@ export function repositoryRelativeCitationLabels(markdown, repository) {
     .filter(({ target }) => /:[0-9]+(?:-[0-9]+)?$/.test(target));
   if (citations.length === 0) return false;
   return citations.every(({ label, target }) => {
-    const suffix = /:([0-9]+(?:-[0-9]+)?)$/.exec(target)?.[1];
+    const semanticLabel = /^`[^`]+`$/.test(label) ? label.slice(1, -1) : label;
+    const range = /:([0-9]+)(?:-([0-9]+))?$/.exec(target);
     const file = target.replace(/:[0-9]+(?:-[0-9]+)?$/, "");
-    const relative = path.relative(repository, file).split(path.sep).join("/");
+    let relative;
+    try {
+      relative = path.relative(fs.realpathSync(repository), fs.realpathSync(file)).split(path.sep).join("/");
+    } catch {
+      return false;
+    }
+    const start = range?.[1];
+    const end = range?.[2] ?? start;
+    const acceptedLabels = start === end
+      ? new Set([`${relative}:${start}`, `${relative}:${start}-${end}`])
+      : new Set([`${relative}:${start}-${end}`]);
     return relative && !relative.startsWith("..") && !path.isAbsolute(relative)
-      && label === `${relative}:${suffix}`;
+      && acceptedLabels.has(semanticLabel);
   });
+}
+
+function preciseCitationRanges(markdown) {
+  const ranges = [...markdown.matchAll(/\]\((?:<[^>\n]+>|\/[^)\n]+):([0-9]+)(?:-([0-9]+))?\)/g)]
+    .map((match) => ({ start: Number(match[1]), end: Number(match[2] ?? match[1]) }));
+  return ranges.length > 0 && ranges.every(({ start, end }) => end - start + 1 <= 15);
+}
+
+function markdownSection(text, heading) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === `## ${heading}`);
+  if (start < 0) return "";
+  const nextOffset = lines.slice(start + 1).findIndex((line) => /^##\s+/.test(line));
+  const end = nextOffset < 0 ? lines.length : start + 1 + nextOffset;
+  return lines.slice(start + 1, end).join("\n");
+}
+
+function coverageProjectionMatches(compiledScan, markdown) {
+  try {
+    const scanCoverage = parseCoverageProjection(compiledScan, "compiled scan");
+    const artifactCoverage = parseCoverageProjection(
+      `${markdownSection(markdown, "Summary")}\n${markdownSection(markdown, "Coverage Ledger")}`,
+      "artifact coverage",
+    );
+    return scanCoverage.line === artifactCoverage.line
+      && JSON.stringify(scanCoverage.status_by_question) === JSON.stringify(artifactCoverage.status_by_question);
+  } catch {
+    return false;
+  }
+}
+
+export function tracerScopeCheckpointIsValid(output) {
+  const required = ["Discovery Summary", "Research Questions", "Shared Files", "Evidence Gaps", "Proposed Execution Plan"];
+  if (!required.every((heading) => output.includes(`## ${heading}`))) return false;
+  if (/tracer (?:returned|result|payload).{0,40}invalid|schema self-check is not satisfied/i.test(output)) return false;
+  const questionSection = markdownSection(output, "Research Questions");
+  const questionStarts = [...questionSection.matchAll(/^\d+\.\s+/gm)].map((match) => match.index);
+  if (questionStarts.length < 5 || questionStarts.length > 9) return false;
+  const questionBlocks = questionStarts.map((start, index) =>
+    questionSection.slice(start, questionStarts[index + 1] ?? questionSection.length));
+  if (!questionBlocks.every((question) => (question.match(/\]\((?:<)?\/[^)\n]+\)/g) ?? []).length >= 3)) return false;
+  const plan = markdownSection(output, "Proposed Execution Plan");
+  const groups = (plan.match(/^\d+\.\s+/gm) ?? []).length;
+  return groups >= 1 && groups <= 3;
+}
+
+export function compiledScanProjectedExactly(compiledScan, markdown) {
+  const scanLines = compiledScan.split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line)
+    .filter((line) => !/(?:Write artifact\s*\/\s*Adjust\s*\/\s*Stop|Accept\s*\/\s*Revise\s*\/\s*Stop)/i.test(line));
+  const artifactLines = markdown.split(/\r?\n/);
+  const detailedStart = artifactLines.findIndex((line) => line.trim() === "## Detailed Findings");
+  const detailedEnd = artifactLines.findIndex((line, index) => index > detailedStart && line.trim() === "## Code References");
+  const detailedFindings = detailedStart < 0
+    ? ""
+    : artifactLines.slice(detailedStart + 1, detailedEnd < 0 ? artifactLines.length : detailedEnd).join("\n");
+  if (!scanLines.every((line) => detailedFindings.split(/\r?\n/).includes(line))) return false;
+
+  const scanLineSet = new Set(scanLines);
+  const artifactCitationLines = markdown.split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => /\]\((?:<)?\/[^)\n]+:[0-9]+(?:-[0-9]+)?(?:>)?\)/.test(line))
+    .filter((line) => !/\/\.rpiv-codex\/artifacts\//.test(line));
+  return artifactCitationLines.every((line) => scanLineSet.has(line));
 }
 
 export default function assertResearchContract(output, context) {
   const root = process.env.RPIVC_EVIDENCE_ROOT;
   const caseId = String(context?.vars?.case_id ?? "");
+  const inputMode = String(context?.vars?.input_mode ?? "discovery");
   const directory = path.join(root, caseId);
   const latest = JSON.parse(fs.readFileSync(path.join(directory, "latest.json"), "utf8"));
   const turns = readJsonLines(path.join(directory, "turns.jsonl"));
   const attestations = readJsonLines(path.join(directory, "runtime-attestations.jsonl"));
   const revisionObservations = readJsonLines(path.join(directory, "artifact-revisions.jsonl"));
   const artifactDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "research");
+  const discoveryDirectory = path.join(directory, "workspace", ".rpiv-codex", "artifacts", "discover");
   const artifacts = fs.existsSync(artifactDirectory)
     ? fs.readdirSync(artifactDirectory).filter((name) => name.endsWith(".md"))
     : [];
@@ -60,7 +154,28 @@ export default function assertResearchContract(output, context) {
       && observationsValidate
       && /User: Revise[\s\S]*User: Accept/i.test(transcript)
     : revisionObservations.length === 1 && observationsValidate && !/User: Revise/i.test(transcript);
+  const compiledScan = turns.find((turn) =>
+    /^- Coverage snapshot:\s*Q1=/m.test(turn.output)
+      && /Write artifact\s*\/\s*Adjust\s*\/\s*Stop/i.test(turn.output))?.output ?? "";
+  const initialCommands = commandExecutions(turns[0]);
+  const firstCommand = initialCommands[0];
+  const preflightWasFirstCommand = firstCommand?.status === "completed"
+    && firstCommand.exitCode === 0
+    && /node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research\b/.test(firstCommand.command);
+  const skillWasNotReread = initialCommands.every((command) =>
+    !command.command.includes(".agents/skills/rpivc-research/SKILL.md"));
+  const firstOutput = turns[0]?.output ?? "";
+  const tracerOutput = turns.find((turn) => String(turn.input ?? "").trim().replaceAll("*", "").toLowerCase() === "run"
+    && /^## Discovery Summary\b/m.test(turn.output))?.output ?? "";
+  const initialTracerGatePasses = /(?:^|\n)\s*role:\s*["']?rpivc-scope-tracer["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /(?:^|\n)\s*id:\s*["']?S1["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /Run[\s\S]*Edit[\s\S]*Omit[\s\S]*Stop/i.test(firstOutput)
+    && !/##\s+(?:Discovery Summary|Proposed Execution Plan)/i.test(firstOutput);
 
+  components.push(result("input preflight first command", preflightWasFirstCommand, preflightWasFirstCommand ? "successful deterministic input preflight preceded all shell reads" : `first command: ${firstCommand?.status ?? "none"}/${firstCommand?.exitCode ?? "none"} ${firstCommand?.command ?? "none"}`));
+  components.push(result("no skill reread before scope Run", skillWasNotReread, skillWasNotReread ? "loaded skill was not reread through the shell" : "initial turn accessed rpivc-research/SKILL.md through the shell"));
+  components.push(result("initial scope tracer gate", initialTracerGatePasses, initialTracerGatePasses ? "initial turn displayed only the S1 approval card" : "initial turn did not preserve the S1 card-before-tracing boundary"));
+  components.push(result("valid tracer scope checkpoint", tracerScopeCheckpointIsValid(tracerOutput), "tracer supplied five sections, 5-9 questions with three artifact links each, and at most three groups"));
   components.push(result("one research artifact", artifacts.length === 1, `${artifacts.length} research artifacts`));
   components.push(result("single-draft revision lifecycle", revisionLifecyclePasses, `${revisionObservations.length} validated observations; ${revisionPaths.size} paths; ${revisionHashes.size} hashes`));
   components.push(result("write scope", unexpected.length === 0, unexpected.length ? unexpected.join(", ") : "only research artifact changed"));
@@ -71,13 +186,39 @@ export default function assertResearchContract(output, context) {
   components.push(result("direct child budget", directChildBudgetPasses, `${directSpawns.length} direct children; ${analysisSpawns.length} analysis profiles`));
   components.push(result("spawn-only analysis", attestations.every((item) => item.dispatch_mode === "spawn"), "every approved card used a fresh child"));
   components.push(result("no successor", ![...changes.created, ...changes.modified].some((file) => file.includes("rpivc-design")) && !/invok(?:e|ed|ing) [`$]?rpivc-design/i.test(output), "no design stage created or invoked"));
+  components.push(result(
+    "compiled scan canonical evidence",
+    repositoryRelativeCitationLabels(compiledScan, path.join(directory, "workspace"))
+      && preciseCitationRanges(compiledScan),
+    "compiled scan current-code citations use full repository-relative labels and ranges no wider than 15 lines",
+  ));
 
   if (artifacts.length === 1) {
     const markdown = fs.readFileSync(path.join(artifactDirectory, artifacts[0]), "utf8");
+    const metadata = parseFrontmatter(markdown);
     const sections = ["Source Feature", "Research Questions", "Coverage Ledger", "Detailed Findings", "Code References", "Integration Points", "Developer Context", "Evidence Conflicts and Gaps", "Dispatch Ledger"];
     components.push(result("required artifact sections", sections.every((section) => markdown.includes(`## ${section}`)), "required research sections present"));
     components.push(result("repository-relative clickable evidence", repositoryRelativeCitationLabels(markdown, path.join(directory, "workspace")), "all current-code citation labels match repository-relative targets"));
-    components.push(result("inherited decision", inheritsExternalWebDeferral(markdown), "discovery deferral inherited"));
+    components.push(result("coverage projection", coverageProjectionMatches(compiledScan, markdown), "compiled scan and artifact use one canonical question-status projection"));
+    components.push(result("compiled scan projection", compiledScanProjectedExactly(compiledScan, markdown), "Detailed Findings preserves the rendered scan and artifact citation lines come from it verbatim"));
+    components.push(result("external-web boundary", inheritsExternalWebDeferral(markdown), "external web research remains deferred"));
+    if (inputMode === "prompt") {
+      const expectedPrompt = String(context?.vars?.expected_prompt ?? "");
+      const firstOutput = turns[0]?.output ?? "";
+      const discoverArtifacts = fs.existsSync(discoveryDirectory)
+        ? fs.readdirSync(discoveryDirectory).filter((name) => name.endsWith(".md"))
+        : [];
+      const promptReachedCard = firstOutput.includes("inputs:")
+        && firstOutput.includes(expectedPrompt)
+        && /(?:prompt|direct)/i.test(firstOutput);
+      components.push(result("direct prompt scope card", promptReachedCard, promptReachedCard ? "exact prompt and prompt mode visible before Run" : "direct prompt or mode missing from first scope card"));
+      components.push(result("prompt-only lineage", Array.isArray(metadata.source_artifacts) && metadata.source_artifacts.length === 0, JSON.stringify(metadata.source_artifacts)));
+      const noDiscoveryContext = hasNoDiscoveryContext(markdown);
+      components.push(result("no discovery dependency", discoverArtifacts.length === 0 && noDiscoveryContext, `${discoverArtifacts.length} discovery artifacts; explicit no-discovery context ${noDiscoveryContext}`));
+    } else {
+      components.push(result("discovery lineage", Array.isArray(metadata.source_artifacts) && metadata.source_artifacts.length === 1, JSON.stringify(metadata.source_artifacts)));
+      components.push(result("inherited decision", inheritsExternalWebDeferral(markdown), "discovery deferral inherited"));
+    }
   }
 
   const pass = components.every((item) => item.pass);

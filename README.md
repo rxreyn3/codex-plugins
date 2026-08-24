@@ -2,7 +2,7 @@
 
 A lightweight, human-gated Codex port of valuable RPIV-Pi workflow behavior.
 
-Current checkpoint: `rpivc-discover` is accepted at commit `bc94805`. The independently reviewable `rpivc-research` candidate is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Its three-card 2026-08-20 baseline passed 2/2. Ryan then rejected superseding research files for minor revisions: a research run now owns one review-draft path, **Revise** changes and revalidates those bytes in place, and **Accept** freezes them. A fresh two-case baseline is authorized to exercise that lifecycle. No later workflow stage is implemented.
+Current checkpoint: `rpivc-discover` is accepted at commit `bc94805`. The independently reviewable `rpivc-research` candidate is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Its three-card 2026-08-20 baseline passed 2/2. Research now preserves RPIV-Pi's two entry modes: a lightweight direct prompt or one accepted discovery artifact. A run owns one review-draft path, **Revise** changes and revalidates those bytes in place, and **Accept** freezes them. A fresh three-case baseline is authorized to cover both input modes and the revision lifecycle. No later workflow stage is implemented.
 
 Discovery keeps review inside the conversation:
 
@@ -21,7 +21,7 @@ Only final stage artifacts are written. They remain local under the gitignored `
 
 Promptfoo now owns the repeatable discovery evaluation. It drives the real repository-local skill through Codex app-server tasks in disposable clones, using two synthetic multi-turn cases, deterministic assertions, safe child-runtime attestations, and two independent read-only agent graders. It does not run RPIV-Pi or repair the product during a baseline.
 
-Research uses the same one-shot evaluation discipline through separate narrow and cross-cutting cases. A failed baseline stops for review; it never repairs and reruns itself. Its evaluator independently attests every fresh child and archives it immediately after capturing effective runtime settings. It also records evaluation-only artifact path and hash observations so the revision case proves one validated path changed without creating duplicate workflow artifacts.
+Research uses the same evaluation discipline through direct-prompt, discovery-backed narrow, and cross-cutting cases. Its evaluator independently attests every fresh child and archives it immediately after capturing effective runtime settings. It also records evaluation-only artifact path and hash observations so the revision case proves one validated path changed without creating duplicate workflow artifacts.
 
 Useful entry points:
 
