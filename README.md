@@ -2,7 +2,7 @@
 
 A lightweight, human-gated Codex port of valuable RPIV-Pi workflow behavior.
 
-Current checkpoint: `rpivc-discover`, shared deterministic artifact helpers, and the locator and analyzer discovery agents. No later workflow stage is implemented.
+Current checkpoint: `rpivc-discover`, shared deterministic artifact helpers, and the locator and analyzer discovery agents are accepted at commit `bc94805`. The next unit has a reviewable [`rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md), but no later workflow stage is implemented.
 
 Discovery keeps review inside the conversation:
 
@@ -27,6 +27,7 @@ Useful entry points:
 - [Discovery configuration](/Users/ryan.reynolds/Projects/rpiv-codex/evals/discover/promptfooconfig.yaml)
 - [Parity matrix](/Users/ryan.reynolds/Projects/rpiv-codex/PARITY.md)
 - [Implementation plan](/Users/ryan.reynolds/Projects/rpiv-codex/PLAN.md)
+- [`rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md)
 
 ```sh
 npm test

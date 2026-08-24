@@ -342,7 +342,10 @@ Nothing commits or pushes automatically.
 
 ## Incremental Implementation Order
 
-### 1. Discovery simplification and correction
+### 1. Discovery simplification and correction — accepted
+
+Completed and accepted at commit `bc94805` after the two-case Promptfoo baseline,
+runtime subagent attestation, contract tests, and manual review.
 
 Update only the existing discovery vertical unit:
 
@@ -357,17 +360,21 @@ Update only the existing discovery vertical unit:
 - Preserve adaptive zero/one/two-agent discovery.
 - Preserve truthful sandbox disclosure.
 - Update deterministic product tests and the Promptfoo discovery cases.
-- Run one Promptfoo baseline and stop for Ryan’s review and decision.
+- Run one Promptfoo baseline and stop for Ryan’s review and decision. Completed.
 
-Do not begin `rpivc-research`.
+The discovery checkpoint is closed. No research implementation was included in it.
 
-### 2. Research
+### 2. Research — specification ready for review
+
+The proposed unit contract is [the `rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). It deliberately exists before any research skill, agent, fixture, or adapter is scaffolded.
 
 - Add `rpivc-research`.
 - Add scope-tracer, pattern, integration, precedent, and analysis specialists.
 - Test conversational scope-tracer and research-wave gates.
 - Test Feature Requirements Document decision inheritance.
 - Stop for manual review.
+
+Do not implement this unit until Ryan accepts the specification.
 
 ### 3. Design
 
@@ -502,17 +509,13 @@ A strict approval mode may be reconsidered only if a concrete future use case re
 
 ## Current Assumptions
 
-- `rpiv-codex` now exists and contains the uncommitted discovery unit.
+- `rpiv-codex` now exists; the accepted discovery unit is committed at `bc94805`.
 - The previous assumption that it remains empty is obsolete.
 - Historical discovery, dispatch, and approval artifacts from the superseded gate design have been deleted at Ryan’s explicit request.
 - `rpiv-mono` remains read-only and untouched.
 - Initial use is Ryan’s local Codex environment.
 - No global installation or plugin packaging is included.
 - Skills never modify `.gitignore`, commit, push, or choose whether artifacts should be committed.
-- The next implementation checkpoint is complete only when the simplified `rpivc-discover` can be exercised through the Promptfoo baseline and reviewed for:
-  - no-probe discovery;
-  - conversational locator approval;
-  - evidence-dependent conversational analyzer approval;
-  - clickable final artifact presentation;
-  - final **Accept / Revise / Stop**.
-- `rpivc-research` must not exist at that checkpoint.
+- The discovery checkpoint is complete and accepted.
+- The next proposed implementation unit is `rpivc-research`; its specification is reviewable, but the skill and its evaluation files do not yet exist.
+- `rpivc-design` must not exist at the research checkpoint.
