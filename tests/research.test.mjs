@@ -349,7 +349,7 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /const turnTimeoutMs = 2700000/);
   assert.match(provider, /Native waits yield every ten minutes/);
   assert.match(provider, /openai:codex-app-server:gpt-5\.6-sol/);
-  assert.match(provider, /model_reasoning_effort: "xhigh"/);
+  assert.match(provider, /model_reasoning_effort: "high"/);
   assert.match(provider, /Call collaboration\.spawn_agent directly/);
   assert.match(provider, /never from functions\.exec/);
   assert.match(provider, /collaboration\.wait_agent directly with timeout_ms: 600000/);

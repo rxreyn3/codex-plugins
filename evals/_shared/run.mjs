@@ -51,6 +51,13 @@ function runCommand(args, env) {
 }
 
 function controlledEnvironment(id, evidenceRoot) {
+  // Research allows one retry after a 45-minute app-server turn timeout. Give
+  // the enclosing case enough time to report that bounded retry outcome, and
+  // give an abandoned scheduler slot one turn plus a small cleanup buffer to
+  // drain before the next serial case begins.
+  const caseTimeoutMs = 10_800_000;
+  const schedulerQueueTimeoutMs = 3_000_000;
+  const evaluationTimeoutMs = caseTimeoutMs * 3;
   return {
     ...process.env,
     RPIVC_EVAL_ID: id,
@@ -63,8 +70,9 @@ function controlledEnvironment(id, evidenceRoot) {
     PROMPTFOO_DISABLE_SHARING: "true",
     PROMPTFOO_CACHE_ENABLED: "false",
     PROMPTFOO_ASSERTIONS_MAX_CONCURRENCY: "1",
-    PROMPTFOO_EVAL_TIMEOUT_MS: "7200000",
-    PROMPTFOO_MAX_EVAL_TIME_MS: "14400000",
+    PROMPTFOO_EVAL_TIMEOUT_MS: String(caseTimeoutMs),
+    PROMPTFOO_MAX_EVAL_TIME_MS: String(evaluationTimeoutMs),
+    PROMPTFOO_SCHEDULER_QUEUE_TIMEOUT_MS: String(schedulerQueueTimeoutMs),
   };
 }
 

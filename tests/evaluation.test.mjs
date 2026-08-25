@@ -84,6 +84,10 @@ test("discovery config contains two simulated-user cases and two independent gra
   assert.match(runner, /PROMPTFOO_DISABLE_TELEMETRY/);
   assert.match(runner, /PROMPTFOO_DISABLE_UPDATE/);
   assert.match(runner, /PROMPTFOO_DISABLE_SHARING/);
+  assert.match(runner, /const caseTimeoutMs = 10_800_000/);
+  assert.match(runner, /const schedulerQueueTimeoutMs = 3_000_000/);
+  assert.match(runner, /const evaluationTimeoutMs = caseTimeoutMs \* 3/);
+  assert.match(runner, /PROMPTFOO_SCHEDULER_QUEUE_TIMEOUT_MS/);
   assert.match(runner, /"--no-cache"/);
   assert.match(runner, /"--no-share"/);
   assert.match(runner, /"--repeat", "1"/);
