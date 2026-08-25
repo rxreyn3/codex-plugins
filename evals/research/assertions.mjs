@@ -116,6 +116,19 @@ export function compiledScanProjectedExactly(compiledScan, markdown) {
   return artifactCitationLines.every((line) => scanLineSet.has(line));
 }
 
+export function successorStageWasInvoked(turns, changes) {
+  const sourceChanges = [...changes.created, ...changes.modified]
+    .some((file) => file.includes("rpivc-design"));
+  if (sourceChanges) return true;
+
+  return turns.some((turn) => {
+    const input = String(turn?.input ?? "");
+    const output = String(turn?.output ?? "");
+    return /(?:^|\n)\s*\$rpivc-design(?:\s|$)/i.test(input)
+      || /(?:^|\n)\s*(?:(?:I\s+(?:am\s+|['’]m\s+))|(?:now\s+))?(?:invoking|starting|running)\s+(?:the\s+)?[`$]?rpivc-design\b/i.test(output);
+  });
+}
+
 export default function assertResearchContract(output, context) {
   const root = process.env.RPIVC_EVIDENCE_ROOT;
   const caseId = String(context?.vars?.case_id ?? "");
@@ -196,7 +209,7 @@ export default function assertResearchContract(output, context) {
   components.push(result("runtime attestation", attestations.length >= 2 && attestations.every((item) => item.pass), `${attestations.length} attestations; ${attestations.filter((item) => !item.pass).length} failed`));
   components.push(result("direct child budget", directChildBudgetPasses, `${directSpawns.length} direct children; ${analysisSpawns.length} analysis profiles`));
   components.push(result("spawn-only analysis", attestations.every((item) => item.dispatch_mode === "spawn"), "every approved card used a fresh child"));
-  components.push(result("no successor", ![...changes.created, ...changes.modified].some((file) => file.includes("rpivc-design")) && !/invok(?:e|ed|ing) [`$]?rpivc-design/i.test(output), "no design stage created or invoked"));
+  components.push(result("no successor", !successorStageWasInvoked(turns, changes), "no design stage created or invoked"));
   components.push(result(
     "compiled scan canonical evidence",
     repositoryRelativeCitationLabels(compiledScan, path.join(directory, "workspace"))

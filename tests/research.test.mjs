@@ -620,6 +620,29 @@ test("tracer scope checkpoint rejects parent-authored recovery from an invalid t
   assert.equal(tracerScopeCheckpointIsValid(valid.replaceAll(`(${workspace}/`, `(file://${workspace}/`), workspace), false);
 });
 
+test("research evaluation distinguishes successor evidence from successor invocation", async () => {
+  const { successorStageWasInvoked } = await import("../evals/research/assertions.mjs");
+  const unchanged = { created: [], modified: [], deleted: [] };
+
+  assert.equal(successorStageWasInvoked([{
+    input: "Accept",
+    output: "The no-successor result rejects a created, modified, or invoked `rpivc-design` stage.",
+  }], unchanged), false);
+  assert.equal(successorStageWasInvoked([{
+    input: "$rpivc-design continue from the accepted research",
+    output: "Starting the requested stage.",
+  }], unchanged), true);
+  assert.equal(successorStageWasInvoked([{
+    input: "Accept",
+    output: "Invoking `rpivc-design` now.",
+  }], unchanged), true);
+  assert.equal(successorStageWasInvoked([], {
+    created: [".rpiv-codex/artifacts/rpivc-design/next.md"],
+    modified: [],
+    deleted: [],
+  }), true);
+});
+
 test("research attestation recognizes every dispatchable research role", () => {
   const rendered = [
     "```yaml\nid: S1\ntask_name: s1_scope_tracer\nrole: rpivc-scope-tracer\nmodel: gpt-5.6-terra\nreasoning: high\n```",
