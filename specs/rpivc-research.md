@@ -141,6 +141,10 @@ The scope tracer must:
 7. Put the canonical definition first in each question's citations.
 8. Reference at least three concrete artifacts per question.
 9. Answer none of the questions and write no file.
+10. Pass its exact complete candidate response through the deterministic
+    `validate-research-scope` helper, repair all reported defects, and return
+    only the exact validated bytes. The parent repeats this validation before
+    presenting the scope checkpoint.
 
 **Omit** runs no tracer. Research may continue only if Ryan supplies replacement
 questions meeting the same schema; otherwise the skill stops. This keeps Omit a

@@ -205,6 +205,9 @@ test("research specialist definitions are adaptive and childless", () => {
   assert.match(scopeTracer, /full repository-relative.*label/);
   assert.match(scopeTracer, /never put leading or trailing whitespace inside the label/);
   assert.match(scopeTracer, /derive each label from its absolute target/);
+  assert.match(scopeTracer, /invisible Unicode formatting or control character/);
+  assert.match(scopeTracer, /validate-research-scope/);
+  assert.match(scopeTracer, /exact validated candidate bytes/);
   assert.match(scopeTracer, /propose four groups/);
   assert.match(scopeTracer, /all five literal Markdown headings/);
   assert.match(scopeTracer, /self-check that all five headings exist/);
@@ -461,6 +464,10 @@ test("research scope validation checks citations and exact plan coverage", () =>
   );
   assert.throws(
     () => validateResearchScope(valid.replaceAll("[tracked.txt:1]", "[tracked.txt:1 ]"), workspace),
+    /citation label must be repository-relative/,
+  );
+  assert.throws(
+    () => validateResearchScope(valid.replaceAll("[tracked.txt:1]", "[\u200btracked.txt:1]"), workspace),
     /citation label must be repository-relative/,
   );
   assert.throws(
