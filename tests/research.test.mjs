@@ -577,6 +577,7 @@ test("research provider retries one timed-out turn without granting new authorit
     delegateContext: {},
     callOptions: {},
     decision: "run",
+    retryDelayMs: 0,
   });
 
   assert.equal(response.output, "validated scope");
@@ -590,6 +591,40 @@ test("research provider retries one timed-out turn without granting new authorit
   assert.deepEqual(events.map((event) => event.event), ["scheduled", "succeeded"]);
   assert.equal(isResearchTransportTimeout(new Error("other failure")), false);
   assert.match(researchTransportRetryMarker({ decision: "run", pendingCardIds: ["S1"] }), /same user decision/i);
+});
+
+test("research provider rejects an empty transport retry checkpoint", async () => {
+  const evidenceDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "rpivc-empty-retry-")));
+  let calls = 0;
+  const state = {
+    evidenceDir,
+    turn: 1,
+    pendingCards: [{ id: "S1" }],
+    delegate: {
+      async callApi() {
+        calls += 1;
+        return calls === 1
+          ? { error: "codex app-server turn timed out after 2700000ms" }
+          : { output: "" };
+      },
+    },
+  };
+  const provider = new RpivcResearchProvider();
+
+  await assert.rejects(
+    provider.callDelegateWithTransportRetry({
+      state,
+      appServerInput: [{ type: "text", text: "Run" }],
+      delegateContext: {},
+      callOptions: {},
+      decision: "run",
+      retryDelayMs: 0,
+    }),
+    /no checkpoint output/,
+  );
+  const events = fs.readFileSync(path.join(evidenceDir, "transport-retries.jsonl"), "utf8")
+    .trim().split("\n").map((line) => JSON.parse(line));
+  assert.deepEqual(events.map((event) => event.event), ["scheduled", "failed"]);
 });
 
 test("research provider supplements a raw dispatch when the notification handler misses it", () => {

@@ -443,6 +443,7 @@ export default class RpivcResearchProvider {
     delegateContext,
     callOptions,
     decision,
+    retryDelayMs = 2000,
   }) {
     const evidencePath = path.join(state.evidenceDir, "transport-retries.jsonl");
     const turn = state.turn + 1;
@@ -457,6 +458,10 @@ export default class RpivcResearchProvider {
         );
         if (isResearchTransportTimeout(response?.error)) {
           throw new Error(String(response.error));
+        }
+        if (retryAttempt > 0
+          && (typeof response?.output !== "string" || response.output.trim().length === 0)) {
+          throw new Error("research transport retry returned no checkpoint output");
         }
         if (retryAttempt > 0) {
           appendJsonLine(evidencePath, {
@@ -491,6 +496,13 @@ export default class RpivcResearchProvider {
           approved_card_ids: state.pendingCards.map((card) => card.id),
           error: error instanceof Error ? error.message : String(error),
         });
+        // Promptfoo requests turn interruption asynchronously. Give the
+        // persistent app-server task one event-loop boundary to settle before
+        // starting the replacement turn, or a late aborted-turn completion can
+        // resolve the retry with an empty response while its work continues.
+        if (retryDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        }
         input = [
           ...appServerInput,
           {
