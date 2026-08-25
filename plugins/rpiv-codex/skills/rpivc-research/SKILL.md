@@ -9,11 +9,11 @@ Produce current-code research, not a design. The invoked skill content is alread
 
 ## Resolve the bundled runtime
 
-Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin's helpers are at `<skill-root>/scripts/`, and its specialist contracts are at `<skill-root>/specialists/`. Construct those absolute paths from the loaded skill location, preserving any symlink component; filesystem resolution will reach the canonical plugin resources. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
+Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin exposes regular-file helper entrypoints at `<skill-root>/scripts/`; each entrypoint loads the canonical implementation from the plugin root, so it survives Codex's local cache copy as well as repository development symlinks. Resolve a bundled specialist contract by running `node <skill-root>/scripts/artifact-check.mjs specialist-contract <role>` and use the emitted absolute path and hash. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
 
 Run every helper with the user's current project as the working directory. The helper determines the target repository from `process.cwd()` and allocates artifacts only beneath that project's `.rpiv-codex/artifacts/`. The plugin installation directory is runtime code, never the research target and never an artifact destination.
 
-Run the deterministic input preflight as the first command. After it succeeds, read [the research contract](references/research-contract.md), [the research template](assets/research-template.md), and the bundled scope-tracer contract at `<skill-root>/specialists/rpivc-scope-tracer.toml` completely. Then run `node <skill-root>/scripts/artifact-check.mjs specialist-contract rpivc-scope-tracer` and copy its emitted `absolute` and `sha256` values literally into the tracer card.
+Run the deterministic input preflight as the first command. After it succeeds, read [the research contract](references/research-contract.md) and [the research template](assets/research-template.md), then run `node <skill-root>/scripts/artifact-check.mjs specialist-contract rpivc-scope-tracer`. Read the contract at its emitted `absolute` path completely and copy the emitted `absolute` and `sha256` values literally into the tracer card.
 
 ## Preflight the research input
 

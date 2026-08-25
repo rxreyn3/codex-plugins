@@ -9,7 +9,7 @@ Preserve RPIV discovery behavior while adding lightweight Codex-native review ga
 
 ## Resolve the bundled runtime
 
-Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin's helpers are at `<skill-root>/scripts/`, and its specialist contracts are at `<skill-root>/specialists/`. Construct those absolute paths from the loaded skill location, preserving any symlink component; filesystem resolution will reach the canonical plugin resources. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
+Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin exposes regular-file helper entrypoints at `<skill-root>/scripts/`; each entrypoint loads the canonical implementation from the plugin root, so it survives Codex's local cache copy as well as repository development symlinks. Resolve a bundled specialist contract by running `node <skill-root>/scripts/artifact-check.mjs specialist-contract <role>` and use the emitted absolute path and hash. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
 
 Run every helper with the user's current project as the working directory. The helper determines the target repository from `process.cwd()` and allocates artifacts only beneath that project's `.rpiv-codex/artifacts/`. The plugin installation directory is runtime code, never the product target and never an artifact destination.
 
@@ -25,7 +25,7 @@ Before declaring probe readiness, establish the **target context**: the current 
 
 ## Gate a narrow evidence probe
 
-While choosing the roster and preparing cards, read only the user's named inputs, this skill's own resources, the matching bundled specialist contract at `<skill-root>/specialists/<role>.toml`, and `context-snapshot.mjs` output. Do not search memories or inspect target-repository source, tests, documentation, Git history, or configuration to discover anchors. Reading plugin resources so you can follow the workflow does not turn their paths into approved product evidence. Treat an exact anchor as already known only when the user supplied it or an approved prior artifact records it. Otherwise, unresolved **where** questions require a locator card before any analyzer card.
+While choosing the roster and preparing cards, read only the user's named inputs, this skill's own resources, the matching bundled specialist contract returned by `specialist-contract`, and `context-snapshot.mjs` output. Do not search memories or inspect target-repository source, tests, documentation, Git history, or configuration to discover anchors. Reading plugin resources so you can follow the workflow does not turn their paths into approved product evidence. Treat an exact anchor as already known only when the user supplied it or an approved prior artifact records it. Otherwise, unresolved **where** questions require a locator card before any analyzer card.
 
 Choose the smallest useful roster:
 
@@ -39,7 +39,7 @@ Choose the smallest useful roster:
 For a justified probe:
 
 1. Run `node <skill-root>/scripts/context-snapshot.mjs` and confirm that its absolute repository matches the established product target. If not, ask the user to re-root or continue without repository evidence.
-2. Build only the justified cards from [the card templates](assets/agent-card-templates.md). Fill every field with information available now. Include the repository, branch, commit, and working-tree SHA-256 shown by the snapshot. Treat the displayed card as the complete, authoritative runtime role contract; the matching bundled specialist contract is an authoring reference for the card, not a second hidden configuration layer.
+2. Run `node <skill-root>/scripts/artifact-check.mjs specialist-contract <role>` for every justified role, read the emitted absolute contract completely, then build only the justified cards from [the card templates](assets/agent-card-templates.md). Fill every field with information available now. Include the repository, branch, commit, and working-tree SHA-256 shown by the snapshot. Treat the displayed card as the complete, authoritative runtime role contract; the matching bundled specialist contract is an authoring reference for the card, not a second hidden configuration layer.
 3. Display the complete cards directly in chat as YAML. Explain that requested read-only isolation is not a technical guarantee because child agents inherit the parent runtime sandbox.
 4. Ask for exactly one conversational decision: **Run**, **Edit**, **Omit**, or **Stop**. End the response and run nothing yet.
 5. Treat only an explicit **Run** as authorization for the most recently displayed cards:

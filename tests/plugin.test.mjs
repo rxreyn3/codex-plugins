@@ -21,13 +21,15 @@ test("portable skills resolve every runtime resource inside the plugin", () => {
     const skillRoot = path.join(pluginRoot, "skills", skillName);
     const skill = fs.readFileSync(path.join(skillRoot, "SKILL.md"), "utf8");
     assert.match(skill, /<skill-root>\/scripts\//);
-    assert.match(skill, /<skill-root>\/specialists\//);
+    assert.match(skill, /specialist-contract <role>/);
     assert.doesNotMatch(skill, /node \.agents\/skills/);
     assert.doesNotMatch(skill, /\.codex\/agents/);
-    for (const resource of ["scripts", "specialists"]) {
-      const exposed = path.join(skillRoot, resource);
-      assert.equal(fs.lstatSync(exposed).isSymbolicLink(), true);
-      assert.equal(fs.realpathSync(exposed), path.join(pluginRoot, resource));
+    const scripts = path.join(skillRoot, "scripts");
+    assert.equal(fs.lstatSync(scripts).isDirectory(), true);
+    for (const script of ["artifact-check.mjs", "artifact-path.mjs", "context-snapshot.mjs"]) {
+      const exposed = path.join(scripts, script);
+      assert.equal(fs.lstatSync(exposed).isFile(), true);
+      assert.equal(fs.lstatSync(exposed).isSymbolicLink(), false);
     }
   }
 
@@ -53,7 +55,7 @@ test("bundled helpers preflight both Research inputs and allocate artifacts in a
 
   const researchHelper = path.join(pluginRoot, "skills", "rpivc-research", "scripts", "artifact-check.mjs");
   const allocator = path.join(pluginRoot, "skills", "rpivc-discover", "scripts", "artifact-path.mjs");
-  assert.equal(fs.realpathSync(researchHelper), path.join(pluginRoot, "scripts", "artifact-check.mjs"));
+  assert.equal(fs.realpathSync(researchHelper), researchHelper);
 
   const prompt = runJson(researchHelper, ["preflight-research", "Trace the unrelated product entry point"], workspace);
   assert.equal(prompt.input_mode, "prompt");

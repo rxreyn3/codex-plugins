@@ -436,6 +436,7 @@ const researchProfiles = {
 };
 
 const runningArtifactCheckPath = fs.realpathSync(fileURLToPath(import.meta.url));
+const bundledPluginRoot = fs.realpathSync(path.join(path.dirname(runningArtifactCheckPath), ".."));
 const bundledSpecialistDirectory = fs.realpathSync(path.join(path.dirname(runningArtifactCheckPath), "..", "specialists"));
 const bundledSpecialistRoles = new Set([
   "rpivc-codebase-locator",
@@ -501,7 +502,14 @@ export function validateResearchCard(text, cwd = process.cwd(), authoritativeSna
     } catch {
       fail("research card scope_validator does not resolve to a file");
     }
-    if (resolvedScopeValidator !== runningArtifactCheckPath) {
+    const bundledResearchEntry = fs.realpathSync(path.join(
+      bundledPluginRoot,
+      "skills",
+      "rpivc-research",
+      "scripts",
+      "artifact-check.mjs",
+    ));
+    if (![runningArtifactCheckPath, bundledResearchEntry].includes(resolvedScopeValidator)) {
       fail("research card scope_validator must resolve to the running plugin helper");
     }
   } else if (fields.has("scope_validator")) {
@@ -929,7 +937,7 @@ function readStandardInput(timeoutMs = 2000) {
   });
 }
 
-async function main() {
+export async function artifactCheckMain() {
   const [, , command, ...args] = process.argv;
   if (["validate-research-card", "validate-research-scope", "render-research-envelope"].includes(command)) {
     if (args.length !== 0) fail(`usage: artifact-check.mjs ${command} < input`);
@@ -969,7 +977,7 @@ const invokedDirectly = process.argv[1]
   && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(path.resolve(process.argv[1]));
 
 if (invokedDirectly) {
-  main().then((result) => {
+  artifactCheckMain().then((result) => {
     process.stdout.write(typeof result === "string" ? result : `${JSON.stringify(result, null, 2)}\n`);
   }).catch((error) => {
     process.stderr.write(`rpivc artifact check error: ${error.message}\n`);
