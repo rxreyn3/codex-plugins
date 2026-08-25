@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { loadApiProviders } from "promptfoo";
 
@@ -17,11 +17,7 @@ import {
   extractAgentCards,
 } from "./runtime-attestation.mjs";
 import { contextSnapshot } from "../../.agents/skills/_shared/scripts/context-snapshot.mjs";
-import {
-  inspectArtifact,
-  validateResearchCard,
-  validateResearchScope,
-} from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
+import * as sourceArtifactChecks from "../../.agents/skills/_shared/scripts/artifact-check.mjs";
 
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +57,25 @@ export function removeProjectLocalRpivcConfiguration(workspace) {
     removed.push(relative);
   }
   return removed;
+}
+
+export async function resolveResearchArtifactChecks(installedPluginRoot = null) {
+  if (!installedPluginRoot) return sourceArtifactChecks;
+  const helper = path.join(installedPluginRoot, "scripts", "artifact-check.mjs");
+  const loaded = await import(pathToFileURL(helper).href);
+  for (const name of ["inspectArtifact", "validateResearchCard", "validateResearchScope"]) {
+    if (typeof loaded[name] !== "function") {
+      throw new Error(`installed Research helper does not export ${name}: ${helper}`);
+    }
+  }
+  return loaded;
+}
+
+export function retainRuntimeSnapshotEvidence(snapshot, workspace, evidenceDir) {
+  return {
+    ...snapshot,
+    repository: retainWorkspaceReferences(snapshot.repository, workspace, evidenceDir),
+  };
 }
 
 // Promptfoo may provide either a plain string or a serialized message history.
@@ -173,7 +188,7 @@ export function retainUniqueAttestation(state, attestation) {
   return true;
 }
 
-export function observeResearchArtifact(workspace, turn) {
+export function observeResearchArtifact(workspace, turn, artifactChecks = sourceArtifactChecks) {
   const directory = path.join(workspace, ".rpiv-codex", "artifacts", "research");
   const artifacts = fs.existsSync(directory)
     ? fs.readdirSync(directory).filter((name) => name.endsWith(".md")).sort()
@@ -194,7 +209,7 @@ export function observeResearchArtifact(workspace, turn) {
   const bytes = fs.readFileSync(absolute);
   let inspectionError = null;
   try {
-    inspectArtifact(absolute, workspace);
+    artifactChecks.inspectArtifact(absolute, workspace);
   } catch (error) {
     inspectionError = error instanceof Error ? error.message : String(error);
   }
@@ -210,7 +225,7 @@ export function observeResearchArtifact(workspace, turn) {
 }
 
 export function retainArtifactRevisionObservation(state) {
-  const observation = observeResearchArtifact(state.workspace, state.turn);
+  const observation = observeResearchArtifact(state.workspace, state.turn, state.artifactChecks);
   if (!observation) return null;
   const previous = state.artifactRevisionObservations.at(-1);
   if (previous
@@ -334,6 +349,7 @@ export default class RpivcResearchProvider {
     const configuredSource = process.env.RPIVC_SOURCE_ROOT
       ?? path.resolve(moduleDirectory, this.config.source_root ?? "../..");
     const installedPluginRoot = resolveInstalledPluginRoot(process.env.RPIVC_INSTALLED_PLUGIN_ROOT);
+    const artifactChecks = await resolveResearchArtifactChecks(installedPluginRoot);
     const codexPath = process.env.RPIVC_CODEX_PATH ?? executableOnPath("codex", configuredSource);
     if (!evaluationId || !evidenceRoot || !caseId) {
       throw new Error("RPIVC_EVAL_ID, RPIVC_EVIDENCE_ROOT, and case_id are required");
@@ -450,6 +466,7 @@ export default class RpivcResearchProvider {
       inputMode,
       discoveryArtifact,
       installedPluginRoot,
+      artifactChecks,
       researchSkillRoot,
       driftMarker: path.join(
         workspaceState.workspace,
@@ -761,11 +778,16 @@ export default class RpivcResearchProvider {
       ? contextSnapshot(state.workspace)
       : null;
     if (runtimeSnapshot) {
+      const retainedSnapshot = retainRuntimeSnapshotEvidence(
+        runtimeSnapshot,
+        state.workspace,
+        state.evidenceDir,
+      );
       appendJsonLine(path.join(state.evidenceDir, "pre-dispatch-snapshots.jsonl"), {
         before_turn: state.turn + 1,
-        decision,
+        decision: retainWorkspaceReferences(decision, state.workspace, state.evidenceDir),
         card_ids: state.pendingCards.map((card) => card.id),
-        context: runtimeSnapshot,
+        context: retainedSnapshot,
       });
     }
     // Slice the event stream at the turn boundary so an older spawn cannot make
@@ -801,7 +823,7 @@ export default class RpivcResearchProvider {
     if (isFirstTurn) {
       let error = null;
       try {
-        validateResearchCard(output, state.workspace, runtimeSnapshot);
+        state.artifactChecks.validateResearchCard(output, state.workspace, runtimeSnapshot);
       } catch (caught) {
         error = caught instanceof Error ? caught.message : String(caught);
       }
@@ -815,7 +837,7 @@ export default class RpivcResearchProvider {
     if (/^## Discovery Summary\b/m.test(output)) {
       let error = null;
       try {
-        validateResearchScope(output, state.workspace);
+        state.artifactChecks.validateResearchScope(output, state.workspace);
       } catch (caught) {
         error = caught instanceof Error ? caught.message : String(caught);
       }

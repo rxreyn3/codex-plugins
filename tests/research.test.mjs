@@ -29,7 +29,9 @@ import RpivcResearchProvider, {
   removeProjectLocalRpivcConfiguration,
   researchTransportRetryMarker,
   resolveInstalledPluginRoot,
+  resolveResearchArtifactChecks,
   retainArtifactRevisionObservation,
+  retainRuntimeSnapshotEvidence,
   retainUniqueAttestation,
   shouldCaptureRuntimeSnapshot,
   supplementRawAttestationEvents,
@@ -68,6 +70,50 @@ test("installed Research mode resolves the cached plugin and removes project-loc
   assert.equal(fs.existsSync(path.join(workspace, ".agents", "plugins")), false);
   assert.equal(fs.existsSync(path.join(workspace, ".agents", "skills", "rpivc-research")), false);
   assert.equal(fs.existsSync(path.join(workspace, ".codex", "agents", "rpivc-scope-tracer.toml")), false);
+});
+
+test("installed Research evidence validates against the installed bundle and retains one durable workspace path", async (t) => {
+  const installedParent = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "rpivc-installed-bundle-")));
+  const installedRoot = path.join(installedParent, "rpiv-codex");
+  fs.cpSync(path.join(root, "plugins", "rpiv-codex"), installedRoot, { recursive: true });
+  t.after(() => fs.rmSync(installedParent, { recursive: true, force: true }));
+
+  const checks = await resolveResearchArtifactChecks(installedRoot);
+  const tracer = checks.specialistContract("rpivc-scope-tracer");
+  assert.equal(tracer.absolute, path.join(installedRoot, "specialists", "rpivc-scope-tracer.toml"));
+
+  const { workspace } = researchWorkspaceFixture();
+  t.after(() => fs.rmSync(workspace, { recursive: true, force: true }));
+  const snapshot = JSON.parse(execFileSync(
+    process.execPath,
+    [path.join(installedRoot, "scripts", "context-snapshot.mjs")],
+    { cwd: workspace, encoding: "utf8" },
+  ));
+  const card = [
+    "id: S1",
+    "dispatch_protocol: rpivc-dispatch/v1",
+    "role: rpivc-scope-tracer",
+    "runtime_agent_type: default",
+    `specialist_contract: ${tracer.absolute}`,
+    `specialist_contract_sha256: ${tracer.sha256}`,
+    `scope_validator: ${path.join(installedRoot, "skills", "rpivc-research", "scripts", "artifact-check.mjs")}`,
+    `repository: ${snapshot.repository}`,
+    `branch: ${snapshot.branch}`,
+    `commit: ${snapshot.commit}`,
+    `working_tree_sha256: ${snapshot.working_tree_sha256}`,
+    "model: gpt-5.6-terra",
+    "reasoning: medium",
+  ].join("\n");
+  assert.equal(checks.validateResearchCard(card, workspace, snapshot).valid, true);
+  assert.throws(
+    () => validateResearchCard(card, workspace, snapshot),
+    /must resolve to the bundled logical-role contract/,
+  );
+
+  const evidenceDir = path.join(installedParent, "evidence");
+  const retained = retainRuntimeSnapshotEvidence(snapshot, workspace, evidenceDir);
+  assert.equal(retained.repository, path.join(evidenceDir, "workspace"));
+  assert.equal(retained.working_tree_sha256, snapshot.working_tree_sha256);
 });
 
 function git(cwd, ...args) {
@@ -879,6 +925,38 @@ test("research attestation requires and accepts direct native collaboration disp
   assert.equal(dispatch.spawn_schema, "native-collaboration");
   assert.equal(attestation.checks.native_collaboration_dispatch, true);
   assert.equal(attestation.pass, true);
+
+  const implicitDefault = buildDispatchAttestation({
+    parentThreadId: "parent",
+    card,
+    events: [
+      { kind: "thread-settings", thread_id: "parent", sandbox_policy: sandbox },
+      { ...dispatch, agent_type: null },
+      {
+        kind: "subagent-activity",
+        call_id: "native-spawn",
+        child_thread_id: "child",
+        agent_path: "/root/s1_scope_tracer",
+      },
+      {
+        kind: "thread-settings",
+        thread_id: "child",
+        model: card.model,
+        effort: card.reasoning,
+        sandbox_policy: sandbox,
+      },
+      { kind: "turn-completed", thread_id: "child", status: "completed", error: null },
+      {
+        kind: "agent-output",
+        author: "/root/s1_scope_tracer",
+        content_sha256: "b".repeat(64),
+        content_bytes: 128,
+      },
+    ],
+  });
+  assert.equal(implicitDefault.dispatch.agent_type, null);
+  assert.equal(implicitDefault.checks.requested_runtime_agent_matches, true);
+  assert.equal(implicitDefault.pass, true);
 });
 
 test("runtime attestation compares visible sandbox policy when parent roots are redacted", () => {

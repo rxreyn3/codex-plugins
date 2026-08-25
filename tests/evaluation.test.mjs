@@ -153,6 +153,14 @@ test("runtime attestation binds the displayed card to the effective child run", 
   assert.equal(attestation.child.nested_spawn_count, 0);
   assert.equal(JSON.stringify(events).includes(card.prompt), false);
 
+  const implicitDefaultEvents = events.map((event) => event.call_id === "spawn-call"
+    ? { ...event, agent_type: null }
+    : event);
+  const implicitDefault = buildDispatchAttestation({ events: implicitDefaultEvents, parentThreadId, card });
+  assert.equal(implicitDefault.spawn.agent_type, null);
+  assert.equal(implicitDefault.checks.requested_runtime_agent_matches, true);
+  assert.equal(implicitDefault.pass, true);
+
   const opaqueEvents = events.map((event) => event.kind === "spawn-call"
     ? { ...event, canonical_envelope_sha256: null, message_sha256: "encrypted-payload-hash", message_bytes: 512 }
     : event);

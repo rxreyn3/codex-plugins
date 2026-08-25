@@ -460,7 +460,10 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     prompt_envelope_matches_or_is_opaque: dispatch?.canonical_envelope_sha256 == null
       || dispatch.canonical_envelope_sha256 === expectedEnvelopeSha256,
     task_name_matches: dispatch?.task_name === expectedName,
-    requested_runtime_agent_matches: dispatch?.agent_type === card?.runtime_agent_type,
+    // The native collaboration schema makes agent_type optional and omission
+    // selects the default runtime agent. Preserve the raw null in evidence, but
+    // compare its effective value so a semantically identical call does not fail.
+    requested_runtime_agent_matches: (dispatch?.agent_type ?? "default") === card?.runtime_agent_type,
     context_mode_matches: dispatch?.fork_turns === "none",
     requested_model_matches: dispatch?.model === card?.model,
     requested_reasoning_matches: dispatch?.reasoning_effort === card?.reasoning,

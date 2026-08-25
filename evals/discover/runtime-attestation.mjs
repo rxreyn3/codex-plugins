@@ -266,7 +266,10 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     spawn_observed: Boolean(spawn),
     prompt_transport_observed: Boolean(spawn?.message_sha256 && spawn?.message_bytes > 0),
     task_name_matches: spawn?.task_name === expectedName,
-    requested_runtime_agent_matches: spawn?.agent_type === card?.runtime_agent_type,
+    // The native collaboration schema makes agent_type optional and omission
+    // selects the default runtime agent. Preserve the raw null in evidence, but
+    // compare its effective value so a semantically identical call does not fail.
+    requested_runtime_agent_matches: (spawn?.agent_type ?? "default") === card?.runtime_agent_type,
     no_inherited_conversation: spawn?.fork_turns === "none",
     requested_model_matches: spawn?.model === card?.model,
     requested_reasoning_matches: spawn?.reasoning_effort === card?.reasoning,
