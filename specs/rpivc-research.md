@@ -227,14 +227,15 @@ evidence gap instead of improvising a web agent.
 - Every analysis card spawns a fresh child with `fork_turns: none`, explicit
   `agent_type`, model, and reasoning, no children, and the approved card
   envelope. `agent_type` equals the displayed role.
-- A nested spawn-and-wait call uses a 120-second outer yield and a 600-second
-  same-child wait. The deferred wait result stores the child state at
-  `waited.status?.[spawned.agent_id]`; that keyed object is final when it owns
-  `completed`, `failed`, `cancelled`, or `terminated`. The complete status map
-  is not a scalar state, and a final child is never polled again. A non-final
-  inner timeout is polled again on that same child.
-  If orchestration returns a running cell identifier, the parent waits on that
-  exact cell to final output before dispatching another card or synthesizing.
+- Dispatch uses native `collaboration.spawn_agent` directly, never a deferred
+  adapter inside `functions.exec`. The direct call carries exact `agent_type`,
+  `task_name`, `fork_turns: none`, model, reasoning, and approved envelope.
+- Independent cards are all spawned before waiting so the approved wave runs in
+  parallel. The parent calls native `collaboration.wait_agent` with a 600-second
+  interval until completion notifications account for every authorized child.
+  The current wait schema has no target argument or keyed status map. A timeout
+  is retried only while an authorized child remains live; it never authorizes a
+  replacement child or early synthesis.
 - A later dependent card names prior cards in `depends_on`, contains their
   returned evidence, receives a separate approval, and consumes one of the
   three analysis-card slots by spawning a fresh child.

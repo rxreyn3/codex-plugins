@@ -10,6 +10,7 @@ import {
   buildDispatchAttestation,
   captureAttestationEvent,
   compareSandboxPolicies,
+  dispatchEnvelope,
   extractAgentCards,
 } from "../evals/research/runtime-attestation.mjs";
 import { artifactPath } from "../.agents/skills/_shared/scripts/artifact-path.mjs";
@@ -124,11 +125,12 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /discovery mode has exactly one declared discovery source and prompt mode has none/);
   assert.match(combined, /analyzer and pattern finder use Terra\/high/);
   assert.match(combined, /integration scanner and precedent locator use Luna\/low/);
-  assert.match(combined, /`functions\.wait` with that exact cell identifier/);
-  assert.match(combined, /inner.*(?:wait|same-child).*600|timeout_ms: 600000/s);
-  assert.match(combined, /keyed child state is absent or non-final.*same wait again|non-final timeout.*same child/s);
-  assert.match(combined, /do not append, stringify, or otherwise echo the full terminal child state/i);
-  assert.match(combined, /canonical payload from (?:the|that) (?:completion )?notification/i);
+  assert.match(combined, /native `collaboration\.spawn_agent` tool directly/);
+  assert.match(combined, /native `collaboration\.wait_agent`.*`timeout_ms: 600000`/s);
+  assert.match(combined, /current (?:wait )?schema.*no target.*no keyed status map/is);
+  assert.match(combined, /spawn every authorized card before waiting|dispatch every card before waiting/i);
+  assert.match(combined, /separately delivered completion (?:payload|notification)/i);
+  assert.doesNotMatch(combined, /multi_agent_v1__spawn_agent|waited\.status/);
   assert.match(combined, /artifact-check\.mjs finalize-research/);
   assert.match(combined, /compiled scan as well as the artifact.*basename-only label/s);
   assert.match(combined, /prepare-research-scan/);
@@ -257,16 +259,14 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   const provider = read("evals", "research", "provider.mjs");
   const assertions = read("evals", "research", "assertions.mjs");
   assert.match(provider, /const turnTimeoutMs = 2700000/);
-  assert.match(provider, /two 600-second same-child/);
+  assert.match(provider, /Native waits yield every ten minutes/);
   assert.match(provider, /openai:codex-app-server:gpt-5\.6-sol/);
   assert.match(provider, /model_reasoning_effort: "xhigh"/);
-  assert.match(provider, /Begin every functions\.exec spawn-and-wait script/);
-  assert.match(provider, /timeout_ms: 600000/);
-  assert.match(provider, /waited\.status\?\.\[spawned\.agent_id\]/);
-  assert.match(provider, /Object\.hasOwn\(state, \\"completed\\"\)/);
-  assert.match(provider, /never poll a terminal keyed child again/i);
-  assert.match(provider, /Do not text, append, stringify, or otherwise echo the full terminal child state/i);
-  assert.match(provider, /canonical payload from the notification/i);
+  assert.match(provider, /Call collaboration\.spawn_agent directly/);
+  assert.match(provider, /never from functions\.exec/);
+  assert.match(provider, /collaboration\.wait_agent directly with timeout_ms: 600000/);
+  assert.match(provider, /spawn every authorized card before waiting so the children run in parallel/i);
+  assert.match(provider, /wait schema has no targets or agent_id argument and returns no keyed status map/i);
   assert.match(provider, /first command must be artifact-check\.mjs preflight-research/i);
   assert.match(provider, /exact first command executable path is node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research/i);
   assert.match(provider, /first command must exit zero/i);
@@ -289,7 +289,7 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /return claims cite the return object/i);
   assert.match(provider, /do not access SKILL\.md through cat, sed, rg, find/i);
   assert.match(provider, /Never use a current-file citation to claim Git history/i);
-  assert.match(provider, /120-second outer yield is not a child deadline/);
+  assert.match(provider, /Never call functions\.wait/);
   assert.match(provider, /full repository-relative citation labels in the compiled scan/);
   assert.match(provider, /prepare-research-scan.*source_excerpt.*normalized_markdown/);
   assert.match(provider, /Compiled-scan preparation is read-only and has no two-attempt ceiling/);
@@ -722,9 +722,77 @@ test("runtime reducer captures only fresh spawn dispatches without plaintext", (
 
   assert.deepEqual([spawn.kind, spawn.dispatch_mode, spawn.task_name], ["dispatch-call", "spawn", "analysis_profile"]);
   assert.equal(spawn.message_sha256.length, 64);
+  assert.equal(spawn.spawn_schema, "native-collaboration");
   assert.equal(spawn.agent_type, "rpivc-codebase-analyzer");
   assert.equal(followup, null);
   assert.equal(JSON.stringify(spawn).includes("encrypted-spawn-envelope"), false);
+});
+
+test("research attestation requires and accepts direct native collaboration dispatch", () => {
+  const card = {
+    id: "S1",
+    dispatch_protocol: "rpivc-dispatch/v1",
+    dispatch_mode: "spawn",
+    depends_on: [],
+    task_name: "s1_scope_tracer",
+    role: "rpivc-scope-tracer",
+    model: "gpt-5.6-terra",
+    reasoning: "medium",
+  };
+  const dispatch = captureAttestationEvent({
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent",
+      turnId: "parent-turn",
+      item: {
+        type: "function_call",
+        namespace: "collaboration",
+        name: "spawn_agent",
+        call_id: "native-spawn",
+        arguments: JSON.stringify({
+          agent_type: card.role,
+          task_name: card.task_name,
+          fork_turns: "none",
+          model: card.model,
+          reasoning_effort: card.reasoning,
+          message: JSON.stringify(dispatchEnvelope(card)),
+        }),
+      },
+    },
+  });
+  const sandbox = { type: "workspaceWrite", networkAccess: false };
+  const attestation = buildDispatchAttestation({
+    parentThreadId: "parent",
+    card,
+    events: [
+      { kind: "thread-settings", thread_id: "parent", sandbox_policy: sandbox },
+      dispatch,
+      {
+        kind: "subagent-activity",
+        call_id: "native-spawn",
+        child_thread_id: "child",
+        agent_path: "/root/s1_scope_tracer",
+      },
+      {
+        kind: "thread-settings",
+        thread_id: "child",
+        model: card.model,
+        effort: card.reasoning,
+        sandbox_policy: sandbox,
+      },
+      { kind: "turn-completed", thread_id: "child", status: "completed", error: null },
+      {
+        kind: "agent-output",
+        author: "/root/s1_scope_tracer",
+        content_sha256: "b".repeat(64),
+        content_bytes: 128,
+      },
+    ],
+  });
+
+  assert.equal(dispatch.spawn_schema, "native-collaboration");
+  assert.equal(attestation.checks.native_collaboration_dispatch, true);
+  assert.equal(attestation.pass, true);
 });
 
 test("runtime attestation compares visible sandbox policy when parent roots are redacted", () => {
@@ -810,7 +878,8 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
   assert.equal(dispatch.fork_turns, "none");
   assert.equal(result.child_thread_id, "child-thread");
   assert.equal(attestation.prompt_verification.status, "plaintext-envelope-matched");
-  assert.equal(attestation.pass, true);
+  assert.equal(attestation.checks.native_collaboration_dispatch, false);
+  assert.equal(attestation.pass, false);
 
   dispatch.canonical_envelope_sha256 = "c".repeat(64);
   const mismatchedEnvelope = buildDispatchAttestation({
@@ -1029,7 +1098,8 @@ test("runtime reducer correlates an inline nested spawn with its child notificat
   assert.equal(attestation.prompt_verification.status, "plaintext-envelope-matched");
   assert.equal(attestation.checks.child_completed, true);
   assert.equal(attestation.checks.child_output_observed, true);
-  assert.equal(attestation.pass, true);
+  assert.equal(attestation.checks.native_collaboration_dispatch, false);
+  assert.equal(attestation.pass, false);
 });
 
 test("dependent-card attestation requires a fresh explicitly configured child", () => {
@@ -1053,6 +1123,8 @@ test("dependent-card attestation requires a fresh explicitly configured child", 
       call_id: "call-dependent",
       task_name: "analysis_profile",
       agent_type: "rpivc-codebase-analyzer",
+      spawn_schema: "native-collaboration",
+      tool: "spawn_agent",
       fork_turns: "none",
       model: "gpt-5.6-terra",
       reasoning_effort: "high",
@@ -1085,7 +1157,7 @@ test("dependent-card attestation requires a fresh explicitly configured child", 
   ];
 
   const attestation = buildDispatchAttestation({ events, parentThreadId: "parent", card });
-  assert.equal(attestation.schema, "rpivc-runtime-attestation/v3");
+  assert.equal(attestation.schema, "rpivc-runtime-attestation/v4");
   assert.equal(attestation.dispatch_mode, "spawn");
   assert.deepEqual(attestation.depends_on, ["A1"]);
   assert.equal(attestation.pass, true);

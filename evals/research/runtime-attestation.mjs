@@ -340,6 +340,7 @@ export function captureAttestationEvent(message) {
     return {
       kind: "dispatch-call",
       dispatch_mode: "spawn",
+      spawn_schema: "native-collaboration",
       tool: item.name,
       thread_id: params.threadId ?? null,
       turn_id: params.turnId ?? null,
@@ -449,6 +450,8 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   const checks = {
     dispatch_observed: Boolean(dispatch),
     dispatch_mode_matches: dispatch?.dispatch_mode === dispatchMode,
+    native_collaboration_dispatch: dispatch?.spawn_schema === "native-collaboration"
+      && dispatch?.tool === "spawn_agent",
     prompt_transport_observed: Boolean(dispatch?.message_sha256 && dispatch?.message_bytes > 0),
     prompt_envelope_matches_or_is_opaque: dispatch?.canonical_envelope_sha256 == null
       || dispatch.canonical_envelope_sha256 === expectedEnvelopeSha256,
@@ -469,7 +472,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   };
 
   return {
-    schema: "rpivc-runtime-attestation/v3",
+    schema: "rpivc-runtime-attestation/v4",
     card_id: card?.id ?? null,
     role: card?.role ?? null,
     dispatch_mode: dispatchMode,
