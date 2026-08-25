@@ -1,0 +1,23 @@
+{
+  "name": "rpiv-codex",
+  "version": "0.1.0",
+  "description": "Human-gated feature discovery and repository research for Codex.",
+  "author": {
+    "name": "Ryan Reynolds"
+  },
+  "license": "MIT",
+  "keywords": ["discovery", "research", "requirements", "codebase"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "RPIV Codex",
+    "shortDescription": "Human-gated feature discovery and research",
+    "longDescription": "Define product intent with Discover, then trace current repository behavior with Research. Both workflows keep agent dispatch and artifact publication behind explicit human review gates.",
+    "developerName": "Ryan Reynolds",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Use $rpivc-discover to define a feature before implementation.",
+      "Use $rpivc-research to trace current repository behavior."
+    ]
+  }
+}

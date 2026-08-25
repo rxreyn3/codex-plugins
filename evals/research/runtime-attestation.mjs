@@ -17,6 +17,10 @@ const CARD_FIELDS = [
   "depends_on",
   "task_name",
   "role",
+  "runtime_agent_type",
+  "specialist_contract",
+  "specialist_contract_sha256",
+  "scope_validator",
   "purpose",
   "prompt",
   "inputs",
@@ -169,7 +173,7 @@ function nestedSpawnArguments(item) {
   };
   const forkContext = item.input.match(/\bfork_context:\s*(true|false)/)?.[1] ?? null;
   return {
-    agent_type: stringField("agent_type") ?? cardMember("agent_type", "role"),
+    agent_type: stringField("agent_type") ?? cardMember("agent_type", "runtime_agent_type"),
     fork_context: forkContext === null ? null : forkContext === "true",
     model: stringField("model") ?? cardMember("model", "model"),
     reasoning_effort: stringField("reasoning_effort") ?? cardMember("reasoning_effort", "reasoning"),
@@ -456,7 +460,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     prompt_envelope_matches_or_is_opaque: dispatch?.canonical_envelope_sha256 == null
       || dispatch.canonical_envelope_sha256 === expectedEnvelopeSha256,
     task_name_matches: dispatch?.task_name === expectedName,
-    requested_role_matches: dispatch?.agent_type === card?.role,
+    requested_runtime_agent_matches: dispatch?.agent_type === card?.runtime_agent_type,
     context_mode_matches: dispatch?.fork_turns === "none",
     requested_model_matches: dispatch?.model === card?.model,
     requested_reasoning_matches: dispatch?.reasoning_effort === card?.reasoning,
@@ -472,7 +476,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   };
 
   return {
-    schema: "rpivc-runtime-attestation/v4",
+    schema: "rpivc-runtime-attestation/v5",
     card_id: card?.id ?? null,
     role: card?.role ?? null,
     dispatch_mode: dispatchMode,
@@ -498,7 +502,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     child: {
       thread_id: childThreadId,
       agent_path: activity?.agent_path ?? null,
-      origin_role: dispatch?.agent_type ?? null,
+      origin_runtime_agent: dispatch?.agent_type ?? null,
       settings: childSettings ? {
         model: childSettings.model,
         effort: childSettings.effort,

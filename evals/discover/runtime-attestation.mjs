@@ -15,6 +15,7 @@ const CARD_FIELDS = [
   "id",
   "task_name",
   "role",
+  "runtime_agent_type",
   "purpose",
   "prompt",
   "inputs",
@@ -196,6 +197,7 @@ export function captureAttestationEvent(message) {
       turn_id: params.turnId ?? null,
       call_id: item.call_id ?? null,
       task_name: args?.task_name ?? null,
+      agent_type: args?.agent_type ?? null,
       fork_turns: args?.fork_turns ?? null,
       model: args?.model ?? null,
       reasoning_effort: args?.reasoning_effort ?? null,
@@ -264,6 +266,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
     spawn_observed: Boolean(spawn),
     prompt_transport_observed: Boolean(spawn?.message_sha256 && spawn?.message_bytes > 0),
     task_name_matches: spawn?.task_name === expectedName,
+    requested_runtime_agent_matches: spawn?.agent_type === card?.runtime_agent_type,
     no_inherited_conversation: spawn?.fork_turns === "none",
     requested_model_matches: spawn?.model === card?.model,
     requested_reasoning_matches: spawn?.reasoning_effort === card?.reasoning,
@@ -278,7 +281,7 @@ export function buildDispatchAttestation({ events, parentThreadId, card }) {
   };
 
   return {
-    schema: "rpivc-runtime-attestation/v1",
+    schema: "rpivc-runtime-attestation/v2",
     card_id: card?.id ?? null,
     role: card?.role ?? null,
     expected_task_name: expectedName,

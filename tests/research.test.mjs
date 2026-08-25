@@ -17,6 +17,8 @@ import { artifactPath } from "../.agents/skills/_shared/scripts/artifact-path.mj
 import {
   finalizeResearch,
   prepareResearchScan,
+  renderResearchEnvelope,
+  specialistContract,
   validateResearchCard,
   validateResearchScope,
   verifyResearchProjection,
@@ -24,7 +26,9 @@ import {
 import RpivcResearchProvider, {
   isResearchTransportTimeout,
   observeResearchArtifact,
+  removeProjectLocalRpivcConfiguration,
   researchTransportRetryMarker,
+  resolveInstalledPluginRoot,
   retainArtifactRevisionObservation,
   retainUniqueAttestation,
   shouldCaptureRuntimeSnapshot,
@@ -33,6 +37,38 @@ import RpivcResearchProvider, {
 
 const root = path.resolve(import.meta.dirname, "..");
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
+const scopeValidator = `${root}/.agents/skills/rpivc-research/scripts/artifact-check.mjs`;
+const tracerContract = specialistContract("rpivc-scope-tracer");
+
+test("installed Research mode resolves the cached plugin and removes project-local configuration", () => {
+  const pluginRoot = resolveInstalledPluginRoot(path.join(root, "plugins", "rpiv-codex"));
+  assert.equal(pluginRoot, fs.realpathSync(path.join(root, "plugins", "rpiv-codex")));
+  assert.throws(() => resolveInstalledPluginRoot("plugins/rpiv-codex"), /must be an absolute path/);
+
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "rpivc-installed-mode-"));
+  for (const relative of [
+    ".agents/plugins/marketplace.json",
+    ".agents/skills/_shared",
+    ".agents/skills/rpivc-discover",
+    ".agents/skills/rpivc-research",
+    ".codex/agents/rpivc-scope-tracer.toml",
+  ]) {
+    const target = path.join(workspace, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, "fixture\n");
+  }
+  const removed = removeProjectLocalRpivcConfiguration(workspace);
+  assert.deepEqual(removed, [
+    ".agents/plugins",
+    ".agents/skills/_shared",
+    ".agents/skills/rpivc-discover",
+    ".agents/skills/rpivc-research",
+    ".codex/agents/rpivc-scope-tracer.toml",
+  ]);
+  assert.equal(fs.existsSync(path.join(workspace, ".agents", "plugins")), false);
+  assert.equal(fs.existsSync(path.join(workspace, ".agents", "skills", "rpivc-research")), false);
+  assert.equal(fs.existsSync(path.join(workspace, ".codex", "agents", "rpivc-scope-tracer.toml")), false);
+});
 
 function git(cwd, ...args) {
   return execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
@@ -171,7 +207,8 @@ test("research skill exposes the accepted manual gates and boundaries", () => {
   assert.match(combined, /`file:\/\/` targets.*invalid/);
   assert.match(combined, /introduce no new current-code claim or citation|must not introduce a new current-code factual claim/);
   assert.doesNotMatch(combined, /followup_task|dispatch_mode: followup/);
-  assert.match(combined, /`agent_type` (?:from|equal to).*`role`/);
+  assert.match(combined, /`agent_type` (?:from|equal to).*`runtime_agent_type`/);
+  assert.match(combined, /target-project custom profile is required|without a target-project profile/);
   assert.match(combined, /requested runtime settings/);
   assert.match(combined, /updates that same absolute draft path/);
   assert.match(combined, /Never attempt a third inspection/);
@@ -193,12 +230,12 @@ test("research specialist definitions are adaptive and childless", () => {
     "rpivc-precedent-locator.toml": /Never fetch/,
   };
   for (const [file, pattern] of Object.entries(expected)) {
-    const text = read(".codex", "agents", file);
+    const text = read("plugins", "rpiv-codex", "specialists", file);
     assert.match(text, pattern);
     assert.match(text, /spawn children/);
     assert.match(text, /behaviorally read-only|never mutate/i);
   }
-  const scopeTracer = read(".codex", "agents", "rpivc-scope-tracer.toml");
+  const scopeTracer = read("plugins", "rpiv-codex", "specialists", "rpivc-scope-tracer.toml");
   assert.match(scopeTracer, /direct-prompt mode/);
   assert.match(scopeTracer, /do not request, assume, or invent a discovery artifact/);
   assert.match(scopeTracer, /model_reasoning_effort = "medium"/);
@@ -220,7 +257,7 @@ test("research specialist definitions are adaptive and childless", () => {
     "rpivc-codebase-pattern-finder.toml",
     "rpivc-integration-scanner.toml",
   ]) {
-    const specialist = read(".codex", "agents", file);
+    const specialist = read("plugins", "rpiv-codex", "specialists", file);
     assert.match(specialist, /full repository-relative/);
     assert.match(specialist, /source excerpt|source_excerpt/i);
   }
@@ -273,11 +310,15 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(provider, /spawn every authorized card before waiting so the children run in parallel/i);
   assert.match(provider, /wait schema has no targets or agent_id argument and returns no keyed status map/i);
   assert.match(provider, /first command must be artifact-check\.mjs preflight-research/i);
-  assert.match(provider, /exact first command executable path is node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research/i);
+  assert.match(provider, /exact first command executable path is node \$\{researchSkillRoot\}\/scripts\/artifact-check\.mjs preflight-research/i);
   assert.match(provider, /first command must exit zero/i);
   assert.match(provider, /initial turn must display only one complete YAML card with id S1/i);
+  assert.match(provider, /runtime_agent_type default/);
+  assert.match(provider, /scope_validator equal to the literal absolute bundled plugin helper path/);
+  assert.match(provider, /specialist_contract and specialist_contract_sha256/);
+  assert.match(provider, /render-research-envelope/);
   assert.match(provider, /Do not answer the research questions/i);
-  assert.match(provider, /never human-readable aliases such as codebase analyzer/i);
+  assert.match(provider, /human-readable aliases such as codebase analyzer are invalid/i);
   assert.match(provider, /When a later Run authorizes S1/i);
   assert.match(provider, /followed only by Use scope\/Revise scope\/Stop/i);
   assert.match(provider, /Do not construct or display any A-card in the S1 Run response/i);
@@ -405,7 +446,12 @@ test("research card validation binds profile and context to the authoritative sn
   ));
   const card = [
     "id: S1",
+    "dispatch_protocol: rpivc-dispatch/v1",
     "role: rpivc-scope-tracer",
+    "runtime_agent_type: default",
+    `specialist_contract: ${tracerContract.absolute}`,
+    `specialist_contract_sha256: ${tracerContract.sha256}`,
+    `scope_validator: ${scopeValidator}`,
     `repository: ${snapshot.repository}`,
     `branch: ${snapshot.branch}`,
     `commit: ${snapshot.commit}`,
@@ -415,6 +461,15 @@ test("research card validation binds profile and context to the authoritative sn
   ].join("\n");
 
   assert.equal(validateResearchCard(card, workspace).valid, true);
+  const envelope = JSON.parse(renderResearchEnvelope(card, workspace));
+  assert.equal(envelope.card_yaml, card);
+  assert.equal(envelope.specialist_contract_sha256, tracerContract.sha256);
+  assert.match(envelope.specialist_contract_toml, /name = "rpivc-scope-tracer"/);
+  assert.match(envelope.instructions, /project-local custom-agent profile/);
+  assert.throws(
+    () => validateResearchCard(card.replace(tracerContract.sha256, "0".repeat(64)), workspace),
+    /specialist_contract_sha256 does not match/,
+  );
   assert.throws(
     () => validateResearchCard(card.replace(snapshot.working_tree_sha256, snapshot.working_tree_sha256.slice(0, 61)), workspace),
     /does not match the authoritative repository snapshot/,
@@ -667,7 +722,7 @@ test("research provider supplements a raw dispatch when the notification handler
         name: "spawn_agent",
         call_id: "raw-spawn",
         arguments: JSON.stringify({
-          agent_type: "rpivc-codebase-analyzer",
+          agent_type: "default",
           task_name: "analysis_profile",
           fork_turns: "none",
           model: "gpt-5.6-terra",
@@ -722,7 +777,7 @@ test("runtime reducer captures only fresh spawn dispatches without plaintext", (
         name: "spawn_agent",
         call_id: "call-spawn",
         arguments: JSON.stringify({
-          agent_type: "rpivc-codebase-analyzer",
+          agent_type: "default",
           task_name: "analysis_profile",
           fork_turns: "none",
           model: "gpt-5.6-terra",
@@ -752,7 +807,7 @@ test("runtime reducer captures only fresh spawn dispatches without plaintext", (
   assert.deepEqual([spawn.kind, spawn.dispatch_mode, spawn.task_name], ["dispatch-call", "spawn", "analysis_profile"]);
   assert.equal(spawn.message_sha256.length, 64);
   assert.equal(spawn.spawn_schema, "native-collaboration");
-  assert.equal(spawn.agent_type, "rpivc-codebase-analyzer");
+  assert.equal(spawn.agent_type, "default");
   assert.equal(followup, null);
   assert.equal(JSON.stringify(spawn).includes("encrypted-spawn-envelope"), false);
 });
@@ -765,6 +820,8 @@ test("research attestation requires and accepts direct native collaboration disp
     depends_on: [],
     task_name: "s1_scope_tracer",
     role: "rpivc-scope-tracer",
+    runtime_agent_type: "default",
+    scope_validator: scopeValidator,
     model: "gpt-5.6-terra",
     reasoning: "medium",
   };
@@ -779,7 +836,7 @@ test("research attestation requires and accepts direct native collaboration disp
         name: "spawn_agent",
         call_id: "native-spawn",
         arguments: JSON.stringify({
-          agent_type: card.role,
+          agent_type: card.runtime_agent_type,
           task_name: card.task_name,
           fork_turns: "none",
           model: card.model,
@@ -852,6 +909,8 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
     depends_on: [],
     task_name: "s1_scope_tracer",
     role: "rpivc-scope-tracer",
+    runtime_agent_type: "default",
+    scope_validator: scopeValidator,
     model: "gpt-5.6-terra",
     reasoning: "medium",
   };
@@ -862,6 +921,8 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
     "depends_on: []",
     "task_name: s1_scope_tracer",
     "role: rpivc-scope-tracer",
+    "runtime_agent_type: default",
+    `scope_validator: ${scopeValidator}`,
     "model: gpt-5.6-terra",
     "reasoning: medium",
   ].join("\n");
@@ -874,7 +935,7 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
         type: "custom_tool_call",
         name: "exec",
         call_id: "nested-call",
-        input: `// @exec: {"yield_time_ms": 120000}\nconst envelope = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, message: envelope, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
+        input: `// @exec: {"yield_time_ms": 120000}\nconst envelope = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "default", fork_context: false, message: envelope, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
       },
     },
   });
@@ -938,7 +999,7 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
         type: "custom_tool_call",
         name: "exec",
         call_id: "shorthand-call",
-        input: `const message = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, model: "gpt-5.6-terra", reasoning_effort: "medium", message });`,
+        input: `const message = \`${cardYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "default", fork_context: false, model: "gpt-5.6-terra", reasoning_effort: "medium", message });`,
       },
     },
   });
@@ -961,11 +1022,13 @@ test("runtime reducer resolves the yielded spawn payload variable structurally",
   depends_on: [],
   task_name: "s1_scope_tracer",
   role: "rpivc-scope-tracer",
+  runtime_agent_type: "default",
+  scope_validator: "${scopeValidator}",
   model: "gpt-5.6-terra",
   reasoning: "medium"
 };
 const spawned = await tools.multi_agent_v1__spawn_agent({
-  agent_type: card.role,
+  agent_type: card.runtime_agent_type,
   fork_context: false,
   message: JSON.stringify(card),
   model: card.model,
@@ -974,7 +1037,7 @@ const spawned = await tools.multi_agent_v1__spawn_agent({
       },
     },
   });
-  assert.equal(objectDispatch.agent_type, "rpivc-scope-tracer");
+  assert.equal(objectDispatch.agent_type, "default");
   assert.equal(objectDispatch.model, "gpt-5.6-terra");
   assert.equal(objectDispatch.reasoning_effort, "medium");
   assert.equal(objectDispatch.task_name, "s1_scope_tracer");
@@ -989,6 +1052,7 @@ test("runtime reducer preserves Markdown backticks inside a spawned YAML templat
     depends_on: [],
     task_name: "a1_markdown_evidence",
     role: "rpivc-codebase-analyzer",
+    runtime_agent_type: "default",
     purpose: "Trace cited evidence",
     inputs: ["Question 1: Trace `source_artifacts` with [`path.js:1`](/repo/path.js:1)"],
     repository: "/repo",
@@ -1005,6 +1069,7 @@ test("runtime reducer preserves Markdown backticks inside a spawned YAML templat
     'depends_on: []',
     'task_name: "a1_markdown_evidence"',
     'role: "rpivc-codebase-analyzer"',
+    'runtime_agent_type: "default"',
     'purpose: "Trace cited evidence"',
     'inputs:',
     '  - "Question 1: Trace `source_artifacts` with [`path.js:1`](/repo/path.js:1)"',
@@ -1025,13 +1090,13 @@ test("runtime reducer preserves Markdown backticks inside a spawned YAML templat
         type: "custom_tool_call",
         name: "exec",
         call_id: "call",
-        input: `const message = \`${escapedYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({agent_type:"rpivc-codebase-analyzer", fork_context:false, message, model:"gpt-5.6-terra", reasoning_effort:"high"});`,
+        input: `const message = \`${escapedYaml}\`;\nconst spawned = await tools.multi_agent_v1__spawn_agent({agent_type:"default", fork_context:false, message, model:"gpt-5.6-terra", reasoning_effort:"high"});`,
       },
     },
   });
   assert.equal(event.kind, "dispatch-call");
   assert.equal(event.task_name, card.task_name);
-  assert.equal(event.agent_type, card.role);
+  assert.equal(event.agent_type, card.runtime_agent_type);
   assert.equal(event.fork_turns, "none");
   assert.equal(event.canonical_envelope_sha256, buildDispatchAttestation({
     events: [],
@@ -1071,6 +1136,8 @@ test("runtime reducer correlates an inline nested spawn with its child notificat
     depends_on: [],
     task_name: "s1_scope_tracer",
     role: "rpivc-scope-tracer",
+    runtime_agent_type: "default",
+    scope_validator: scopeValidator,
     model: "gpt-5.6-terra",
     reasoning: "medium",
   };
@@ -1081,6 +1148,8 @@ test("runtime reducer correlates an inline nested spawn with its child notificat
     "depends_on: []",
     "task_name: s1_scope_tracer",
     "role: rpivc-scope-tracer",
+    "runtime_agent_type: default",
+    `scope_validator: ${scopeValidator}`,
     "model: gpt-5.6-terra",
     "reasoning: medium",
   ].join("\n");
@@ -1093,7 +1162,7 @@ test("runtime reducer correlates an inline nested spawn with its child notificat
         type: "custom_tool_call",
         name: "exec",
         call_id: "nested-call",
-        input: `const spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "rpivc-scope-tracer", fork_context: false, message: \`${cardYaml}\`, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
+        input: `const spawned = await tools.multi_agent_v1__spawn_agent({ agent_type: "default", fork_context: false, message: \`${cardYaml}\`, model: "gpt-5.6-terra", reasoning_effort: "medium" });`,
       },
     },
   });
@@ -1140,6 +1209,7 @@ test("dependent-card attestation requires a fresh explicitly configured child", 
     depends_on: ["A1"],
     task_name: "analysis_profile",
     role: "rpivc-codebase-analyzer",
+    runtime_agent_type: "default",
     model: "gpt-5.6-terra",
     reasoning: "high",
   };
@@ -1151,7 +1221,7 @@ test("dependent-card attestation requires a fresh explicitly configured child", 
       thread_id: "parent",
       call_id: "call-dependent",
       task_name: "analysis_profile",
-      agent_type: "rpivc-codebase-analyzer",
+      agent_type: "default",
       spawn_schema: "native-collaboration",
       tool: "spawn_agent",
       fork_turns: "none",
@@ -1186,7 +1256,7 @@ test("dependent-card attestation requires a fresh explicitly configured child", 
   ];
 
   const attestation = buildDispatchAttestation({ events, parentThreadId: "parent", card });
-  assert.equal(attestation.schema, "rpivc-runtime-attestation/v4");
+  assert.equal(attestation.schema, "rpivc-runtime-attestation/v5");
   assert.equal(attestation.dispatch_mode, "spawn");
   assert.deepEqual(attestation.depends_on, ["A1"]);
   assert.equal(attestation.pass, true);

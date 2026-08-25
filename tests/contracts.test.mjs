@@ -6,14 +6,34 @@ import test from "node:test";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
 
-test("only the accepted discovery and research vertical units are present", () => {
+test("only the accepted discovery and research vertical units are exposed as development links", () => {
   const entries = fs.readdirSync(path.join(root, ".agents", "skills"), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
     .map((entry) => entry.name)
     .sort();
   assert.deepEqual(entries, ["_shared", "rpivc-discover", "rpivc-research"]);
+  for (const name of entries) {
+    assert.equal(fs.lstatSync(path.join(root, ".agents", "skills", name)).isSymbolicLink(), true);
+  }
+  assert.equal(fs.realpathSync(path.join(root, ".agents", "skills", "rpivc-discover")), path.join(root, "plugins", "rpiv-codex", "skills", "rpivc-discover"));
+  assert.equal(fs.realpathSync(path.join(root, ".agents", "skills", "rpivc-research")), path.join(root, "plugins", "rpiv-codex", "skills", "rpivc-research"));
+  assert.equal(fs.realpathSync(path.join(root, ".agents", "skills", "_shared")), path.join(root, "plugins", "rpiv-codex"));
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "rpivc-approve")), false);
   assert.equal(fs.existsSync(path.join(root, ".agents", "skills", "rpivc-research")), true);
+});
+
+test("plugin source is canonical and remains skills-only", () => {
+  const manifest = JSON.parse(read("plugins", "rpiv-codex", ".codex-plugin", "plugin.json"));
+  const marketplace = JSON.parse(read(".agents", "plugins", "marketplace.json"));
+  assert.equal(manifest.name, "rpiv-codex");
+  assert.equal(manifest.version, "0.1.0");
+  assert.equal(manifest.skills, "./skills/");
+  for (const unsupported of ["apps", "mcpServers", "hooks", "authentication"]) {
+    assert.equal(Object.hasOwn(manifest, unsupported), false);
+  }
+  assert.deepEqual(fs.readdirSync(path.join(root, "plugins", "rpiv-codex", "skills")).sort(), ["rpivc-discover", "rpivc-research"]);
+  assert.equal(marketplace.name, "rpiv-codex-local");
+  assert.equal(marketplace.plugins[0].source.path, "./plugins/rpiv-codex");
 });
 
 test("skill frontmatter and generated metadata match the discovery contract", () => {
@@ -73,7 +93,7 @@ test("every agent dispatch uses a conversational gate", () => {
   assert.match(skill, /End the response and run nothing yet/);
   assert.match(skill, /only an explicit \*\*Run\*\* as authorization for the most recently displayed cards/);
   assert.match(skill, /show a refreshed complete card and require a new \*\*Run\*\* decision/);
-  assert.match(skill, /Dispatch exactly the displayed roles, prompts, inputs, models, reasoning levels/);
+  assert.match(skill, /Dispatch exactly the displayed logical roles, prompts, inputs, models, reasoning levels/);
   assert.match(skill, /displayed card is the native Codex role instance/);
   assert.match(skill, /JSON object with exactly two top-level fields/);
   assert.match(skill, /`model` to the displayed `model`/);
@@ -119,6 +139,7 @@ test("agent cards expose the complete editable contract and current context", ()
     "dispatch_protocol",
     "task_name",
     "role",
+    "runtime_agent_type",
     "purpose",
     "prompt",
     "inputs",
@@ -205,9 +226,9 @@ test("Promptfoo replaces the manual forward-testing harness", () => {
   assert.equal(fs.existsSync(path.join(root, "evals", "discover", "cases.yaml")), true);
 });
 
-test("project agents are pinned, behaviorally read-only, bounded, and childless", () => {
-  const locator = read(".codex", "agents", "rpivc-codebase-locator.toml");
-  const analyzer = read(".codex", "agents", "rpivc-codebase-analyzer.toml");
+test("bundled specialist contracts are pinned, behaviorally read-only, bounded, and childless", () => {
+  const locator = read("plugins", "rpiv-codex", "specialists", "rpivc-codebase-locator.toml");
+  const analyzer = read("plugins", "rpiv-codex", "specialists", "rpivc-codebase-analyzer.toml");
   assert.match(locator, /model = "gpt-5\.6-luna"/);
   assert.match(locator, /model_reasoning_effort = "low"/);
   assert.match(analyzer, /model = "gpt-5\.6-terra"/);
@@ -219,6 +240,11 @@ test("project agents are pinned, behaviorally read-only, bounded, and childless"
     assert.match(agent, /Never edit files/);
     assert.match(agent, /spawn child agents/);
     assert.match(agent, /repository-relative file:line/);
+  }
+  for (const name of ["rpivc-codebase-locator.toml", "rpivc-codebase-analyzer.toml"]) {
+    const developmentLink = path.join(root, ".codex", "agents", name);
+    assert.equal(fs.lstatSync(developmentLink).isSymbolicLink(), true);
+    assert.equal(fs.realpathSync(developmentLink), path.join(root, "plugins", "rpiv-codex", "specialists", name));
   }
 });
 

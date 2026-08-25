@@ -9,15 +9,8 @@ import path from "node:path";
 // the entire checkout would make reports noisy and could retain local secrets.
 const EVIDENCE_PATHS = [
   "PARITY.md",
-  ".agents/skills/rpivc-discover",
-  ".agents/skills/rpivc-research",
-  ".agents/skills/_shared/scripts",
-  ".codex/agents/rpivc-codebase-locator.toml",
-  ".codex/agents/rpivc-codebase-analyzer.toml",
-  ".codex/agents/rpivc-scope-tracer.toml",
-  ".codex/agents/rpivc-codebase-pattern-finder.toml",
-  ".codex/agents/rpivc-integration-scanner.toml",
-  ".codex/agents/rpivc-precedent-locator.toml",
+  ".agents/plugins/marketplace.json",
+  "plugins/rpiv-codex",
   ".rpiv-codex/artifacts/discover",
   ".rpiv-codex/artifacts/research",
 ];

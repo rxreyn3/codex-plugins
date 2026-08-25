@@ -25,6 +25,44 @@ import {
 
 const moduleDirectory = path.dirname(fileURLToPath(import.meta.url));
 
+export function resolveInstalledPluginRoot(configuredPath) {
+  if (!configuredPath) return null;
+  if (!path.isAbsolute(configuredPath)) {
+    throw new Error("RPIVC_INSTALLED_PLUGIN_ROOT must be an absolute path");
+  }
+  const root = fs.realpathSync(configuredPath);
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, ".codex-plugin", "plugin.json"), "utf8"));
+  if (manifest.name !== "rpiv-codex") {
+    throw new Error(`installed plugin manifest name must be rpiv-codex, received ${manifest.name}`);
+  }
+  const skill = path.join(root, "skills", "rpivc-research", "SKILL.md");
+  if (!fs.existsSync(skill)) throw new Error(`installed Research skill is missing: ${skill}`);
+  return root;
+}
+
+export function removeProjectLocalRpivcConfiguration(workspace) {
+  const relativePaths = [
+    ".agents/plugins",
+    ".agents/skills/_shared",
+    ".agents/skills/rpivc-discover",
+    ".agents/skills/rpivc-research",
+    ".codex/agents/rpivc-codebase-analyzer.toml",
+    ".codex/agents/rpivc-codebase-locator.toml",
+    ".codex/agents/rpivc-codebase-pattern-finder.toml",
+    ".codex/agents/rpivc-integration-scanner.toml",
+    ".codex/agents/rpivc-precedent-locator.toml",
+    ".codex/agents/rpivc-scope-tracer.toml",
+  ];
+  const removed = [];
+  for (const relative of relativePaths) {
+    const target = path.join(workspace, relative);
+    if (!fs.lstatSync(target, { throwIfNoEntry: false })) continue;
+    fs.rmSync(target, { force: true, recursive: true });
+    removed.push(relative);
+  }
+  return removed;
+}
+
 // Promptfoo may provide either a plain string or a serialized message history.
 // The app-server receives only the latest simulated-user turn so the provider,
 // rather than hidden prompt history, owns evaluation state.
@@ -295,6 +333,7 @@ export default class RpivcResearchProvider {
     const evidenceRoot = process.env.RPIVC_EVIDENCE_ROOT;
     const configuredSource = process.env.RPIVC_SOURCE_ROOT
       ?? path.resolve(moduleDirectory, this.config.source_root ?? "../..");
+    const installedPluginRoot = resolveInstalledPluginRoot(process.env.RPIVC_INSTALLED_PLUGIN_ROOT);
     const codexPath = process.env.RPIVC_CODEX_PATH ?? executableOnPath("codex", configuredSource);
     if (!evaluationId || !evidenceRoot || !caseId) {
       throw new Error("RPIVC_EVAL_ID, RPIVC_EVIDENCE_ROOT, and case_id are required");
@@ -306,6 +345,9 @@ export default class RpivcResearchProvider {
       caseId,
       evidenceDir,
     });
+    const removedProjectConfiguration = installedPluginRoot
+      ? removeProjectLocalRpivcConfiguration(workspaceState.workspace)
+      : [];
     if (!["discovery", "prompt"].includes(inputMode)) {
       throw new Error(`unsupported research input_mode: ${inputMode}`);
     }
@@ -322,6 +364,13 @@ export default class RpivcResearchProvider {
       path.join(evidenceDir, "baseline.json"),
       `${JSON.stringify(workspaceState.baseline, null, 2)}\n`,
     );
+    if (installedPluginRoot) {
+      fs.writeFileSync(path.join(evidenceDir, "installed-plugin.json"), `${JSON.stringify({
+        plugin_root: installedPluginRoot,
+        skill_root: path.join(installedPluginRoot, "skills", "rpivc-research"),
+        removed_project_configuration: removedProjectConfiguration,
+      }, null, 2)}\n`);
+    }
     const delegateConfigs = [{
       id: "openai:codex-app-server:gpt-5.6-sol",
       config: {
@@ -339,7 +388,7 @@ export default class RpivcResearchProvider {
           "Evaluation isolation: do not consult personal memory, external applications, or the network. The configured current working directory is the repository; run relative shell commands there and do not reconstruct an alternate workdir. Do not change source files. Follow the supplied rpivc-research skill as the authoritative workflow contract.",
           "When a user decision includes an rpivc-evaluation-runtime-snapshot block, it is the exact context-snapshot helper output captured immediately before that decision. Copy its repository, branch, commit, and working_tree_sha256 verbatim into every new or refreshed card. Never recompute or approximate those fields with git status, git ls-files, shasum, or another command. Before displaying a card, verify it contains exactly one 64-character working_tree_sha256 key matching the authoritative snapshot. A refreshed gate must redisplay every complete YAML card; a summary is not approvable.",
           "Analysis profiles are fixed: codebase analyzer and pattern finder are gpt-5.6-terra/high; integration scanner and precedent locator are gpt-5.6-luna/low. Verify every displayed analysis role, model, and reasoning triple before asking Run; never reuse the tracer's medium reasoning for analysis.",
-          "Use only the native collaboration tools exposed directly in the task. Call collaboration.spawn_agent directly, never from functions.exec and never through a deferred adapter. Pass the exact validated envelope as message; set agent_type to the exact card role, task_name to the exact card task_name, fork_turns to none, model to the exact card model, and reasoning_effort to the exact card reasoning. For S1 or a dependent card, spawn once and call collaboration.wait_agent directly with timeout_ms: 600000. For an approved independent analysis wave, validate every envelope, spawn every authorized card before waiting so the children run in parallel, then call collaboration.wait_agent until separately delivered completion notifications account for all of them. The current wait schema has no targets or agent_id argument and returns no keyed status map. If a wait interval expires, use native child status and repeat the direct wait only while an authorized child remains live. Never call functions.wait, treat a timeout as terminal, spawn a replacement, synthesize before all approved children finish, or return an awaiting placeholder.",
+          "Use only the native collaboration tools exposed directly in the task. Call collaboration.spawn_agent directly, never from functions.exec and never through a deferred adapter. Revalidate each exact displayed card, render its hash-bound specialist envelope with artifact-check.mjs render-research-envelope, and pass the renderer's exact output as message; set agent_type to the exact card runtime_agent_type, task_name to the exact card task_name, fork_turns to none, model to the exact card model, and reasoning_effort to the exact card reasoning. The card role is the approved logical specialist and runtime_agent_type must be default, so no project-local custom-agent profile is required. For S1 or a dependent card, spawn once and call collaboration.wait_agent directly with timeout_ms: 600000. For an approved independent analysis wave, render and spawn every authorized card before waiting so the children run in parallel, then call collaboration.wait_agent until separately delivered completion notifications account for all of them. The current wait schema has no targets or agent_id argument and returns no keyed status map. If a wait interval expires, use native child status and repeat the direct wait only while an authorized child remains live. Never call functions.wait, treat a timeout as terminal, spawn a replacement, synthesize before all approved children finish, or return an awaiting placeholder.",
           "Artifact citations may use only exact child-returned target-and-line pairs rechecked against current numbered source; never derive source lines from artifact line numbers. Treat each approved question as a hypothesis, split it into named clauses, and mark it Answered only when every clause has direct evidence. When every executed card has depends_on: [], do not claim that a dependent wave ran. Before displaying the compiled scan, pass its complete draft, including the canonical Coverage snapshot and Q clause rows, in a quoted heredoc to artifact-check.mjs prepare-research-scan; never invoke the command bare. Use one behavior and exactly one current-code citation per evidence bullet, split multi-range support into separate bullets, and keep ranges no wider than 15 lines. Compare every returned claim to source_excerpt before rendering. Present render-research-scan output exactly. Use full repository-relative citation labels in the compiled scan as well as the artifact.",
           "The artifact is a projection of the rendered scan, not a second synthesis pass: preserve its exact coverage statuses, totals, Q rows, evidence lines, and citation ranges. After writing or revising the artifact, run artifact-check.mjs normalize-citations on the exact draft path before inspection; do not use sed or an ad hoc script to rebuild labels. If inspection reports an out-of-bounds range, re-read the target with numbered lines and replace the entire range. Artifact inspection has a hard two-invocation ceiling for the initial draft: after one failure, make one correction, normalize again, and inspect once more; if that second invocation fails, stop immediately.",
         ].join(" "),
@@ -373,15 +422,18 @@ export default class RpivcResearchProvider {
         },
       },
     }];
-    const evaluationCorrections = "On the initial request, the first command must be artifact-check.mjs preflight-research with the exact input as its one literal argument. The invoked skill content is already supplied; do not access SKILL.md through cat, sed, rg, find, or any other shell command at any time. Do not cat, read, or combine the discovery artifact or target files in any command before preflight; use artifact_content returned by preflight. Read only the contract and template after preflight succeeds. Never use a current-file citation to claim Git history such as introduced, inherited, or changed behavior. Split that into one current-behavior bullet with one file citation and one separate history bullet with a locally verified plain commit identifier.";
-    const exactPreflightCorrection = "The exact first command executable path is node .agents/skills/_shared/scripts/artifact-check.mjs preflight-research <input>. Do not shorten, relocate, search for, or guess that helper path. The first command must exit zero; a failed attempt followed by discovery is not preflight-first.";
-    const initialGateCorrection = "After successful preflight and reading the contract and template, the initial turn must display only one complete YAML card with id S1, role rpivc-scope-tracer, task_name s1_scope_tracer, model gpt-5.6-terra, the literal card field reasoning: medium, no reasoning_effort card field, and the Run/Edit/Omit/Stop gate, then end. reasoning_effort is only the spawn-API argument mapped from card.reasoning. Do not answer the research questions, produce Discovery Summary or Proposed Execution Plan, invoke the tracer, show analysis cards, or offer Use scope on the initial turn. Only the user's later Run authorizes spawning S1. Analysis card roles must also be exact callable rpivc-* role identifiers, never human-readable aliases such as codebase analyzer.";
+    const evaluationCorrections = "On the initial request, the first command must be artifact-check.mjs preflight-research with the exact input as its one literal argument. The invoked skill content is already supplied; do not access SKILL.md through cat, sed, rg, find, or any other shell command at any time. Do not cat, read, or combine the discovery artifact or target files in any command before preflight; use artifact_content returned by preflight. Read only the contract, template, and bundled specialist contract after preflight succeeds. Never use a current-file citation to claim Git history such as introduced, inherited, or changed behavior. Split that into one current-behavior bullet with one file citation and one separate history bullet with a locally verified plain commit identifier.";
+    const researchSkillRoot = installedPluginRoot
+      ? path.join(installedPluginRoot, "skills", "rpivc-research")
+      : path.join(workspaceState.workspace, ".agents", "skills", "rpivc-research");
+    const exactPreflightCorrection = `The exact first command executable path is node ${researchSkillRoot}/scripts/artifact-check.mjs preflight-research <input>. Do not shorten, relocate, search the target project for, or guess that helper path. The first command must exit zero; a failed attempt followed by discovery is not preflight-first.`;
+    const initialGateCorrection = "After successful preflight and reading the contract, template, and bundled tracer contract, run artifact-check.mjs specialist-contract rpivc-scope-tracer. The initial turn must display only one complete YAML card with id S1, role rpivc-scope-tracer, runtime_agent_type default, specialist_contract and specialist_contract_sha256 copied literally from that helper, scope_validator equal to the literal absolute bundled plugin helper path, task_name s1_scope_tracer, model gpt-5.6-terra, the literal card field reasoning: medium, no reasoning_effort card field, and the Run/Edit/Omit/Stop gate, then end. reasoning_effort is only the spawn-API argument mapped from card.reasoning. Do not answer the research questions, produce Discovery Summary or Proposed Execution Plan, invoke the tracer, show analysis cards, or offer Use scope on the initial turn. Only the user's later Run authorizes spawning S1. Analysis card roles remain exact rpivc-* logical role identifiers, runtime_agent_type remains default, and human-readable aliases such as codebase analyzer are invalid.";
     const scopeCheckpointCorrection = "When a later Run authorizes S1, spawn and wait for S1, then present the complete tracer payload with all five required headings, its 5-9 numbered questions, and the complete feasible coverage plan, followed only by Use scope/Revise scope/Stop, then end. Do not construct or display any A-card in the S1 Run response. Only the user's subsequent Use scope authorizes preparing and displaying complete A-cards with Run/Edit/Omit/Stop; Use scope does not authorize dispatch.";
     const aggregateScanCorrection = "prepare-research-scan returns every detectable citation defect in one aggregated correction set. After a failure, repair every listed defect together before one rerun; do not submit sequential one-defect retries.";
     const invalidChildCorrection = "If a terminal analysis child omits the required literal-clause matrix or answers a different task, do not spawn a replacement, silently repair its answer, ask for synthesis authorization, or end with only an acknowledgement. Record the invalid child as an evidence gap, mark every clause assigned only to that card Unanswered, and continue the already-approved turn directly into synthesis and the compiled-scan preparation.";
     const tracerAndEvidenceCorrection = "Treat a discovery path in the approved tracer card as already absolute and pass it literally; never prepend repository or duplicate .rpiv-codex. Before offering Use scope, validate the tracer's five headings, 5-9 numbered questions, three concrete artifact links per question, exact group coverage, and smallest roster. Never parent-author replacement scope for an invalid tracer; stop before analysis. Fold Git precedent into the analyzer whenever it concerns the same files, never a standalone precedent locator merely for history. During citation excerpt review, cite the lines that perform each claimed action: return claims cite the return object, check or verdict claims cite the check expressions, and multi-file claims become separate one-file bullets. Lines that merely select or stage values do not prove they are returned, hashed, or checked. An unknown-stage claim cites both the stage guard and throw. Scan normalization, coverage validation, citation checks, and the normalized_markdown return are separate claims with separate evidence. In parseCoverageProjection, snapshot recognition, contiguous identifiers and totals, and clause-row checks are separate evidence blocks. In validateLocalMarkdownLinks, target and label checks are separate from the later research-width check. In runtime-attestation, no-history, completion, output, and no-fan-out claims must each cite their individual context_mode_matches, child_completed, child_output_observed, or no_child_fanout check expression; selection of those values is not the verdict. An overall runtime pass claim cites Object.values(checks).every(Boolean). A passing-attestation claim cites attestations.every, while bounded-spawn behavior is a separate claim citing the direct-child budget expression. When writing the artifact, start from the complete research template and preserve every template ## section heading exactly once, including Research Questions, Evidence Conflicts and Gaps, and Dispatch Ledger; never compress or omit empty sections. Summary contains the snapshot but no Q clause rows; Q rows belong only in Coverage Ledger and the copied Detailed Findings scan.";
     const strictTracerLinksCorrection = "Every tracer citation must use a full repository-relative path:line label and a literal absolute local target beginning with /. After removing only one optional enclosing code-backtick pair, the label must contain no leading or trailing whitespace and must exactly equal the target-derived repository-relative path plus identical line suffix. file:// targets, basename labels, whitespace-padded labels, and targets without a line or range are invalid. Reject an invalid tracer before offering Use scope.";
-    const transportEnvelopeCorrection = "Immediately before every spawn, validate the exact transport envelope again with artifact-check.mjs validate-research-card, then reuse those validated bytes as message. Never retype or reconstruct a card between dispatch-time validation and the spawn call.";
+    const transportEnvelopeCorrection = "Immediately before every spawn, validate the exact displayed card again with artifact-check.mjs validate-research-card, then pass the same card bytes through artifact-check.mjs render-research-envelope. Reuse the renderer's exact standard output as message. Never retype or reconstruct a card, specialist contract, or rendered envelope between validation and the spawn call.";
     const deterministicValidationCorrection = "Preserve every inherited discovery decision in Developer Context, including negative workflow boundaries such as no automatic successor stage. Before displaying S1 or any A-card, pass each complete card through a quoted heredoc to artifact-check.mjs validate-research-card. Before offering Use scope, pass the complete tracer payload through a quoted heredoc to artifact-check.mjs validate-research-scope; any validator failure stops before the gate. Begin every current-code evidence bullet with its question identifier such as - Q1:, and give every Answered question at least one labeled evidence bullet. Copy the allocator's emitted absolute artifact path and never rebuild it from relative output. After writing or revising, pass the exact rendered scan through a quoted heredoc to artifact-check.mjs finalize-research on that absolute path. The finalizer verifies projection before normalization and inspection, so a projection failure does not consume an inspection attempt. Use no separate inspect call.";
     const configuredDeveloperInstructions = delegateConfigs[0].config.developer_instructions;
     const correctedDeveloperInstructions = configuredDeveloperInstructions
@@ -397,6 +449,8 @@ export default class RpivcResearchProvider {
       phase: "ordinary",
       inputMode,
       discoveryArtifact,
+      installedPluginRoot,
+      researchSkillRoot,
       driftMarker: path.join(
         workspaceState.workspace,
         "tests",
@@ -717,7 +771,7 @@ export default class RpivcResearchProvider {
     // Slice the event stream at the turn boundary so an older spawn cannot make
     // a later Run appear authorized.
     const attestationEventStart = state.attestationEvents.length;
-    const skillPath = path.join(state.workspace, ".agents", "skills", "rpivc-research", "SKILL.md");
+    const skillPath = path.join(state.researchSkillRoot, "SKILL.md");
     const modelInput = runtimeSnapshot
       ? `${input}\n\n<rpivc-evaluation-runtime-snapshot>\n${JSON.stringify(runtimeSnapshot, null, 2)}\n</rpivc-evaluation-runtime-snapshot>`
       : input;

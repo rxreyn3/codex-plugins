@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 function git(args, cwd, { optional = false } = {}) {
   try {
@@ -149,7 +149,7 @@ export function contextSnapshot(cwd = process.cwd(), now = new Date()) {
 }
 
 const invokedDirectly = process.argv[1]
-  && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+  && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(path.resolve(process.argv[1]));
 
 if (invokedDirectly) {
   try {

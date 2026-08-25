@@ -166,7 +166,7 @@ export default function assertResearchContract(output, context) {
   const firstCommand = initialCommands[0];
   const preflightWasFirstCommand = firstCommand?.status === "completed"
     && firstCommand.exitCode === 0
-    && /node \.agents\/skills\/_shared\/scripts\/artifact-check\.mjs preflight-research\b/.test(firstCommand.command);
+    && /node \S*\/rpivc-research\/scripts\/artifact-check\.mjs preflight-research\b/.test(firstCommand.command);
   const firstOutput = turns[0]?.output ?? "";
   const tracerOutput = turns.find((turn) => String(turn.input ?? "").trim().replaceAll("*", "").toLowerCase() === "run"
     && /^## Discovery Summary\b/m.test(turn.output))?.output ?? "";
@@ -174,6 +174,10 @@ export default function assertResearchContract(output, context) {
   const initialCardError = initialCardValidation?.error ?? (initialCardValidation ? null : "initial live card validation was not retained");
   const initialTracerGatePasses = initialCardValidation?.pass === true
     && /(?:^|\n)\s*role:\s*["']?rpivc-scope-tracer["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /(?:^|\n)\s*runtime_agent_type:\s*["']?default["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /(?:^|\n)\s*specialist_contract:\s*["']?\/[^\n"']*\/rpivc-scope-tracer\.toml["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /(?:^|\n)\s*specialist_contract_sha256:\s*["']?[0-9a-f]{64}["']?\s*(?:\n|$)/i.test(firstOutput)
+    && /(?:^|\n)\s*scope_validator:\s*["']?\/[^\n"']*\/rpivc-research\/scripts\/artifact-check\.mjs["']?\s*(?:\n|$)/i.test(firstOutput)
     && /(?:^|\n)\s*id:\s*["']?S1["']?\s*(?:\n|$)/i.test(firstOutput)
     && /Run[\s\S]*Edit[\s\S]*Omit[\s\S]*Stop/i.test(firstOutput)
     && !/##\s+(?:Discovery Summary|Proposed Execution Plan)/i.test(firstOutput);

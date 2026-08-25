@@ -1,6 +1,6 @@
 # RPIV-Codex evaluations
 
-Promptfoo owns the repeatable evaluation layer. The product remains the repository-local `rpivc-*` skills and agents; the evaluator drives those skills through Codex app-server tasks in disposable repository clones.
+Promptfoo owns the repeatable evaluation layer. The product source is the skills-only plugin under `plugins/rpiv-codex/`; repository-local skill and specialist paths are development symlinks. The evaluator drives the same canonical resources through Codex app-server tasks in disposable repository clones.
 
 ```text
 Promptfoo case
@@ -29,13 +29,22 @@ npm run eval:view
 
 `npm run eval:discover` is deliberately one pass: two cases, one trial each, no cache, no sharing, and maximum concurrency one. It never repairs `rpivc-discover`, reruns a failed case, invokes RPIV-Pi, or starts another workflow stage.
 
-The Research release evaluation uses `npm run eval:research`. Its latest fresh
-three-case run on 2026-08-24 passed 0/3 with zero harness errors. The failures
-were product-behavior failures in evidence classification,
-projection verification, snapshot authority, and invalid citation handling.
-That result is not accepted release evidence; Research and plugin packaging
-remain gated until a later fresh run passes all three cases and is manually
-accepted.
+The Research release evaluation uses `npm run eval:research`. Its fresh
+repository-local three-case run on 2026-08-25 passed 3/3 with zero harness
+errors and was manually accepted. Installed-plugin evaluation remains a
+separate deployment proof: it must run after local marketplace installation
+from a new task without depending on project-local RPIVC profiles.
+
+For that installed-plugin gate, point the evaluator at the exact Codex cache
+entry:
+
+```sh
+RPIVC_INSTALLED_PLUGIN_ROOT=/absolute/path/to/cached/rpiv-codex npm run eval:research
+```
+
+This mode loads `rpivc-research` from the installed cache and removes
+repository-local RPIVC skill, marketplace, and custom-agent links from every
+disposable target clone before recording its baseline.
 
 ## Discovery cases
 
@@ -54,7 +63,7 @@ Each run writes beneath `.rpiv-codex/evals/<evaluation-id>/`:
 - complete target turns with app-server metadata and raw events
 - `runtime-attestations.jsonl` for every approved child dispatch, containing hashes and runtime facts but no prompt or output text
 - `transport-retries.jsonl` when an app-server turn times out; Research permits one evidence-visible retry of the same decision, grants no new authority, and reuses an already-completed child instead of spawning a duplicate
-- the relevant skill, agent, parity, and generated-artifact files
+- the canonical plugin resources, marketplace manifest, parity file, and generated artifacts
 - deterministic assertion components
 - separate contract/evidence and interaction/parity grader results
 - a cleanup record for the disposable workspace

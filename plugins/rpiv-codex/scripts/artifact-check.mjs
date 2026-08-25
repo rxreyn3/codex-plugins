@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { contextSnapshot } from "./context-snapshot.mjs";
 
 const requiredArtifactFields = [
@@ -219,13 +219,13 @@ export function normalizeLocalMarkdownCitations(input, cwd = process.cwd()) {
 
 function semanticEvidenceDefects(relativeTarget, claim, sourceExcerpt) {
   const defects = [];
-  if (relativeTarget.endsWith(".agents/skills/_shared/scripts/artifact-path.mjs")) {
+  if (relativeTarget.endsWith("scripts/artifact-path.mjs")) {
     if (/\b(?:unknown|invalid|unsupported) stage\b|\bthrows? for (?:an )?unknown stage\b/i.test(claim)
       && !/stageSources\.has[\s\S]*throw new Error/.test(sourceExcerpt)) {
       defects.push("unknown-stage claim does not cite the stage guard and throw");
     }
   }
-  if (relativeTarget.endsWith(".agents/skills/_shared/scripts/artifact-check.mjs")) {
+  if (relativeTarget.endsWith("scripts/artifact-check.mjs")) {
     if (/\bscan preparation\b/i.test(claim)
       && /\b(?:validates?|checks?) coverage\b/i.test(claim)
       && !/parseCoverageProjection/.test(sourceExcerpt)) {
@@ -435,11 +435,34 @@ const researchProfiles = {
   "rpivc-precedent-locator": ["gpt-5.6-luna", "low"],
 };
 
+const runningArtifactCheckPath = fs.realpathSync(fileURLToPath(import.meta.url));
+const bundledSpecialistDirectory = fs.realpathSync(path.join(path.dirname(runningArtifactCheckPath), "..", "specialists"));
+const bundledSpecialistRoles = new Set([
+  "rpivc-codebase-locator",
+  ...Object.keys(researchProfiles),
+]);
+
+export function specialistContract(role) {
+  if (!bundledSpecialistRoles.has(role)) fail(`bundled specialist role is invalid: ${role}`);
+  const absolute = fs.realpathSync(path.join(bundledSpecialistDirectory, `${role}.toml`));
+  const bytes = fs.readFileSync(absolute);
+  return {
+    role,
+    absolute,
+    sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+    byte_length: bytes.length,
+  };
+}
+
 export function validateResearchCard(text, cwd = process.cwd(), authoritativeSnapshot = null) {
   const fields = flatYamlFields(text);
   const snapshot = authoritativeSnapshot ?? contextSnapshot(cwd);
   const id = exactlyOneField(fields, "id");
+  const dispatchProtocol = exactlyOneField(fields, "dispatch_protocol");
   const role = exactlyOneField(fields, "role");
+  const runtimeAgentType = exactlyOneField(fields, "runtime_agent_type");
+  const specialistContractPath = exactlyOneField(fields, "specialist_contract");
+  const specialistContractSha256 = exactlyOneField(fields, "specialist_contract_sha256");
   const repository = exactlyOneField(fields, "repository");
   const branch = exactlyOneField(fields, "branch");
   const commit = exactlyOneField(fields, "commit");
@@ -448,10 +471,42 @@ export function validateResearchCard(text, cwd = process.cwd(), authoritativeSna
   const reasoning = exactlyOneField(fields, "reasoning");
   if (fields.has("reasoning_effort")) fail("research card must not contain reasoning_effort");
   if (!/^S1$|^A[1-9][0-9]*$/.test(id)) fail(`research card id is invalid: ${id}`);
+  if (dispatchProtocol !== "rpivc-dispatch/v1") fail("research card dispatch_protocol must be rpivc-dispatch/v1");
   const expectedProfile = researchProfiles[role];
   if (!expectedProfile) fail(`research card role is invalid: ${role}`);
+  if (runtimeAgentType !== "default") fail("research card runtime_agent_type must be default");
+  const bundledContract = specialistContract(role);
+  if (!path.isAbsolute(specialistContractPath)) fail("research card specialist_contract must be an absolute path");
+  let resolvedSpecialistContract;
+  try {
+    resolvedSpecialistContract = fs.realpathSync(specialistContractPath);
+  } catch {
+    fail("research card specialist_contract does not resolve to a file");
+  }
+  if (resolvedSpecialistContract !== bundledContract.absolute) {
+    fail("research card specialist_contract must resolve to the bundled logical-role contract");
+  }
+  if (specialistContractSha256 !== bundledContract.sha256) {
+    fail("research card specialist_contract_sha256 does not match the bundled logical-role contract");
+  }
   if (id === "S1" && role !== "rpivc-scope-tracer") fail("research card S1 must use role rpivc-scope-tracer");
   if (id !== "S1" && role === "rpivc-scope-tracer") fail("analysis research cards cannot use role rpivc-scope-tracer");
+  let scopeValidator = null;
+  if (id === "S1") {
+    scopeValidator = exactlyOneField(fields, "scope_validator");
+    if (!path.isAbsolute(scopeValidator)) fail("research card scope_validator must be an absolute path");
+    let resolvedScopeValidator;
+    try {
+      resolvedScopeValidator = fs.realpathSync(scopeValidator);
+    } catch {
+      fail("research card scope_validator does not resolve to a file");
+    }
+    if (resolvedScopeValidator !== runningArtifactCheckPath) {
+      fail("research card scope_validator must resolve to the running plugin helper");
+    }
+  } else if (fields.has("scope_validator")) {
+    fail("analysis research cards must not contain scope_validator");
+  }
   if (model !== expectedProfile[0] || reasoning !== expectedProfile[1]) {
     fail(`research card ${role} must use ${expectedProfile[0]}/${expectedProfile[1]}`);
   }
@@ -464,11 +519,29 @@ export function validateResearchCard(text, cwd = process.cwd(), authoritativeSna
   return {
     valid: true,
     id,
+    dispatch_protocol: dispatchProtocol,
     role,
+    runtime_agent_type: runtimeAgentType,
+    specialist_contract: bundledContract.absolute,
+    specialist_contract_sha256: bundledContract.sha256,
+    scope_validator: scopeValidator,
     model,
     reasoning,
     context: snapshot,
   };
+}
+
+export function renderResearchEnvelope(text, cwd = process.cwd(), authoritativeSnapshot = null) {
+  const validated = validateResearchCard(text, cwd, authoritativeSnapshot);
+  const contractToml = fs.readFileSync(validated.specialist_contract, "utf8");
+  return `${JSON.stringify({
+    protocol: validated.dispatch_protocol,
+    instructions: "Apply developer_instructions from specialist_contract_toml as the fixed logical-role behavior and card_yaml as the human-approved runtime scope. The card may narrow but never widen the specialist contract. Do not load a project-local custom-agent profile.",
+    card_sha256: crypto.createHash("sha256").update(text).digest("hex"),
+    specialist_contract_sha256: validated.specialist_contract_sha256,
+    card_yaml: text,
+    specialist_contract_toml: contractToml,
+  }, null, 2)}\n`;
 }
 
 function questionIdentifiers(text) {
@@ -858,12 +931,16 @@ function readStandardInput(timeoutMs = 2000) {
 
 async function main() {
   const [, , command, ...args] = process.argv;
-  if (["validate-research-card", "validate-research-scope"].includes(command)) {
+  if (["validate-research-card", "validate-research-scope", "render-research-envelope"].includes(command)) {
     if (args.length !== 0) fail(`usage: artifact-check.mjs ${command} < input`);
     const input = await readStandardInput();
-    return command === "validate-research-card"
-      ? validateResearchCard(input)
-      : validateResearchScope(input);
+    if (command === "validate-research-card") return validateResearchCard(input);
+    if (command === "render-research-envelope") return renderResearchEnvelope(input);
+    return validateResearchScope(input);
+  }
+  if (command === "specialist-contract") {
+    if (args.length !== 1) fail("usage: artifact-check.mjs specialist-contract <role>");
+    return specialistContract(args[0]);
   }
   if (["prepare-research-scan", "render-research-scan"].includes(command)) {
     if (args.length !== 0) fail(`usage: artifact-check.mjs ${command} < scan.md`);
@@ -879,7 +956,7 @@ async function main() {
     return finalizeResearch(args[0], await readStandardInput());
   }
   if (!["inspect", "compare", "preflight-discovery", "preflight-research", "normalize-citations"].includes(command) || args.length !== 1) {
-    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations|verify-research-projection|validate-research-card|validate-research-scope|finalize-research> <input>");
+    fail("usage: artifact-check.mjs <inspect|compare|preflight-discovery|preflight-research|normalize-citations|verify-research-projection|validate-research-card|validate-research-scope|render-research-envelope|specialist-contract|finalize-research> <input>");
   }
   if (command === "inspect") return inspectArtifact(args[0]);
   if (command === "preflight-discovery") return preflightDiscoveryArtifact(args[0]);
@@ -889,7 +966,7 @@ async function main() {
 }
 
 const invokedDirectly = process.argv[1]
-  && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+  && fs.realpathSync(fileURLToPath(import.meta.url)) === fs.realpathSync(path.resolve(process.argv[1]));
 
 if (invokedDirectly) {
   main().then((result) => {

@@ -104,6 +104,7 @@ test("runtime attestation binds the displayed card to the effective child run", 
     dispatch_protocol: "rpivc-dispatch/v1",
     task_name: "d1_codebase_locator",
     role: "rpivc-codebase-locator",
+    runtime_agent_type: "default",
     purpose: "Locate the save flow",
     prompt: "Locate the save flow and return file:line evidence.",
     inputs: ["captured intent", "target repository: /tmp/project"],
@@ -128,6 +129,7 @@ test("runtime attestation binds the displayed card to the effective child run", 
     "dispatch_protocol: rpivc-dispatch/v1",
     "task_name: d1_codebase_locator",
     "role: rpivc-codebase-locator",
+    "runtime_agent_type: default",
   ].join("\n")}\n\`\`\``;
   assert.equal(extractAgentCards(rendered)[0].task_name, "d1_codebase_locator");
   assert.equal(expectedTaskName(card), "d1_codebase_locator");
@@ -138,7 +140,7 @@ test("runtime attestation binds the displayed card to the effective child run", 
   const envelope = JSON.stringify(dispatchEnvelope(card));
   const notifications = [
     { method: "thread/settings/updated", params: { threadId: parentThreadId, threadSettings: { model: "gpt-5.6-sol", effort: "xhigh", approvalPolicy: "never", sandboxPolicy: { type: "workspaceWrite", networkAccess: false } } } },
-    { method: "rawResponseItem/completed", params: { threadId: parentThreadId, turnId: "parent-turn", item: { type: "function_call", name: "spawn_agent", call_id: "spawn-call", arguments: JSON.stringify({ task_name: card.task_name, fork_turns: "none", model: card.model, reasoning_effort: card.reasoning, message: envelope }) } } },
+    { method: "rawResponseItem/completed", params: { threadId: parentThreadId, turnId: "parent-turn", item: { type: "function_call", name: "spawn_agent", call_id: "spawn-call", arguments: JSON.stringify({ agent_type: card.runtime_agent_type, task_name: card.task_name, fork_turns: "none", model: card.model, reasoning_effort: card.reasoning, message: envelope }) } } },
     { method: "item/completed", params: { threadId: parentThreadId, item: { type: "subAgentActivity", id: "spawn-call", kind: "started", agentThreadId: childThreadId, agentPath } } },
     { method: "thread/settings/updated", params: { threadId: childThreadId, threadSettings: { model: card.model, effort: card.reasoning, approvalPolicy: "never", sandboxPolicy: { type: "workspaceWrite", networkAccess: false } } } },
     { method: "turn/completed", params: { threadId: childThreadId, turn: { id: "child-turn", status: "completed", error: null } } },

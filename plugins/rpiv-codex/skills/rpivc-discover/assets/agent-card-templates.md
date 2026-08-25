@@ -9,6 +9,7 @@ id: "{{CARD_ID}}"
 dispatch_protocol: rpivc-dispatch/v1
 task_name: "{{LOWERCASE_CARD_ID}}_codebase_locator"
 role: rpivc-codebase-locator
+runtime_agent_type: default
 purpose: "{{BOUNDED_WHERE_QUESTION}}"
 prompt: "{{EXACT_INTENT_SHAPED_PROMPT}}"
 inputs: ["captured-intent", "{{KNOWN_TARGET_REPOSITORY_OR_NAMED_PATHS}}"]
@@ -19,7 +20,7 @@ working_tree_sha256: "{{CURRENT_WORKING_TREE_SHA256}}"
 model: gpt-5.6-luna
 reasoning: low
 sandbox_request: read-only
-sandbox_enforcement: "inherited-parent; project-agent configuration does not guarantee child-specific isolation"
+sandbox_enforcement: "inherited-parent; runtime agent configuration does not guarantee child-specific isolation"
 behavioral_permissions: [read, search, git-read]
 intended_tools: [read, search, git-read]
 child_agents: forbidden
@@ -38,6 +39,7 @@ id: "{{CARD_ID}}"
 dispatch_protocol: rpivc-dispatch/v1
 task_name: "{{LOWERCASE_CARD_ID}}_codebase_analyzer"
 role: rpivc-codebase-analyzer
+runtime_agent_type: default
 purpose: "{{BOUNDED_HOW_QUESTION}}"
 prompt: "{{EXACT_INTENT_AND_ANCHOR_SHAPED_PROMPT}}"
 inputs: ["captured-intent", "{{KNOWN_REPOSITORY_RELATIVE_PATH_LINE_ANCHORS}}"]
@@ -48,7 +50,7 @@ working_tree_sha256: "{{CURRENT_WORKING_TREE_SHA256}}"
 model: gpt-5.6-terra
 reasoning: high
 sandbox_request: read-only
-sandbox_enforcement: "inherited-parent; project-agent configuration does not guarantee child-specific isolation"
+sandbox_enforcement: "inherited-parent; runtime agent configuration does not guarantee child-specific isolation"
 behavioral_permissions: [read, search, git-read]
 intended_tools: [read, search, git-read]
 child_agents: forbidden
