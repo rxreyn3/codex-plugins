@@ -439,6 +439,18 @@ test("research scope validation checks citations and exact plan coverage", () =>
   ].join("\n");
 
   assert.equal(validateResearchScope(valid, workspace).valid, true);
+  const naturalLanguagePlan = valid.replace(
+    "1. Analyzer: Q1-Q5.",
+    [
+      "1. Analyzer — Questions 1, 2, and 5: current behavior.",
+      "2. Pattern finder — Questions 3–4: shared patterns.",
+    ].join("\n"),
+  );
+  assert.equal(validateResearchScope(naturalLanguagePlan, workspace).valid, true);
+  assert.throws(
+    () => validateResearchScope(naturalLanguagePlan.replace("Questions 3–4", "Questions 2–4"), workspace),
+    /cover Q2 exactly once/,
+  );
   assert.throws(
     () => validateResearchScope(valid.replaceAll("[tracked.txt:1]", "[file.txt:1]"), workspace),
     /citation label must be repository-relative/,

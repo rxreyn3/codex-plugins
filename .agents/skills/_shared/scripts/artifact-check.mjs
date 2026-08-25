@@ -473,11 +473,22 @@ export function validateResearchCard(text, cwd = process.cwd(), authoritativeSna
 
 function questionIdentifiers(text) {
   const identifiers = [];
-  for (const match of String(text).matchAll(/\bQ([1-9][0-9]*)(?:\s*[-–—]\s*Q([1-9][0-9]*))?\b/g)) {
-    const start = Number(match[1]);
-    const end = Number(match[2] ?? start);
-    if (end < start || end - start > 20) return [];
+  const appendRange = (startText, endText = startText) => {
+    const start = Number(startText);
+    const end = Number(endText);
+    if (end < start || end - start > 20) return false;
     for (let question = start; question <= end; question += 1) identifiers.push(question);
+    return true;
+  };
+  for (const match of String(text).matchAll(/\bQ([1-9][0-9]*)(?:\s*[-–—]\s*Q([1-9][0-9]*))?\b/g)) {
+    if (!appendRange(match[1], match[2])) return [];
+  }
+  for (const match of String(text).matchAll(/\bQuestions?\s+([^:;.\n]+)/gi)) {
+    const list = match[1];
+    if (/\bQ[1-9][0-9]*\b/.test(list)) continue;
+    for (const token of list.matchAll(/\b([1-9][0-9]*)(?:\s*[-–—]\s*([1-9][0-9]*))?\b/g)) {
+      if (!appendRange(token[1], token[2])) return [];
+    }
   }
   return identifiers;
 }

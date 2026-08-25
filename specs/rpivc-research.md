@@ -531,6 +531,9 @@ Deterministic checks must prove:
   dependency evidence, and one remaining analysis-card slot.
 - No child agent spawns another child.
 - Each approved question appears in the Coverage Ledger exactly once.
+- Scope-plan coverage accepts explicit `Q1` identifiers and explicit
+  natural-language lists such as `Questions 1, 2, and 5` or `Questions 3–4`;
+  bare unlabelled numbers do not count.
 - Each Answered question has at least one valid clickable current-code citation.
 - Local citation targets use `:line` or `:start-end`; GitHub-style `#L`
   fragments are invalid. Inspection reports all Markdown-link defects in one
