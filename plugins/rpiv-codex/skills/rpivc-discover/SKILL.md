@@ -9,7 +9,7 @@ Preserve RPIV discovery behavior while adding lightweight Codex-native review ga
 
 ## Resolve the bundled runtime
 
-Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin exposes regular-file helper entrypoints at `<skill-root>/scripts/`; each entrypoint loads the canonical implementation from the plugin root, so it survives Codex's local cache copy as well as repository development symlinks. Resolve a bundled specialist contract by running `node <skill-root>/scripts/artifact-check.mjs specialist-contract <role>` and use the emitted absolute path and hash. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
+Let `<skill-root>` be the absolute directory containing this loaded `SKILL.md`. The plugin exposes regular-file helper entrypoints at `<skill-root>/scripts/`; each entrypoint loads the canonical implementation from the plugin root, so it survives Codex's local cache copy as well as repository development symlinks. Resolve a bundled specialist contract by running `node <skill-root>/scripts/artifact-check.mjs specialist-contract <role>` with the exact displayed `rpivc-*` logical role identifier, such as `rpivc-codebase-locator`; never pass a shorthand such as `locator`. Use the emitted absolute path and hash. Never look for helpers or specialist profiles beneath the target project's `.agents` or `.codex` directories.
 
 Run every helper with the user's current project as the working directory. The helper determines the target repository from `process.cwd()` and allocates artifacts only beneath that project's `.rpiv-codex/artifacts/`. The plugin installation directory is runtime code, never the product target and never an artifact destination.
 

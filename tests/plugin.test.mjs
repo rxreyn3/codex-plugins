@@ -34,6 +34,9 @@ test("portable skills resolve every runtime resource inside the plugin", () => {
   }
 
   const research = fs.readFileSync(path.join(pluginRoot, "skills", "rpivc-research", "SKILL.md"), "utf8");
+  const discover = fs.readFileSync(path.join(pluginRoot, "skills", "rpivc-discover", "SKILL.md"), "utf8");
+  assert.match(discover, /exact displayed `rpivc-\*` logical role identifier/);
+  assert.match(discover, /never pass a shorthand such as `locator`/);
   assert.match(research, /runtime_agent_type: default/);
   assert.match(research, /without a target-project profile/);
   assert.match(research, /current project.*\.rpiv-codex\/artifacts/s);
