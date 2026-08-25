@@ -537,7 +537,8 @@ Deterministic checks must prove:
   invocation so the single permitted correction sees the complete set.
 - One enclosing Markdown code-span pair around a citation label is presentation
   markup; after it is removed, the label must exactly match the
-  repository-relative path and target line or range.
+  repository-relative path and target line or range, with no leading or
+  trailing whitespace.
 - Conflicted, Partial, and Unanswered questions remain visible as gaps or open
   questions.
 - Discovery decisions survive unchanged into Developer Context.
