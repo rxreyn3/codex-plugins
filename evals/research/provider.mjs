@@ -455,6 +455,9 @@ export default class RpivcResearchProvider {
           delegateContext,
           callOptions,
         );
+        if (isResearchTransportTimeout(response?.error)) {
+          throw new Error(String(response.error));
+        }
         if (retryAttempt > 0) {
           appendJsonLine(evidencePath, {
             event: "succeeded",

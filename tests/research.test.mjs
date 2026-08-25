@@ -565,7 +565,7 @@ test("research provider retries one timed-out turn without granting new authorit
     delegate: {
       async callApi(prompt) {
         calls.push(JSON.parse(prompt));
-        if (calls.length === 1) throw new Error("codex app-server turn timed out after 2700000ms");
+        if (calls.length === 1) return { error: "codex app-server turn timed out after 2700000ms" };
         return { output: "validated scope" };
       },
     },
