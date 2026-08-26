@@ -348,6 +348,8 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   const assertions = read("evals", "research", "assertions.mjs");
   assert.match(provider, /const turnTimeoutMs = 2700000/);
   assert.match(provider, /Native waits yield every ten minutes/);
+  assert.match(provider, /one continuous `allocateArtifact` path-construction and frontmatter-return seam/);
+  assert.match(provider, /use one codebase-analyzer group unless direct repository evidence proves/);
   assert.match(provider, /openai:codex-app-server:gpt-5\.6-sol/);
   assert.match(provider, /model_reasoning_effort: "high"/);
   assert.match(provider, /Call collaboration\.spawn_agent directly/);

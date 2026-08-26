@@ -262,6 +262,12 @@ function createDiscoveryFixture(workspace, caseId) {
   fs.mkdirSync(directory, { recursive: true });
   const target = path.join(directory, `${caseId}.md`);
   const crossCutting = caseId === "cross-cutting-research";
+  const summary = crossCutting
+    ? "Research the skill, artifact, evaluation, and runtime-attestation integration."
+    : "Research the one continuous `allocateArtifact` path-construction and frontmatter-return seam in `plugins/rpiv-codex/scripts/artifact-path.mjs`.";
+  const scopeConstraint = crossCutting
+    ? "Use the accepted local repository and existing deterministic helpers."
+    : "Treat allocation as one continuous current-behavior seam and use one codebase-analyzer group unless direct repository evidence proves that one specialist cannot cover the approved questions.";
   const text = `---
 stage: discover
 status: review
@@ -283,7 +289,7 @@ target_context: "rpiv-codex repository"
 # Feature Requirements Document: Research evaluation fixture
 
 ## Summary
-Research ${crossCutting ? "the skill, artifact, evaluation, and runtime-attestation integration" : "the shared artifact allocation and inspection seam"}.
+${summary}
 
 ## Problem & Intent
 The developer needs grounded current-code research before a later design decision.
@@ -304,7 +310,7 @@ The developer needs grounded current-code research before a later design decisio
 - Work behaviorally read-only outside one research artifact.
 
 ## Constraints & Assumptions
-- Use the accepted local repository and existing deterministic helpers.
+- ${scopeConstraint}
 
 ## Acceptance Criteria
 - A research artifact contains verified links, complete coverage, and inherited decisions.
