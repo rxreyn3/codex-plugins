@@ -58,33 +58,26 @@ Codex skills can be instruction-only and explicitly invoked; deterministic scrip
 ## Repository Layout
 
 ```text
-.agents/skills/
-  rpivc-discover/
-  rpivc-research/
-  rpivc-design/
-  rpivc-plan/
-  rpivc-revise/
-  rpivc-implement/
-  rpivc-validate/
-  rpivc-code-review/
-  _shared/
+plugins/rpiv-codex/
+  .codex-plugin/plugin.json
+  scripts/
+  skills/
+    rpivc-discover/
+    rpivc-research/
+  specialists/
+    rpivc-codebase-locator.toml
+    rpivc-codebase-analyzer.toml
+    rpivc-codebase-pattern-finder.toml
+    rpivc-integration-scanner.toml
+    rpivc-scope-tracer.toml
+    rpivc-precedent-locator.toml
 
-.codex/agents/
-  rpivc-codebase-locator.toml
-  rpivc-codebase-analyzer.toml
-  rpivc-codebase-pattern-finder.toml
-  rpivc-integration-scanner.toml
-  rpivc-scope-tracer.toml
-  rpivc-precedent-locator.toml
-  rpivc-slice-verifier.toml
-  rpivc-artifact-code-reviewer.toml
-  rpivc-artifact-coverage-reviewer.toml
-  rpivc-diff-auditor.toml
-  rpivc-peer-comparator.toml
-  rpivc-claim-verifier.toml
+.agents/skills/       # development symlinks into the canonical plugin
+.codex/agents/        # development symlinks into bundled specialists
 ```
 
-Every skill receives:
+Each accepted later unit is added to the canonical plugin only after its own
+implementation, evaluation, and manual review checkpoint. Every skill receives:
 
 - `SKILL.md`
 - Generated `agents/openai.yaml`
@@ -137,7 +130,10 @@ created_at: ...
 
 `status: review` describes the artifact’s lifecycle, not a persisted approval state. The artifact remains immutable after presentation.
 
-If Ryan requests changes, the skill writes a new timestamp-distinct artifact with `supersedes:` pointing to the prior version.
+Each independently reviewed unit declares its revision behavior explicitly.
+Research updates and revalidates its one review-draft path on **Revise**, then
+freezes those bytes on **Accept**. A later unit may use timestamp-distinct
+`supersedes:` lineage only when its accepted contract calls for it.
 
 ## Clickable Path Contract
 
@@ -364,7 +360,7 @@ Update only the existing discovery vertical unit:
 
 The discovery checkpoint is closed. No research implementation was included in it.
 
-### 2. Research — free-text parity validation in progress
+### 2. Research — accepted and released in 0.1.0
 
 The accepted unit contract is [the `rpivc-research` specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md). Ryan accepted it on 2026-08-19, including the external-web deferral. Implementation remains bounded to this independently reviewable unit.
 
@@ -380,6 +376,15 @@ Stop after the one-shot evaluation and manual review evidence. Do not implement 
 The first research baseline ran once on 2026-08-19 and passed 1/2 cases. The narrow case exposed omitted explicit model/reasoning spawn arguments plus two deterministic evaluator defects. Those bounded corrections were applied. Ryan separately authorized a fresh baseline on 2026-08-20; it again passed 1/2, with the narrow case fully passing and the cross-cutting case stopping when the fifth direct child was rejected by the runtime's four-child ceiling.
 
 The three-card candidate's 2026-08-20 baseline passed 2/2. Ryan then rejected timestamp-distinct research files for minor revisions because they force downstream consumers to resolve lineage. Research now creates one review draft, edits and revalidates that same path on **Revise**, and freezes it on **Accept**. Ryan subsequently rejected the discovery-only entry contract because small research tasks must not require a Feature Requirements Document. The parity correction accepts either a direct prompt or one accepted discovery artifact. A fresh three-case baseline covers direct-prompt, discovery-backed narrow, and cross-cutting revision behavior.
+
+The release gate completed on 2026-08-26. The canonical skills-only plugin was
+installed from the tracked `rpiv-codex-local` marketplace and exercised from
+disposable projects with their repository-local RPIVC skills and agent profiles
+removed. The narrow, cross-cutting, and direct-prompt cases each scored `1.0`
+across all three assertion components; the wrapper reported source unchanged,
+successful cleanup, and zero failed or errored cases. Ryan manually accepted
+the result. Research is closed at version `0.1.0`; `rpivc-design` remains a
+separate future unit.
 
 ### 3. Design
 
@@ -522,8 +527,9 @@ A strict approval mode may be reconsidered only if a concrete future use case re
 - Historical discovery, dispatch, and approval artifacts from the superseded gate design have been deleted at Ryan’s explicit request.
 - `rpiv-mono` remains read-only and untouched.
 - Initial use is Ryan’s local Codex environment.
-- No global installation or plugin packaging is included.
+- Discover and Research are packaged and locally installed as the skills-only `rpiv-codex` plugin at version `0.1.0` from the tracked `rpiv-codex-local` marketplace.
+- No remote marketplace publication or universal-directory submission is included.
 - Skills never modify `.gitignore`, commit, push, or choose whether artifacts should be committed.
 - The discovery checkpoint is complete and accepted.
-- The `rpivc-research` candidate and its evaluation files exist in the working tree. Its latest bounded runtime-capacity correction has deterministic validation but no fresh behavioral pass.
-- `rpivc-design` must not exist at the research checkpoint.
+- The Research checkpoint is complete and manually accepted after the fresh installed-plugin three-case evaluation passed 3/3 on 2026-08-26.
+- `rpivc-design` does not exist in `0.1.0`; it is the next independently reviewed vertical unit.

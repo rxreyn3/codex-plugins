@@ -2,7 +2,7 @@
 
 A lightweight, human-gated Codex port of valuable RPIV-Pi workflow behavior.
 
-Current checkpoint: `rpivc-discover` and `rpivc-research` are accepted repository-local units. Research is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md), preserves both a direct prompt and one accepted discovery artifact as input, revises one review draft in place, and freezes it after **Accept**. Its fresh three-case repository-local release evaluation passed 3/3 on 2026-08-25 and was manually accepted. No later workflow stage is implemented.
+Current checkpoint: `rpivc-discover` and `rpivc-research` are accepted and released together in the skills-only `rpiv-codex` local plugin at version `0.1.0`. Research is implemented against its [accepted specification](/Users/ryan.reynolds/Projects/rpiv-codex/specs/rpivc-research.md), preserves both a direct prompt and one accepted discovery artifact as input, revises one review draft in place, and freezes it after **Accept**. Its fresh installed-plugin three-case release evaluation passed 3/3 on 2026-08-26, with every deterministic and model-graded component scoring `1.0`, and was manually accepted. The [Promptfoo report](/Users/ryan.reynolds/Projects/rpiv-codex/.rpiv-codex/evals/20260826T083033564Z-44542/promptfoo.json) and [isolation summary](/Users/ryan.reynolds/Projects/rpiv-codex/.rpiv-codex/evals/20260826T083033564Z-44542/run-summary.json) remain as local, gitignored release evidence. No later workflow stage is implemented.
 
 The canonical source now lives in the skills-only `rpiv-codex` plugin under `plugins/rpiv-codex/`. Repository-local `.agents/skills` and `.codex/agents` paths are development symlinks to that source. The plugin bundles its helpers and specialist authoring contracts, runs them against the user's current project, and writes artifacts only beneath that project's `.rpiv-codex/artifacts/`. It contributes no Model Context Protocol server, app, hook, authentication flow, or automatic successor stage.
 
@@ -40,6 +40,7 @@ During local iteration, use Codex's `plugin-creator` cachebuster helper on `plug
 
 Useful entry points:
 
+- [Changelog](/Users/ryan.reynolds/Projects/rpiv-codex/CHANGELOG.md)
 - [Evaluation guide](/Users/ryan.reynolds/Projects/rpiv-codex/evals/README.md)
 - [Discovery configuration](/Users/ryan.reynolds/Projects/rpiv-codex/evals/discover/promptfooconfig.yaml)
 - [Research configuration](/Users/ryan.reynolds/Projects/rpiv-codex/evals/research/promptfooconfig.yaml)

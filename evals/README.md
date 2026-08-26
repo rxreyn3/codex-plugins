@@ -30,10 +30,13 @@ npm run eval:view
 `npm run eval:discover` is deliberately one pass: two cases, one trial each, no cache, no sharing, and maximum concurrency one. It never repairs `rpivc-discover`, reruns a failed case, invokes RPIV-Pi, or starts another workflow stage.
 
 The Research release evaluation uses `npm run eval:research`. Its fresh
-repository-local three-case run on 2026-08-25 passed 3/3 with zero harness
-errors and was manually accepted. Installed-plugin evaluation remains a
-separate deployment proof: it must run after local marketplace installation
-from a new task without depending on project-local RPIVC profiles.
+installed-plugin three-case run on 2026-08-26 passed 3/3 with zero failed cases
+or harness errors and was manually accepted. Each case scored `1.0` for the
+deterministic contract, contract and evidence, and interaction and parity
+components. Evaluation `20260826T083033564Z-44542` ran after local marketplace
+installation from a new task without depending on project-local RPIVC profiles;
+its source checkout remained unchanged and every disposable workspace was
+removed.
 
 For that installed-plugin gate, point the evaluator at the exact Codex cache
 entry:
