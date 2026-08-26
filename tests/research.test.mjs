@@ -346,8 +346,10 @@ test("research evaluation covers direct prompt and discovery modes with two inde
   assert.match(config, /repeat: 1/);
   const provider = read("evals", "research", "provider.mjs");
   const assertions = read("evals", "research", "assertions.mjs");
-  assert.match(provider, /const turnTimeoutMs = 2700000/);
+  assert.match(provider, /const turnTimeoutMs = 5400000/);
   assert.match(provider, /Native waits yield every ten minutes/);
+  assert.match(provider, /45-minute parent/);
+  assert.match(provider, /one-child and three-child analysis turns/);
   assert.match(provider, /one continuous `allocateArtifact` path-construction and frontmatter-return seam/);
   assert.match(provider, /use one codebase-analyzer group unless direct repository evidence proves/);
   assert.match(provider, /openai:codex-app-server:gpt-5\.6-sol/);

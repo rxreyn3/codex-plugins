@@ -373,11 +373,12 @@ export default class RpivcResearchProvider {
     if (!["discovery", "prompt"].includes(inputMode)) {
       throw new Error(`unsupported research input_mode: ${inputMode}`);
     }
-    // Native waits yield every ten minutes, but a live child may need another
-    // interval before its completion notification arrives. Independent analysis
-    // cards run in parallel; retain a generous outer ceiling for the slowest
-    // child plus clause synthesis, scan validation, and rendering.
-    const turnTimeoutMs = 2700000;
+    // Native waits yield every ten minutes, but a live child may need several
+    // intervals before its completion notification arrives. A 45-minute parent
+    // ceiling timed out both one-child and three-child analysis turns in fresh
+    // installed-plugin runs, so retain 90 minutes for the slowest child plus
+    // clause synthesis, scan validation, and rendering.
+    const turnTimeoutMs = 5400000;
     const discoveryArtifact = inputMode === "discovery"
       ? createDiscoveryFixture(workspaceState.workspace, caseId)
       : null;

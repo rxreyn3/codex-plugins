@@ -51,12 +51,12 @@ function runCommand(args, env) {
 }
 
 function controlledEnvironment(id, evidenceRoot) {
-  // Research allows one retry after a 45-minute app-server turn timeout. Give
+  // Research allows one retry after a 90-minute app-server turn timeout. Give
   // the enclosing case enough time to report that bounded retry outcome, and
   // give an abandoned scheduler slot one turn plus a small cleanup buffer to
   // drain before the next serial case begins.
-  const caseTimeoutMs = 10_800_000;
-  const schedulerQueueTimeoutMs = 3_000_000;
+  const caseTimeoutMs = 21_600_000;
+  const schedulerQueueTimeoutMs = 5_700_000;
   const evaluationTimeoutMs = caseTimeoutMs * 3;
   return {
     ...process.env,
