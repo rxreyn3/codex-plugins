@@ -1,0 +1,235 @@
+# RPIV-Pi to RPIV-Codex: One-Skill Porting Plan
+
+## Purpose
+
+Port RPIV-Pi to Codex one named skill at a time without redesigning RPIV along the way.
+
+Each invocation performs one bounded cycle:
+
+```text
+named RPIV-Pi skill
+        |
+        v
+trace required dependency closure
+        |
+        v
+port behavior with minimal Codex adapters
+        |
+        v
+verify source tree -> commit candidate -> install locally
+        |
+        v
+fresh task tests installed plugin -> user accepts or returns for repair
+```
+
+The final arrow is deliberately a separate task. A task that edits or installs a plugin cannot prove that a newly started Codex task will discover and execute the installed copy correctly.
+
+## Fixed source
+
+Use this source revision unless the user explicitly asks to update the pin:
+
+- Repository: sibling checkout `../rpiv-mono`
+- Package root: `../rpiv-mono/packages/rpiv-pi`
+- Upstream branch at pin time: `upstream/main`
+- Commit: `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`
+- Commit date: `2026-08-24`
+- Commit subject: `Add [Unreleased] section for next cycle`
+
+Resolve both repository paths with `git rev-parse --show-toplevel`; do not rely on the caller's current directory. Before reading the source skill, verify that the RPIV-Pi checkout is clean and `HEAD` equals the pinned commit. If it differs, stop and report the actual revision. Never pull, reset, switch branches, or silently change this pin during a port.
+
+To update the pin later, the user must explicitly request it. Fast-forward the source checkout from its configured upstream, record the new full commit here, validate the orchestration skill, and commit that pin change separately from a skill port.
+
+## Invocation and scope
+
+Accept one simple directory name, for example `discover`, not a path or a comma-separated list. Confirm that `<package-root>/skills/<name>/SKILL.md` exists. Reject `_shared` as the requested skill; it is a dependency namespace, not a user workflow.
+
+The invocation authorizes the bounded cycle for the named skill: source inspection, repository edits, proportionate verification, one local candidate commit, and local plugin installation or refresh. It does not authorize a push, publication, release, source-repository edits, or work on another skill.
+
+Start only from a clean `rpiv-codex` worktree. If it is dirty, classify every change. Continue only when all existing changes are clearly the unfinished candidate for this same named skill and the user asks to resume it. Otherwise stop rather than folding unrelated work into the port.
+
+The allowed change cone is:
+
+1. the target Codex skill;
+2. dependency files the target executes or instructs the model to read;
+3. shared plugin infrastructure required to package or run those files;
+4. tests and concise provenance documentation for this target;
+5. local marketplace metadata and the plugin version needed to install this candidate.
+
+Do not port predecessor or successor skills merely because the source names them. Preserve their names, artifact links, and handoff text so they can be ported later.
+
+## Phase 1: Trace the source dependency closure
+
+Read the source `SKILL.md` fully. Then recursively inspect only items reachable from it:
+
+- relative Markdown links and explicitly named reference files;
+- scripts, templates, schemas, fixtures, and assets;
+- `_shared` material it imports or tells the model to read;
+- agent definitions it dispatches;
+- extension tools, hooks, commands, or runtime data it invokes;
+- artifact inputs, outputs, frontmatter, directories, and downstream handoffs;
+- package code needed to understand observable behavior of an extension call.
+
+For every dependency, record a compact working table with these columns:
+
+| Source item | Why the skill needs it | Codex disposition | Destination |
+|---|---|---|---|
+| path or capability | execution or instruction edge | copy, mechanical conversion, adapter, defer, or block | target path |
+
+`Defer` is valid only for a successor feature that the named skill does not need to complete. `Block` means the named skill cannot honestly work without a missing Codex capability; ask the user before changing semantics.
+
+Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
+
+Before editing, summarize:
+
+- source skill and pinned revision;
+- required closure;
+- Pi-specific capabilities and their Codex mappings;
+- genuine gaps or semantic choices;
+- proposed target files and verification.
+
+Proceed without another ceremony when the mapping is mechanical and within this contract. Ask one focused question when a choice changes user-visible behavior, artifact compatibility, or the stage boundary.
+
+## Phase 2: Apply the porting rules
+
+### Preserve before improving
+
+Preserve these source properties unless Codex makes one impossible:
+
+- user-visible workflow order and decision points;
+- meanings of Run, Edit, Omit, Stop, Accept, Revise, and similar choices;
+- artifact directories, filenames, frontmatter, templates, and cross-stage references;
+- required agent roles and the information returned by them;
+- validation conditions and stop behavior;
+- explicit non-goals and successor-stage boundaries.
+
+Copy compatible prose, templates, and deterministic scripts. Make mechanical syntax changes where Pi and Codex differ. Add the smallest adapter that supplies missing mechanics. Do not add approval envelopes, hashes, graders, ledgers, schemas, generalized frameworks, or new workflow stages unless the source requires them or a concrete failing test demonstrates the need.
+
+Name the Codex skill `rpivc-<source-name>` unless an already accepted port establishes a different compatible convention.
+
+### Capability mapping
+
+Use the capability available in the current Codex environment, not a guessed tool name:
+
+| RPIV-Pi dependency | Codex mapping |
+|---|---|
+| Read, search, list, and shell operations | Native repository inspection and terminal tools; prefer `rg` and `rg --files` for search |
+| `ask_user_question` | Native structured user-input tool when available; otherwise ask one concise question in the response and stop |
+| Pi `Agent` dispatch | Native Codex collaboration agent using a bundled role prompt and an explicit task contract |
+| Pi agent definition | Convert to a portable Markdown role prompt shipped inside the target skill; do not depend on target-project `.codex/agents` files |
+| Todo or workflow progress | Native plan/progress mechanism when available; otherwise concise commentary checkpoints |
+| Web search or fetch extension | Native Codex web or browser capability when available; otherwise report the missing evidence capability and stop rather than fabricating results |
+| Pi extension with deterministic local behavior | Reuse a standalone script when possible; otherwise port only the behavior the named skill calls |
+| Pi session hook or global runtime mutation | Replace with explicit skill instructions or a local helper when behavior is reproducible; block when hidden lifecycle behavior is essential |
+
+When dispatching a converted agent, the target skill must read the bundled role prompt and include its operational instructions in the native agent task. Use a built-in Codex agent type that exists in the installed environment. If collaboration agents are unavailable, execute inline only when role separation is not semantically important; otherwise report the limitation.
+
+### Package dependencies where they execute
+
+The installed plugin must be self-contained:
+
+- Put dependencies used by one skill inside that skill's directory.
+- Put genuinely reused runtime files under a documented shared directory in `plugins/rpiv-codex/` only after a second accepted port needs them.
+- Do not reach back into `../rpiv-mono`, the `rpiv-codex` source checkout, a personal Codex skill directory, or a target project's `.codex/agents` during installed execution.
+- Resolve helper paths from the installed skill or plugin location, not from the caller's working directory.
+
+On the first port, create the minimum documented Codex plugin structure:
+
+```text
+.agents/plugins/marketplace.json
+plugins/rpiv-codex/
+  .codex-plugin/plugin.json
+  skills/
+    rpivc-<source-name>/
+      SKILL.md
+      references/   # only when needed
+      scripts/      # only when needed
+```
+
+Follow the official Codex plugin manifest and local-marketplace formats. Use the installed `plugin-creator` skill for marketplace metadata, version cache-busting, and reinstall mechanics rather than preserving commands from memory.
+
+## Phase 3: Verify the candidate
+
+Verification should be proportional to this skill's actual behavior. At minimum:
+
+1. Validate every new or changed `SKILL.md` with the available Codex skill validator.
+2. Parse plugin and marketplace manifests and verify every referenced path exists.
+3. Find and remove broken relative links and forbidden runtime references to the source checkout, repository-local orchestration skill, personal skill directories, or target-project `.codex/agents`.
+4. Run focused tests for each ported or adapted script.
+5. Exercise deterministic workflow contracts that can be tested without model judgment: argument handling, artifact paths and shape, validation failures, stop boundaries, and dependency lookup from an unrelated working directory.
+6. Review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
+
+Do not build a general evaluation harness merely to port one skill. Add semantic model evaluation only when the named workflow has behavior that static and deterministic tests cannot establish. Retain failing evidence and repair the same skill; a historical pass does not cancel a current failure.
+
+Report verified facts separately from behavior that still requires the installed-plugin test.
+
+## Phase 4: Commit and install the candidate
+
+Before committing:
+
+- show the exact files to be committed;
+- confirm tests pass;
+- confirm no unrelated changes are staged;
+- confirm the plugin version and marketplace entry identify this candidate.
+
+Create one candidate commit with the subject:
+
+```text
+Port <source-name> from RPIV-Pi
+```
+
+Do not amend an accepted prior skill's commit. If installed testing exposes a defect, make a focused repair commit for the same skill.
+
+After the commit, use the `plugin-creator` skill's current local development installation flow. Install or refresh from the repository's local marketplace. Do not publish or push. Record:
+
+- candidate commit;
+- plugin manifest version;
+- installed cache path or installation identifier;
+- validation commands and outcomes;
+- exact fresh-task test prompts.
+
+## Phase 5: Hand off to a fresh installed-plugin test
+
+End the porting task with a self-contained test card. Tell the user to start a new Codex task in an unrelated project with the locally installed plugin enabled. The test card must require:
+
+1. confirmation that Codex loaded the installed cache copy, not files from the `rpiv-codex` checkout;
+2. one explicit invocation such as `$rpivc-<source-name> ...`;
+3. one natural-language invocation when implicit discovery is intended;
+4. one boundary or negative case that should not trigger or should stop safely;
+5. one realistic end-to-end case that exercises the ported dependencies and artifact output;
+6. confirmation that execution did not rely on `rpiv-mono`, `rpiv-codex`, personal skill files, or target-project `.codex/agents`.
+
+The fresh task returns either:
+
+- **Pass**: evidence for every required case, followed by explicit user acceptance; or
+- **Repair**: the exact failing prompt, observed behavior, expected source behavior, and installed candidate identity.
+
+Only **Pass** plus user acceptance makes the named skill done. A committed and installed candidate is still a candidate. Do not begin another skill in the test task.
+
+For the next cycle, start another fresh task in `rpiv-codex` and invoke this orchestration skill with one new name, for example:
+
+```text
+Discover is accepted. Use $port-rpiv-skill research.
+```
+
+The new task must independently verify the repository state, accepted predecessor files, and pinned RPIV-Pi revision. It must not trust a prose claim when the checkout disagrees.
+
+## Completion report
+
+End every porting task with:
+
+- named skill and source pin;
+- dependency closure actually ported;
+- Codex substitutions and any known differences;
+- candidate commit and plugin version;
+- source-tree validation results;
+- installed-plugin status;
+- fresh-task test card or accepted test evidence;
+- explicit statement that no successor skill, push, or publication occurred.
+
+Keep candidate, installed, tested, accepted, and published as distinct states. Software has enough ambiguous adjectives already.
+
+## Codex format references
+
+- Repository skill layout and invocation: <https://learn.chatgpt.com/docs/build-skills>
+- Plugin structure and local marketplace: <https://developers.openai.com/plugins/build/plugins>
+- Local installation and complete-plugin testing: <https://developers.openai.com/plugins/deploy/connect-chatgpt>

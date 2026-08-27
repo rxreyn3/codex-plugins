@@ -1,0 +1,4 @@
+interface:
+  display_name: "Port RPIV Skill"
+  short_description: "Port one RPIV-Pi skill into RPIV-Codex"
+  default_prompt: "Use $port-rpiv-skill with one RPIV-Pi skill name to port and verify only that skill and its missing dependencies."
