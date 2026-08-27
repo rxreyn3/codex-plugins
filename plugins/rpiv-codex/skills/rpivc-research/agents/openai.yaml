@@ -1,4 +1,0 @@
-interface:
-  display_name: "RPIVC Research"
-  short_description: "Research codebases with visible review gates"
-  default_prompt: "Use $rpivc-research with this research prompt or accepted discovery artifact to produce a grounded research document with visible agent gates."

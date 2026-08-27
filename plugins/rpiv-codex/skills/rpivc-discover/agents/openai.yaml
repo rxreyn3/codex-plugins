@@ -1,4 +1,0 @@
-interface:
-  display_name: "RPIVC Discover"
-  short_description: "Discover features with conversational gates"
-  default_prompt: "Use $rpivc-discover to turn this feature idea into a reviewable Feature Requirements Document with visible agent gates."
