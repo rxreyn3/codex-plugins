@@ -1,0 +1,30 @@
+{
+  "name": "rpiv-codex",
+  "version": "0.1.0+codex.20260827144400",
+  "description": "Intent-first feature discovery for Codex.",
+  "author": {
+    "name": "Ryan Reynolds"
+  },
+  "license": "MIT",
+  "keywords": [
+    "discovery",
+    "requirements",
+    "codebase"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "RPIV Codex",
+    "shortDescription": "Intent-first feature discovery",
+    "longDescription": "Interview a developer one decision at a time, ground the discussion with narrow repository probes, and write a research-compatible Feature Requirements Document.",
+    "developerName": "Ryan Reynolds",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use $rpivc-discover to define a feature before implementation."
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "rpiv-codex-local",
+  "interface": {
+    "displayName": "RPIV Codex Local"
+  },
+  "plugins": [
+    {
+      "name": "rpiv-codex",
+      "source": {
+        "source": "local",
+        "path": "./plugins/rpiv-codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
