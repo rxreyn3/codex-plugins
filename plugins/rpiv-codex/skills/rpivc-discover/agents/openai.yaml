@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Discover"
+  short_description: "Intent-first feature requirements discovery"
+
+policy:
+  allow_implicit_invocation: false
