@@ -149,16 +149,18 @@ Follow the official Codex plugin manifest and local-marketplace formats. Use the
 
 ## Phase 3: Verify the candidate
 
-Verification should be proportional to this skill's actual behavior. At minimum:
+Verification must be proportional and source-aligned. Use only the checks below that apply to behavior the named skill actually has:
 
-1. Validate every new or changed `SKILL.md` with the available Codex skill validator.
-2. Parse plugin and marketplace manifests and verify every referenced path exists.
-3. Find and remove broken relative links and forbidden runtime references to the source checkout, repository-local orchestration skill, personal skill directories, or target-project `.codex/agents`.
-4. Run focused tests for each ported or adapted script.
-5. Exercise deterministic workflow contracts that can be tested without model judgment: argument handling, artifact paths and shape, validation failures, stop boundaries, and dependency lookup from an unrelated working directory.
-6. Review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
+1. **Skill validity:** validate each new or changed `SKILL.md` with the available Codex skill validator.
+2. **Codex packaging:** parse plugin and marketplace manifests, verify declared and linked paths exist, and reject runtime references to the source checkout, repository-local orchestration skill, personal skill directories, or target-project `.codex/agents`.
+3. **Source-equivalent executable behavior:** port or adapt focused upstream tests for each copied or changed helper script. Do not strengthen the source contract accidentally. Add a Codex-specific case only when installation changes path resolution or another observable runtime boundary.
+4. **Artifact contracts:** when the source declares a downstream artifact shape, check only load-bearing frontmatter, required sections, filenames, and compatibility fields. Do not snapshot template prose.
+5. **Workflow structure:** statically check only a small number of load-bearing order or stop boundaries that cannot be inferred from the file layout. Do not assert generated wording, headings, or agent-role prose merely because it appears in `SKILL.md`; add a wording regression only when the source already carries an equivalent check or a demonstrated defect requires one.
+6. **Change provenance:** review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
 
-Do not build a general evaluation harness merely to port one skill. Add semantic model evaluation only when the named workflow has behavior that static and deterministic tests cannot establish. Retain failing evidence and repair the same skill; a historical pass does not cancel a current failure.
+Create generic manifest, link, and forbidden-reference checks once at plugin level and reuse them as later skills arrive. Do not reproduce the same packaging test body per skill.
+
+Do not require argument, artifact, failure, stop, or unrelated-working-directory tests from a skill that lacks the corresponding behavior. Do not build a general evaluation harness, Promptfoo suite, semantic grader panel, repeated stochastic run, or per-skill coverage matrix by default. Add model evaluation only when a concrete installed failure or unresolved high-consequence semantic difference cannot be distinguished by a single realistic run. Retain failing evidence and repair the same skill; a historical pass does not cancel a current failure.
 
 Report verified facts separately from behavior that still requires the installed-plugin test.
 
@@ -189,14 +191,14 @@ After the commit, use the `plugin-creator` skill's current local development ins
 
 ## Phase 5: Hand off to a fresh installed-plugin test
 
-End the porting task with a self-contained test card. Tell the user to start a new Codex task in an unrelated project with the locally installed plugin enabled. The test card must require:
+End the porting task with a self-contained test card. Tell the user to start a new Codex task in an unrelated project with the locally installed plugin enabled. By default, use two prompt executions:
 
-1. confirmation that Codex loaded the installed cache copy, not files from the `rpiv-codex` checkout;
-2. one explicit invocation such as `$rpivc-<source-name> ...`;
-3. one natural-language invocation when implicit discovery is intended;
-4. one boundary or negative case that should not trigger or should stop safely;
-5. one realistic end-to-end case that exercises the ported dependencies and artifact output;
-6. confirmation that execution did not rely on `rpiv-mono`, `rpiv-codex`, personal skill files, or target-project `.codex/agents`.
+1. **Realistic path:** one explicit invocation such as `$rpivc-<source-name> ...` that exercises the named skill's ported dependencies and observable output end to end.
+2. **Boundary:** one cheap no-argument, invalid-input, stop, or non-trigger case chosen from the source skill's actual boundary behavior.
+
+Before those executions, confirm that Codex loaded the installed cache copy rather than files from the `rpiv-codex` checkout. During them, confirm execution does not rely on `rpiv-mono`, `rpiv-codex`, personal skill files, or target-project `.codex/agents`; these are observations, not extra prompt cases.
+
+Add a separate natural-language invocation only when implicit discovery is intentionally supported and materially needs verification. Do not multiply prompts to test the same path, and do not repeat a passing stochastic run unless its result is ambiguous or a concrete failure is being isolated.
 
 The fresh task returns either:
 

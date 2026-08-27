@@ -22,6 +22,8 @@ Follow every checkpoint and completion rule in the porting plan. In particular:
 - preserve the RPIV-Pi outcome and interaction model;
 - translate Pi-specific mechanics to the closest native Codex capability;
 - keep installed-plugin execution independent of the `rpiv-codex` checkout and target-project `.codex/agents` files;
+- keep testing source-aligned: executable behavior inherited from RPIV-Pi, minimal Codex packaging checks, and one realistic installed run plus one cheap boundary case by default;
+- do not turn prompt wording into a test interface or create a general evaluation harness without a concrete failure that needs one;
 - commit only the completed candidate for the named skill;
 - never push, publish, or start the next skill;
 - call the port complete only after a fresh task tests the installed plugin and the user accepts the result.
