@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Implement"
+  short_description: "Execute an approved phased implementation plan"
+
+policy:
+  allow_implicit_invocation: false
