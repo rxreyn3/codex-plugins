@@ -64,7 +64,7 @@ Read the source `SKILL.md` fully. Then recursively inspect only items reachable 
 - relative Markdown links and explicitly named reference files;
 - scripts, templates, schemas, fixtures, and assets;
 - `_shared` material it imports or tells the model to read;
-- agent definitions it dispatches;
+- agent definitions it dispatches and whether their isolation is semantic or merely organizational;
 - extension tools, hooks, commands, or runtime data it invokes;
 - artifact inputs, outputs, frontmatter, directories, and downstream handoffs;
 - path-bearing output surfaces: conversational evidence, artifact prose, parser-consumed structural fields, and raw agent output that a parent skill must normalize;
@@ -77,6 +77,8 @@ For every dependency, record a compact working table with these columns:
 | path or capability | execution or instruction edge | copy, mechanical conversion, adapter, defer, or block | target path |
 
 `Defer` is valid only for a successor feature that the named skill does not need to complete. `Block` means the named skill cannot honestly work without a missing Codex capability; ask the user before changing semantics.
+
+For every Pi `Agent` edge, record the role's required tools, whether separate execution is part of the observable contract, and the behavior when native collaboration agents are unavailable. Do not infer semantic isolation merely because the source happens to use an agent as its execution carrier.
 
 Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
 
@@ -128,14 +130,19 @@ Use the capability available in the current Codex environment, not a guessed too
 |---|---|
 | Read, search, list, and shell operations | Native repository inspection and terminal tools; prefer `rg` and `rg --files` for search |
 | `ask_user_question` | Native structured user-input tool when available; otherwise ask one concise question in the response and stop |
-| Pi `Agent` dispatch | Native Codex collaboration agent using a bundled role prompt and an explicit task contract |
+| Pi `Agent` dispatch | Native Codex collaboration agent when available; otherwise bounded inline execution when role separation is organizational rather than semantic |
 | Pi agent definition | Convert to a portable Markdown role prompt shipped inside the target skill; do not depend on target-project `.codex/agents` files |
 | Todo or workflow progress | Native plan/progress mechanism when available; otherwise concise commentary checkpoints |
 | Web search or fetch extension | Native Codex web or browser capability when available; otherwise report the missing evidence capability and stop rather than fabricating results |
 | Pi extension with deterministic local behavior | Reuse a standalone script when possible; otherwise port only the behavior the named skill calls |
 | Pi session hook or global runtime mutation | Replace with explicit skill instructions or a local helper when behavior is reproducible; block when hidden lifecycle behavior is essential |
 
-When dispatching a converted agent, the target skill must read the bundled role prompt and include its operational instructions in the native agent task. Use a built-in Codex agent type that exists in the installed environment. If collaboration agents are unavailable, execute inline only when role separation is not semantically important; otherwise report the limitation.
+Classify every converted agent dependency before implementing it:
+
+- **Semantic isolation** means separate context, independence, competing judgments, or role identity is necessary to trust the output. If collaboration agents are unavailable, report the limitation and stop rather than simulating independence inline.
+- **Organizational delegation** means the agent only bounds context, parallelizes work, or applies a specialist search or analysis prompt whose output the parent verifies. Bundle the role prompt and define a bounded inline fallback using the same task, tool, search, file-read, and output limits. Use the fallback only when the main task exposes the required capabilities.
+
+When native collaboration is available, the target skill must read the bundled role prompt and include its operational instructions in the agent task. Use a built-in Codex agent type that exists in the installed environment. Whether delegated or inline, normalize the role result at the parent boundary. Do not make ordinary installed use depend on a capability that the target Codex task may omit unless semantic isolation genuinely makes that capability a compatibility requirement.
 
 ### Package dependencies where they execute
 
@@ -170,8 +177,9 @@ Verification must be proportional and source-aligned. Use only the checks below 
 3. **Source-equivalent executable behavior:** port or adapt focused upstream tests for each copied or changed helper script. Do not strengthen the source contract accidentally. Add a Codex-specific case only when installation changes path resolution or another observable runtime boundary.
 4. **Artifact contracts:** when the source declares a downstream artifact shape, check only load-bearing frontmatter, required sections, filenames, and compatibility fields. Do not snapshot template prose.
 5. **File-reference adapters:** when the skill has path-bearing output, check the representation boundary: repository-relative artifact links, plain structural fields, and no machine-specific absolute paths in artifacts. A demonstrated installed-use defect justifies a narrow static contract check when no deterministic renderer exists. Prefer checking a template or role output shape when available; do not duplicate whole instruction paragraphs across per-skill tests.
-6. **Workflow structure:** statically check only a small number of load-bearing order or stop boundaries that cannot be inferred from the file layout. Do not assert generated wording, headings, or agent-role prose merely because it appears in `SKILL.md`; add a wording regression only when the source already carries an equivalent check or a demonstrated defect requires one.
-7. **Change provenance:** review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
+6. **Conditional capability fallbacks:** when a concrete installed failure shows that an optional Codex capability may be absent, check the load-bearing fallback or stop branch without snapshotting the whole prompt. A narrow static contract check is acceptable when the branch is instruction-driven. Do not add duplicate installed runs for every capability combination unless the states are controllable and the semantic risk requires them.
+7. **Workflow structure:** statically check only a small number of load-bearing order or stop boundaries that cannot be inferred from the file layout. Do not assert generated wording, headings, or agent-role prose merely because it appears in `SKILL.md`; add a wording regression only when the source already carries an equivalent check or a demonstrated defect requires one.
+8. **Change provenance:** review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
 
 Create generic manifest, link, and forbidden-reference checks once at plugin level and reuse them as later skills arrive. Do not reproduce the same packaging test body per skill.
 
@@ -214,6 +222,8 @@ End the porting task with a self-contained test card. Tell the user to start a n
 Before those executions, confirm that Codex loaded the installed cache copy rather than files from the `rpiv-codex` checkout. During them, confirm execution does not rely on `rpiv-mono`, `rpiv-codex`, personal skill files, or target-project `.codex/agents`; these are observations, not extra prompt cases.
 
 When the named skill emits file references, use the same realistic execution to inspect one representative conversational citation and one artifact citation. Confirm the conversational form is navigable in the intended host, the artifact link remains repository-relative, and any downstream structural path remains literal. Do not add separate prompt executions for these observations.
+
+When the named skill conditionally delegates to collaboration agents, record whether that capability is available during the realistic execution and which path ran. After a concrete unavailable-agent failure, the repaired realistic case must exercise the bounded fallback or the honest semantic-isolation stop; it does not need an additional prompt execution.
 
 Add a separate natural-language invocation only when implicit discovery is intentionally supported and materially needs verification. Do not multiply prompts to test the same path, and do not repeat a passing stochastic run unless its result is ambiguous or a concrete failure is being isolated.
 

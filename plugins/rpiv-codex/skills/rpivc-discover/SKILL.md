@@ -64,7 +64,9 @@ Do not dispatch an agent until this answer makes the probe intent-shaped.
 
 ### 2. Run the lightweight repository probe
 
-Choose the locator, analyzer, or both. Use no other role and dispatch no more than two agents for the initial probe.
+First inspect the repository file inventory with native read-only listing, preferring `rg --files`. If the repository contains no project files, record `no codebase precedent`, skip role execution, and continue to Step 3. An empty greenfield repository is already decisive probe evidence; it does not need an agent to discover its own absence.
+
+Otherwise choose the locator, analyzer, or both. Use no other role and execute no more than two roles for the initial probe.
 
 Before dispatching a role, read its bundled prompt completely:
 
@@ -74,13 +76,13 @@ Before dispatching a role, read its bundled prompt completely:
 For each chosen role:
 
 1. Draft a narrow task from the developer's stated intent, not merely the raw invocation text.
-2. Include the entire role prompt's operational instructions and required output contract in the native collaboration-agent task.
+2. Include the entire role prompt's operational instructions and required output contract in the native collaboration-agent task or inline fallback.
 3. Name one component or one seam. Avoid breadth requests such as “everything related to X.”
 4. Keep the task repository-read-only.
 
-Dispatch the chosen agents in parallel and wait for all of them. If native collaboration agents are unavailable, report that the required probe roles cannot be preserved and stop; do not quietly collapse them into an unbounded main-context sweep.
+Use native collaboration agents when they are available, dispatching the chosen roles in parallel and waiting for all of them. For this probe, locator and analyzer separation is organizational rather than semantic: their reports are evidence input that the main skill verifies and the developer later confirms. If collaboration agents are unavailable, execute each chosen role inline under its complete bundled prompt and the same narrow task contract. Run inline roles sequentially, preserve their read-only boundaries and required output shapes, and do not broaden the search merely because isolation is unavailable.
 
-After both reports arrive, read at most five clearly relevant files in the main context. Read files shorter than 300 lines completely; for larger files, start with the first 150 lines and expand only when the requested seam requires it.
+After the chosen role reports are available, read at most five clearly relevant files in the main context. Files already read by an inline analyzer count toward this cap. Read files shorter than 300 lines completely; for larger files, start with the first 150 lines and expand only when the requested seam requires it.
 
 Empty results are valid evidence. Record `no codebase precedent` and continue with scope questions; present later architectural choices as conventions rather than pretending a precedent exists.
 
@@ -120,12 +122,12 @@ If the probe finds an existing feature that might replace the requested work, do
 #### Response handling
 
 - **Decision:** record the question, recommendation, chosen answer, and a rationale that says more than `agreed`; resolve the node and lazily add its children.
-- **Correction:** run targeted repository search on the corrected seam. Dispatch at most one additional narrow agent for that correction when the seam was not already probed. Rebuild and re-ask dependent descendants.
+- **Correction:** run targeted repository search on the corrected seam. Execute at most one additional narrow role for that correction when the seam was not already probed, using Step 2's collaboration-agent or bounded-inline path. Rebuild and re-ask dependent descendants.
 - **Scope adjustment:** prune or add the relevant branch and record the choice. Put related but unrequested findings in Suggested Follow-ups unless the developer explicitly expands scope.
 - **Cross-cutting answer:** keep one node and re-queue it under every affected parent, resolving it once in each parent's context.
 - **Deferral:** put the item in Open Questions and resolve the node by deferral.
 
-The total agent budget is two initial probes plus at most one additional agent per correction event, normally two to four agents for the entire discovery run. Broad repository sweeps belong to `$rpivc-research`, not this skill.
+The total probe-role budget is two initial roles plus at most one additional role per correction event, normally two to four role executions for the entire discovery run. Broad repository sweeps belong to `$rpivc-research`, not this skill.
 
 Stop the interview when all of these are true:
 

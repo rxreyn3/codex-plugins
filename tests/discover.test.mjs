@@ -39,6 +39,15 @@ test("discover keeps its load-bearing workflow boundaries", () => {
   assert.match(skill, /successor name is a handoff/i);
 });
 
+test("discover keeps a bounded probe path without collaboration agents", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /If the repository contains no project files, record `no codebase precedent`/);
+  assert.match(skill, /separation is organizational rather than semantic/);
+  assert.match(skill, /execute each chosen role inline under its complete bundled prompt/);
+  assert.match(skill, /Files already read by an inline analyzer count toward this cap/);
+  assert.doesNotMatch(skill, /required probe roles cannot be preserved and stop/);
+});
+
 test("the Feature Requirements Document template keeps its compatibility skeleton", () => {
   const template = read(join(skillRoot, "references/frd-template.md"));
   assert.match(template, /^---[\s\S]*status: ready[\s\S]*---/);
