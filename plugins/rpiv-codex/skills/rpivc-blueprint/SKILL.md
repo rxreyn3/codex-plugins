@@ -47,6 +47,16 @@ node <blueprint-skill-root>/scripts/list-recent.mjs .rpiv/artifacts/solutions 4
 
 The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The Git helper returns labeled repository metadata with explicit fallbacks.
 
+## Navigable file references
+
+Keep file evidence usable in both Zed and Codex without making plan artifacts machine-specific.
+
+- **Chat responses:** always show a backticked repository-relative path with one starting line, for example `backend/path/to/file.py:42`. For a range, keep only the start line inside the code span and write `(lines 42–55)` immediately after it; do not emit backticked `path:42-55`, which Zed does not reliably resolve. When host instructions explicitly support absolute local Markdown links, also add a concise `Open in Codex` link targeting the absolute file path and starting line. The repository-relative code span remains mandatory.
+- **Plan artifacts:** render prose citations, Pattern References, precedent links, review-table `codebase-loc` values, and other evidence as real Markdown links. Use the repository-relative path and line range as the label; use the same repository-relative path as the target with a GitHub-style `#Lstart` or `#Lstart-Lend` fragment. Never write machine-specific absolute paths into an artifact.
+- **Structural plan fields:** keep `#### N. path`, `**File**: path`, frontmatter `files:`, and other parser-consumed fields as plain repository-relative paths. Do not turn them into links.
+
+Normalize role output into these formats before presenting checkpoints or writing the artifact. A role's raw citation is evidence input, not the final rendering contract.
+
 ## Workflow
 
 Follow every numbered step in order.
@@ -119,15 +129,17 @@ Walk the evidence and inherited questions through these six dimensions, plus mig
 
 Classify every finding:
 
-- **simple**: only one valid option is supported by current code. Record the decision with `file:line` evidence and do not ask.
-- **directional**: one option fits, but adopting it propagates a convention or chooses extend versus replace. Queue it for one batched directional confirmation.
+- **simple**: only one valid option is supported by current code. Record the decision with navigable file evidence and do not ask.
+- **directional**: one option fits, but adopting it propagates a convention or chooses extend versus replace. Queue it for a directional confirmation.
 - **genuine ambiguity**: multiple valid options, conflicting patterns, scope uncertainty, or a novel choice. Queue it for one-at-a-time questions.
 
 Pre-validate every option against current runtime behavior and inherited constraints. Eliminate or clearly caveat invalid choices. Every Step 2 file read must appear in a decision, directional confirmation, or ambiguity, and every dimension must be addressed.
 
 ### 4. Run the developer checkpoint
 
-Prefix each visible decision question with `❓ Question:`. Every question must contain observed behavior, at least one current `file:line` reference, why the choice matters, and two to four concrete options. Keep structured-input headers at sixteen characters or fewer.
+Prefix each visible decision question with `❓ Question:`. Every question must contain observed behavior, at least one current navigable file reference, why the choice matters, and two to four concrete options. Keep structured-input headers at sixteen characters or fewer.
+
+Ask exactly one developer question per response and stop for its answer. This applies to directional confirmations, genuine ambiguities, decomposition, slice approval, and review triage. Never batch multiple questions or multiple review findings into one structured-input call or prose response, even when they are independent.
 
 For every checkpoint in this workflow, render each option as both a short label and a plain-language description. The description must explain:
 
@@ -139,10 +151,10 @@ Do not present bare labels and expect the developer to translate architecture te
 
 #### Directional confirmations
 
-Clear directional findings first, batching up to four independent confirmations:
+Clear directional findings first, one confirmation per response:
 
 ```text
-About to follow {pattern} (`file:line`, used N times) across {new surface}. Confirm that direction, or are we moving off it?
+About to follow {pattern} ({navigable file reference}, used N times) across {new surface}. Confirm that direction, or are we moving off it?
 ```
 
 Offer both options with concrete consequences:
@@ -154,7 +166,7 @@ Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity
 
 #### Genuine ambiguities
 
-Ask one dependent question at a time, highest architectural impact first. Independent questions may be batched up to four. Ground pattern conflicts, missing patterns, scope boundaries, integration choices, and novel approaches in real evidence. Each answer becomes fixed Developer Context unless the developer explicitly revisits it.
+Ask one question at a time, highest architectural impact first, and wait for the answer before presenting the next. Ground pattern conflicts, missing patterns, scope boundaries, integration choices, and novel approaches in real evidence. Each answer becomes fixed Developer Context unless the developer explicitly revisits it.
 
 Classify responses as:
 
@@ -169,7 +181,7 @@ Design: {feature}
 Approach: {one or two sentences}
 
 Decisions:
-- {decision} — modeled after `file:line`
+- {decision} — modeled after {navigable file reference}
 
 Scope: {included} | Not building: {excluded}
 Files: {N} new, {M} modified
@@ -314,7 +326,7 @@ Show a condensed review, not all generated code:
 - public signatures;
 - key factory, wiring, or non-obvious blocks;
 - test case names only;
-- a mandatory Fit line naming reused helpers and conventions with `file:line` evidence, plus any new abstraction.
+- a mandatory Fit line naming reused helpers and conventions with navigable file evidence, plus any new abstraction.
 
 For MODIFY files, show a focused diff with about three lines of context. Show complete code only when requested.
 
@@ -374,13 +386,13 @@ If one role fails, persist the other and append a one-line failure note. If both
 
 ### 9. Triage findings and mark ready
 
-Do not auto-apply reviewer findings. Present counts for blockers, concerns, and suggestions. For each row, the developer chooses:
+Do not auto-apply reviewer findings. Present counts for blockers, concerns, and suggestions. Present exactly one unresolved row per response. For that row, the developer chooses an action using present-tense imperative labels:
 
-- `applied` — edit the named phase code or criterion, then record `applied: {summary}`;
-- `deferred` — record the developer's scope or follow-up reason;
-- `dismissed` — record why the finding does not apply.
+- `Apply` — edit the named phase code or criterion, then record the completed resolution as `applied: {summary}`;
+- `Defer` — leave the plan unchanged and record the developer's scope or follow-up reason as `deferred: {reason}`;
+- `Dismiss` — leave the plan unchanged and record why the finding does not apply as `dismissed: {reason}`.
 
-Triage blockers sequentially. Batch up to four independent concerns or suggestions. Use structured input when available; otherwise ask the same grounded choice directly and stop. Every row must receive a resolution.
+Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise ask the same grounded choice directly and stop. Every row must receive a resolution.
 
 After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path, fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 

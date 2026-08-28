@@ -125,6 +125,26 @@ test("blueprint checkpoint options explain their consequences in plain language"
   assert.match(skill, /Do not present bare labels/);
 });
 
+test("blueprint asks one question at a time and uses present-tense triage actions", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /Ask exactly one developer question per response/);
+  assert.match(skill, /Present exactly one unresolved row per response/);
+  assert.match(skill, /`Apply`/);
+  assert.match(skill, /`Defer`/);
+  assert.match(skill, /`Dismiss`/);
+  assert.doesNotMatch(skill, /Batch up to four independent concerns or suggestions/);
+  assert.doesNotMatch(skill, /Independent questions may be batched/);
+});
+
+test("blueprint emits Zed-friendly chat paths and portable artifact links", () => {
+  const skill = read(skillPath);
+  const reviewer = read(join(skillRoot, "references/artifact-code-reviewer.md"));
+  assert.match(skill, /backticked repository-relative path with one starting line/);
+  assert.match(skill, /GitHub-style `#Lstart` or `#Lstart-Lend` fragment/);
+  assert.match(skill, /keep `#### N\. path`, `\*\*File\*\*: path`/);
+  assert.match(reviewer, /\[path\/to\/orders\.ts:55\]\(path\/to\/orders\.ts#L55\)/);
+});
+
 test("blueprint metadata helpers report the caller repository", (t) => {
   const directory = mkdtempSync(join(tmpdir(), "rpivc-blueprint-git-context-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));

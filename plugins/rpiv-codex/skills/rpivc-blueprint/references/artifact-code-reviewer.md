@@ -22,11 +22,11 @@ Return one Markdown table and nothing else. Emit no synthetic no-findings row.
 ```markdown
 | plan-loc | codebase-loc | severity | dimension | finding | recommendation |
 | --- | --- | --- | --- | --- | --- |
-| Phase 2 §3 (orders.ts) | path/to/orders.ts:55 | blocker | actionability | {one concrete finding} | {smallest concrete correction} |
+| Phase 2 §3 (orders.ts) | [path/to/orders.ts:55](path/to/orders.ts#L55) | blocker | actionability | {one concrete finding} | {smallest concrete correction} |
 ```
 
 - `plan-loc`: `Phase N §M (filename.ext)`, or just `Phase N` for phase prose.
-- `codebase-loc`: repository-relative `path:line`, or literal `<n/a>` for artifact-internal findings.
+- `codebase-loc`: a repository-relative Markdown link whose target uses a `#Lstart` or `#Lstart-Lend` fragment, or literal `<n/a>` for artifact-internal findings. Never emit an absolute machine path.
 - `severity`: exactly `blocker`, `concern`, or `suggestion`.
 - `dimension`: exactly `code-quality`, `codebase-fit`, or `actionability`.
 - One finding per row; no hedging or merged issues.

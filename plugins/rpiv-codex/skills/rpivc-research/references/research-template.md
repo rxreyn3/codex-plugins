@@ -22,25 +22,25 @@ last_updated_by: {`author:` from Metadata}
 ## Detailed Findings
 
 ### {Component or area}
-- {Finding with a verified `file.ext:line` reference}
+- {Finding with a verified [path/to/file.ext:line](path/to/file.ext#Lline) reference}
 - {Connection to another component}
 - {Relevant implementation detail}
 
 ## Code References
-- `path/to/file.py:NN` — {Planner jump-table description}
-- `another/file.ts:NN-NN` — {Description of the cited block}
+- [path/to/file.py:NN](path/to/file.py#LNN) — {Planner jump-table description}
+- [another/file.ts:NN–MM](another/file.ts#LNN-LMM) — {Description of the cited block}
 
 ## Integration Points
 {Enumerate every observed consumer, dependency, and wiring point with verified repository-relative evidence.}
 
 ### Inbound References
-- `path/to/consumer.ext:line` — {What references the component and how}
+- [path/to/consumer.ext:line](path/to/consumer.ext#Lline) — {What references the component and how}
 
 ### Outbound Dependencies
-- `path/to/dependency.ext:line` — {What the component depends on}
+- [path/to/dependency.ext:line](path/to/dependency.ext#Lline) — {What the component depends on}
 
 ### Infrastructure Wiring
-- `path/to/config.ext:line` — {Dependency injection, routes, events, jobs, or middleware}
+- [path/to/config.ext:line](path/to/config.ext#Lline) — {Dependency injection, routes, events, jobs, or middleware}
 
 ## Architecture Insights
 {Demonstrated patterns, conventions, and current design decisions.}
@@ -57,7 +57,7 @@ last_updated_by: {`author:` from Metadata}
 - `{hash}` — "{message}" ({date}) — {what went wrong}
 
 **Lessons from docs**:
-- `.rpiv/artifacts/path/to/doc.md` — {evidenced lesson}
+- [.rpiv/artifacts/path/to/doc.md](.rpiv/artifacts/path/to/doc.md) — {evidenced lesson}
 
 **Takeaway**: {One sentence describing what the precedent establishes}
 
@@ -65,10 +65,10 @@ last_updated_by: {`author:` from Metadata}
 - {Most recurring evidenced lesson, with relevant commit hash inline}
 
 ## Historical Context (from `.rpiv/artifacts/`)
-- `.rpiv/artifacts/something.md` — {One-line description of the document's scope}
+- [.rpiv/artifacts/something.md](.rpiv/artifacts/something.md) — {One-line description of the document's scope}
 
 ## Developer Context
-**Q (`file.ext:line`): {Question grounded in specific code evidence}**
+**Q ([path/to/file.ext:line](path/to/file.ext#Lline)): {Question grounded in specific code evidence}**
 A: {Developer's answer}
 
 ## Related Research

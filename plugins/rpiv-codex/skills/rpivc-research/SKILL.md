@@ -39,6 +39,16 @@ node <research-skill-root>/scripts/git-context.mjs
 
 The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The second returns labeled repository metadata with explicit fallbacks.
 
+## Navigable file references
+
+Keep file evidence usable in both Zed and Codex without making artifacts machine-specific.
+
+- **Chat responses:** always show a backticked repository-relative path with one starting line, for example `backend/path/to/file.py:42`. For a range, keep only the start line inside the code span and write `(lines 42–55)` immediately after it; do not emit backticked `path:42-55`, which Zed does not reliably resolve. When host instructions explicitly support absolute local Markdown links, also add a concise `Open in Codex` link targeting the absolute file path and starting line. The repository-relative code span remains mandatory.
+- **Artifact Markdown:** render code and artifact citations as real Markdown links. Use the repository-relative path and line range as the label; use the same repository-relative path as the target with a GitHub-style `#Lstart` or `#Lstart-Lend` fragment. Never write machine-specific absolute paths into an artifact.
+- **Structural fields:** preserve plain paths where a downstream parser consumes them. Do not turn frontmatter fields or another skill's load-bearing path fields into links.
+
+Normalize role output into these formats before presenting chat evidence or writing the artifact. A role's raw backticked citation is evidence input, not the final rendering contract.
+
 ## Workflow
 
 Follow every step in order. A checkpoint may span multiple turns; resume the current step after the developer answers instead of restarting the investigation.
@@ -110,7 +120,7 @@ Dispatch as many roles concurrently as the current Codex environment permits. If
 - Match each response to the question or questions it answered.
 - Cross-reference patterns, conflicts, and connections across reports.
 - Treat live repository findings as primary evidence. Treat `.rpiv/artifacts/` as supplementary historical context.
-- Verify every emitted `file:line` or `file:start-end` against the current checkout before writing it. The path must exist, and the cited line or range end must be within the file. When a line cannot be verified, cite the repository-relative path without a line rather than inventing precision.
+- Verify every emitted `file:line` or `file:start-end` against the current checkout before rendering it as a navigable reference. The path must exist, and the cited line or range end must be within the file. When a line cannot be verified, link the repository-relative path without a fragment rather than inventing precision.
 - Build Code References as a planner jump table, not narrative.
 - Use at most three lines in any code block. Prefer citations plus prose.
 - Record current-code facts, not implementation recipes or code-quality recommendations.
@@ -125,7 +135,7 @@ Ask only when the reports expose a material pattern conflict, scope boundary, pr
 3. why the decision matters;
 4. two to four concrete evidence-based options or hypotheses.
 
-Prefix the visible question with `❓ Question:`. Ask one question at a time and wait for its answer before asking a dependent question. Two to four genuinely independent questions may share one structured-input call.
+Prefix the visible question with `❓ Question:`. Ask exactly one developer question per response and stop for its answer. This applies even when questions are independent: never batch multiple questions into one structured-input call or one prose response.
 
 Use native structured input when available. Put the recommended evidence-based option first and rely on the control's custom-response field rather than authoring `Other`. If structured input is unavailable, ask the same concise question directly and stop for the answer.
 
@@ -179,7 +189,7 @@ Populate every load-bearing template section:
 - Research Question preserves the topic emitted by the scope tracer; for a chained run, link the discovery artifact under Historical Context.
 - Summary directly answers it.
 - Detailed Findings organize current behavior by component.
-- Code References is a verified jump table.
+- Code References is a verified jump table of repository-relative Markdown links using the artifact format above.
 - Integration Points enumerates inbound consumers, outbound dependencies, and infrastructure wiring.
 - Architecture Insights records demonstrated patterns and conventions, not prescriptions.
 - Precedents & Lessons records real commits and follow-up evidence, or the explicit no-history fallback.
@@ -195,7 +205,7 @@ Report:
 
 ```text
 Research document written to:
-`.rpiv/artifacts/research/{filename}.md`
+{artifact path rendered with the chat file-reference rule}
 
 {N} questions answered, {M} findings across {K} files.
 

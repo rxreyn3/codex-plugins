@@ -90,6 +90,17 @@ test("the research template preserves downstream artifact compatibility", () => 
   ]) {
     assert.ok(template.includes(heading), heading);
   }
+  assert.match(template, /\[path\/to\/file\.py:NN\]\(path\/to\/file\.py#LNN\)/);
+  assert.match(template, /\[another\/file\.ts:NN–MM\]\(another\/file\.ts#LNN-LMM\)/);
+});
+
+test("research asks one developer question per response and emits portable file links", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /Ask exactly one developer question per response/);
+  assert.doesNotMatch(skill, /independent questions may share one structured-input call/i);
+  assert.match(skill, /backticked repository-relative path with one starting line/);
+  assert.match(skill, /GitHub-style `#Lstart` or `#Lstart-Lend` fragment/);
+  assert.match(skill, /Never write machine-specific absolute paths into an artifact/);
 });
 
 test("research now.mjs preserves the upstream timestamp contract", () => {
