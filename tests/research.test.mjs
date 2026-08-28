@@ -60,6 +60,15 @@ test("research keeps the load-bearing stage order and stop boundary", () => {
   assert.match(skill, /successor names are handoffs, not permission/i);
 });
 
+test("research metadata commands separate the newline-free timestamp from Git context", () => {
+  const skill = read(skillPath);
+  const nowCommand = "node <research-skill-root>/scripts/now.mjs";
+  const separator = "\necho\n";
+  const gitCommand = "node <research-skill-root>/scripts/git-context.mjs";
+  assert.ok(skill.indexOf(nowCommand) < skill.indexOf(separator, skill.indexOf(nowCommand)));
+  assert.ok(skill.indexOf(separator, skill.indexOf(nowCommand)) < skill.indexOf(gitCommand));
+});
+
 test("the research template preserves downstream artifact compatibility", () => {
   const template = read(join(skillRoot, "references/research-template.md"));
   assert.match(template, /^---[\s\S]*status: ready[\s\S]*---/);

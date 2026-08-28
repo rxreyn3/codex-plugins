@@ -33,6 +33,7 @@ Resolve the research skill root as the directory containing this loaded `SKILL.m
 
 ```bash
 node <research-skill-root>/scripts/now.mjs
+echo
 node <research-skill-root>/scripts/git-context.mjs
 ```
 
