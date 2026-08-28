@@ -35,6 +35,7 @@ test("plugin packaging is valid and every skill is self-contained", () => {
     .sort();
   assert.ok(skillNames.includes("rpivc-discover"));
   assert.ok(skillNames.includes("rpivc-research"));
+  assert.ok(skillNames.includes("rpivc-blueprint"));
 
   for (const skillName of skillNames) {
     const skillRoot = join(skillsRoot, skillName);

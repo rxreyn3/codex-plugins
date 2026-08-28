@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Blueprint"
+  short_description: "Interactive vertical-slice implementation plans"
+
+policy:
+  allow_implicit_invocation: false

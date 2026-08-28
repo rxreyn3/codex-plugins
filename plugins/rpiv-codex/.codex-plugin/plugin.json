@@ -1,7 +1,7 @@
 {
   "name": "rpiv-codex",
-  "version": "0.1.0+codex.20260828082713",
-  "description": "Intent-first feature discovery and evidence-backed codebase research for Codex.",
+  "version": "0.1.0+codex.20260828101917",
+  "description": "Intent-first feature discovery, evidence-backed research, and interactive vertical-slice planning for Codex.",
   "author": {
     "name": "Ryan Reynolds"
   },
@@ -11,13 +11,14 @@
     "requirements",
     "codebase",
     "research",
-    "architecture"
+    "architecture",
+    "planning"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "RPIV Codex",
-    "shortDescription": "Feature discovery and codebase research",
-    "longDescription": "Define feature intent through a grounded developer interview, then investigate repository behavior with scoped parallel analysis and verified evidence.",
+    "shortDescription": "Feature discovery, research, and planning",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, and shape complex work into reviewed vertical-slice implementation plans.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -27,7 +28,8 @@
     ],
     "defaultPrompt": [
       "Use $rpivc-discover to define a feature before implementation.",
-      "Use $rpivc-research to investigate a codebase area before design."
+      "Use $rpivc-research to investigate a codebase area before design.",
+      "Use $rpivc-blueprint to turn research into an implement-ready phased plan."
     ]
   }
 }
