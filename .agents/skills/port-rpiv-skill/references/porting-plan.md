@@ -67,6 +67,7 @@ Read the source `SKILL.md` fully. Then recursively inspect only items reachable 
 - agent definitions it dispatches;
 - extension tools, hooks, commands, or runtime data it invokes;
 - artifact inputs, outputs, frontmatter, directories, and downstream handoffs;
+- path-bearing output surfaces: conversational evidence, artifact prose, parser-consumed structural fields, and raw agent output that a parent skill must normalize;
 - package code needed to understand observable behavior of an extension call.
 
 For every dependency, record a compact working table with these columns:
@@ -105,6 +106,19 @@ Preserve these source properties unless Codex makes one impossible:
 Copy compatible prose, templates, and deterministic scripts. Make mechanical syntax changes where Pi and Codex differ. Add the smallest adapter that supplies missing mechanics. Do not add approval envelopes, hashes, graders, ledgers, schemas, generalized frameworks, or new workflow stages unless the source requires them or a concrete failing test demonstrates the need.
 
 Name the Codex skill `rpivc-<source-name>` unless an already accepted port establishes a different compatible convention.
+
+### Represent file references by output surface
+
+Apply this adapter only when the named skill emits or consumes file or artifact references. Preserve the source citation's meaning: use a repository-relative path and a verified starting line or range when one exists. Adapt its representation to the surface instead of mechanically rewriting every path-shaped string.
+
+| Output surface | RPIV-Codex representation | Constraints |
+|---|---|---|
+| Conversational evidence | A backticked repository-relative path with one starting line, such as `backend/path/to/file.py:42`. Put a range outside the code span as `(lines 42–55)`. | Keep this portable form even when the current host also permits a concise absolute `Open in Codex` link. Do not depend on the machine-specific link. |
+| Human-readable artifact prose | A repository-relative Markdown link such as `[backend/path/to/file.py:42-55](backend/path/to/file.py#L42-L55)`. | Keep the label repository-relative and the target free of absolute machine paths. |
+| Parser-consumed structural field | The plain repository-relative path or other literal shape required by the source contract. | Do not turn frontmatter, filenames, section identifiers, `files:` values, or another skill's load-bearing path fields into links. |
+| Raw converted-agent output | Whatever citation form the role naturally returns, normalized by the parent skill before presentation or artifact writing. | Treat role output as evidence input, not as the final rendering contract. |
+
+Classify each path-bearing field before converting it. This adapter changes presentation, not artifact schema, evidence precision, or downstream handoff semantics. If the source or a downstream parser requires a conflicting literal representation, preserve that contract and document the Codex difference rather than guessing.
 
 ### Capability mapping
 
@@ -155,8 +169,9 @@ Verification must be proportional and source-aligned. Use only the checks below 
 2. **Codex packaging:** parse plugin and marketplace manifests, verify declared and linked paths exist, and reject runtime references to the source checkout, repository-local orchestration skill, personal skill directories, or target-project `.codex/agents`.
 3. **Source-equivalent executable behavior:** port or adapt focused upstream tests for each copied or changed helper script. Do not strengthen the source contract accidentally. Add a Codex-specific case only when installation changes path resolution or another observable runtime boundary.
 4. **Artifact contracts:** when the source declares a downstream artifact shape, check only load-bearing frontmatter, required sections, filenames, and compatibility fields. Do not snapshot template prose.
-5. **Workflow structure:** statically check only a small number of load-bearing order or stop boundaries that cannot be inferred from the file layout. Do not assert generated wording, headings, or agent-role prose merely because it appears in `SKILL.md`; add a wording regression only when the source already carries an equivalent check or a demonstrated defect requires one.
-6. **Change provenance:** review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
+5. **File-reference adapters:** when the skill has path-bearing output, check the representation boundary: repository-relative artifact links, plain structural fields, and no machine-specific absolute paths in artifacts. A demonstrated installed-use defect justifies a narrow static contract check when no deterministic renderer exists. Prefer checking a template or role output shape when available; do not duplicate whole instruction paragraphs across per-skill tests.
+6. **Workflow structure:** statically check only a small number of load-bearing order or stop boundaries that cannot be inferred from the file layout. Do not assert generated wording, headings, or agent-role prose merely because it appears in `SKILL.md`; add a wording regression only when the source already carries an equivalent check or a demonstrated defect requires one.
+7. **Change provenance:** review the diff against the dependency table. Every added runtime file must have a source edge or a documented Codex adapter reason.
 
 Create generic manifest, link, and forbidden-reference checks once at plugin level and reuse them as later skills arrive. Do not reproduce the same packaging test body per skill.
 
@@ -197,6 +212,8 @@ End the porting task with a self-contained test card. Tell the user to start a n
 2. **Boundary:** one cheap no-argument, invalid-input, stop, or non-trigger case chosen from the source skill's actual boundary behavior.
 
 Before those executions, confirm that Codex loaded the installed cache copy rather than files from the `rpiv-codex` checkout. During them, confirm execution does not rely on `rpiv-mono`, `rpiv-codex`, personal skill files, or target-project `.codex/agents`; these are observations, not extra prompt cases.
+
+When the named skill emits file references, use the same realistic execution to inspect one representative conversational citation and one artifact citation. Confirm the conversational form is navigable in the intended host, the artifact link remains repository-relative, and any downstream structural path remains literal. Do not add separate prompt executions for these observations.
 
 Add a separate natural-language invocation only when implicit discovery is intentionally supported and materially needs verification. Do not multiply prompts to test the same path, and do not repeat a passing stochastic run unless its result is ambiguous or a concrete failure is being isolated.
 
