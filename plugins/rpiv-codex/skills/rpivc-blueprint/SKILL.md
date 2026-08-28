@@ -129,6 +129,14 @@ Pre-validate every option against current runtime behavior and inherited constra
 
 Prefix each visible decision question with `❓ Question:`. Every question must contain observed behavior, at least one current `file:line` reference, why the choice matters, and two to four concrete options. Keep structured-input headers at sixteen characters or fewer.
 
+For every checkpoint in this workflow, render each option as both a short label and a plain-language description. The description must explain:
+
+1. what choosing the option causes the plan to do;
+2. what existing ownership, behavior, or scope remains unchanged; and
+3. the material scope, cost, or trade-off compared with the other options.
+
+Do not present bare labels and expect the developer to translate architecture terms such as “capability boundary,” “shared subsystem,” “pattern,” or “slice” unaided. A checkpoint is incomplete if its options could not be understood without rereading the preceding research. Keep each description to one or two direct sentences; this is decision support, not a second design document.
+
 #### Directional confirmations
 
 Clear directional findings first, batching up to four independent confirmations:
@@ -137,7 +145,12 @@ Clear directional findings first, batching up to four independent confirmations:
 About to follow {pattern} (`file:line`, used N times) across {new surface}. Confirm that direction, or are we moving off it?
 ```
 
-Offer `Follow {pattern}` and `Moving off {pattern}`. Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity.
+Offer both options with concrete consequences:
+
+- `Follow {pattern}` — explain which existing components keep their current responsibility and what narrow surface the plan adds or extends.
+- `Moving off {pattern}` — explain which responsibility or abstraction would be consolidated, replaced, or newly shared, and why that makes the plan materially larger or different.
+
+Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity.
 
 #### Genuine ambiguities
 

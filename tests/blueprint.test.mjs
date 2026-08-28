@@ -116,6 +116,15 @@ test("blueprint preserves no-argument selection and per-phase approval boundarie
   assert.match(skill, /approval is the only event that writes its code and criteria/);
 });
 
+test("blueprint checkpoint options explain their consequences in plain language", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /render each option as both a short label and a plain-language description/);
+  assert.match(skill, /what choosing the option causes the plan to do/);
+  assert.match(skill, /what existing ownership, behavior, or scope remains unchanged/);
+  assert.match(skill, /material scope, cost, or trade-off/);
+  assert.match(skill, /Do not present bare labels/);
+});
+
 test("blueprint metadata helpers report the caller repository", (t) => {
   const directory = mkdtempSync(join(tmpdir(), "rpivc-blueprint-git-context-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
