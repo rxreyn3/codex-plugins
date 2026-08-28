@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Research"
+  short_description: "Evidence-backed codebase research"
+
+policy:
+  allow_implicit_invocation: false

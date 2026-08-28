@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import {
+  existsSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
@@ -13,8 +14,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const pluginRoot = join(repositoryRoot, "plugins/rpiv-codex");
-const skillRoot = join(pluginRoot, "skills/rpivc-discover");
+const skillRoot = join(repositoryRoot, "plugins/rpiv-codex/skills/rpivc-research");
 const skillPath = join(skillRoot, "SKILL.md");
 const nowPath = join(skillRoot, "scripts/now.mjs");
 const gitContextPath = join(skillRoot, "scripts/git-context.mjs");
@@ -29,35 +29,61 @@ const runNode = (path, cwd) =>
 const gitIn = (cwd, ...args) =>
   execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "ignore"] });
 
-test("discover keeps its load-bearing workflow boundaries", () => {
-  const skill = read(skillPath);
-  assert.ok(
-    skill.indexOf("### 1. Ask the foundational intent question") <
-      skill.indexOf("### 2. Run the lightweight repository probe"),
-  );
-  assert.match(skill, /\.rpiv\/artifacts\/discover\//);
-  assert.match(skill, /successor name is a handoff/i);
+test("research includes exactly its reachable role and artifact dependencies", () => {
+  for (const path of [
+    "references/scope-tracer.md",
+    "references/codebase-analyzer.md",
+    "references/web-search-researcher.md",
+    "references/precedent-locator.md",
+    "references/codebase-locator.md",
+    "references/research-template.md",
+    "scripts/now.mjs",
+    "scripts/git-context.mjs",
+  ]) {
+    assert.ok(existsSync(join(skillRoot, path)), path);
+  }
 });
 
-test("the Feature Requirements Document template keeps its compatibility skeleton", () => {
-  const template = read(join(skillRoot, "references/frd-template.md"));
+test("research keeps the load-bearing stage order and stop boundary", () => {
+  const skill = read(skillPath);
+  const headings = [
+    "### 1. Formulate the research questions",
+    "### 2. Dispatch the analysis roles",
+    "### 3. Synthesize and checkpoint",
+    "### 4. Write the research document",
+    "### 5. Present the handoff and stop",
+  ];
+  for (let index = 1; index < headings.length; index += 1) {
+    assert.ok(skill.indexOf(headings[index - 1]) < skill.indexOf(headings[index]));
+  }
+  assert.match(skill, /\.rpiv\/artifacts\/research\//);
+  assert.match(skill, /successor names are handoffs, not permission/i);
+});
+
+test("the research template preserves downstream artifact compatibility", () => {
+  const template = read(join(skillRoot, "references/research-template.md"));
   assert.match(template, /^---[\s\S]*status: ready[\s\S]*---/);
   for (const heading of [
-    "## Problem & Intent",
-    "## Functional Requirements",
-    "## Acceptance Criteria",
-    "## Decisions",
+    "## Research Question",
+    "## Summary",
+    "## Detailed Findings",
+    "## Code References",
+    "## Integration Points",
+    "### Inbound References",
+    "### Outbound Dependencies",
+    "### Infrastructure Wiring",
+    "## Architecture Insights",
+    "## Precedents & Lessons",
+    "## Historical Context (from `.rpiv/artifacts/`)",
+    "## Developer Context",
+    "## Related Research",
     "## Open Questions",
-    "## References",
   ]) {
     assert.ok(template.includes(heading), heading);
   }
-  for (const field of ["**Question**:", "**Recommended**:", "**Chosen**:", "**Rationale**:"]) {
-    assert.ok(template.includes(field), field);
-  }
 });
 
-test("now.mjs preserves the upstream timestamp contract", () => {
+test("research now.mjs preserves the upstream timestamp contract", () => {
   const output = runNode(nowPath, repositoryRoot);
   assert.equal(output.includes("\n"), false);
   const [iso, slug, ...rest] = output.split("\t");
@@ -66,8 +92,8 @@ test("now.mjs preserves the upstream timestamp contract", () => {
   assert.equal(slug, iso.slice(0, 19).replaceAll(":", "-").replace("T", "_"));
 });
 
-test("git-context.mjs reports a repository using the caller's working directory", (t) => {
-  const directory = mkdtempSync(join(tmpdir(), "rpivc-git-context-"));
+test("research git-context.mjs reports the caller repository", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "rpivc-research-git-context-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   gitIn(directory, "init", "--initial-branch=main", "-q");
   gitIn(directory, "config", "user.email", "test@example.com");
@@ -88,8 +114,8 @@ test("git-context.mjs reports a repository using the caller's working directory"
   assert.ok(output.endsWith("\n"));
 });
 
-test("git-context.mjs falls back cleanly outside a repository", (t) => {
-  const directory = mkdtempSync(join(tmpdir(), "rpivc-no-repository-"));
+test("research git-context.mjs falls back outside a repository", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "rpivc-research-no-repository-"));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const output = runNode(gitContextPath, directory);
   for (const line of [
