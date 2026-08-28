@@ -23,12 +23,14 @@ last_updated_by: {`author:` from Metadata}
 
 ### {Component or area}
 - {Finding with a verified [path/to/file.ext:line](path/to/file.ext#Lline) reference}
+- {For an external-contract finding, use a direct [primary-source title](https://example.com) and state its version or date boundary}
 - {Connection to another component}
 - {Relevant implementation detail}
 
 ## Code References
 - [path/to/file.py:NN](path/to/file.py#LNN) — {Planner jump-table description}
 - [another/file.ts:NN–MM](another/file.ts#LNN-LMM) — {Description of the cited block}
+{Use `None.` instead when the repository has no live project files.}
 
 ## Integration Points
 {Enumerate every observed consumer, dependency, and wiring point with verified repository-relative evidence.}
@@ -41,6 +43,8 @@ last_updated_by: {`author:` from Metadata}
 
 ### Infrastructure Wiring
 - [path/to/config.ext:line](path/to/config.ext#Lline) — {Dependency injection, routes, events, jobs, or middleware}
+
+{In greenfield or external-only mode, replace repository wiring placeholders with external contract boundaries backed by direct primary-source links. Never invent file references.}
 
 ## Architecture Insights
 {Demonstrated patterns, conventions, and current design decisions.}
@@ -69,6 +73,9 @@ last_updated_by: {`author:` from Metadata}
 
 ## Developer Context
 **Q ([path/to/file.ext:line](path/to/file.ext#Lline)): {Question grounded in specific code evidence}**
+A: {Developer's answer}
+
+**Q ([Primary source](https://example.com), {version or date}): {Question grounded in external-contract evidence}**
 A: {Developer's answer}
 
 ## Related Research

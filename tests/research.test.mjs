@@ -103,6 +103,21 @@ test("research asks one developer question per response and emits portable file 
   assert.match(skill, /Never write machine-specific absolute paths into an artifact/);
 });
 
+test("research keeps the bounded workflow when agents or live code are unavailable", () => {
+  const skill = read(skillPath);
+  const scopeTracer = read(join(skillRoot, "references/scope-tracer.md"));
+
+  assert.match(skill, /execute that complete role prompt inline/i);
+  assert.match(skill, /execute each analysis task sequentially inline/i);
+  assert.doesNotMatch(skill, /required scope-tracer boundary cannot be preserved and stop/i);
+  assert.match(skill, /greenfield or external-only mode/i);
+  assert.match(skill, /direct primary-source link with a version or date boundary/i);
+
+  assert.match(scopeTracer, /## Greenfield or external-only method/);
+  assert.match(scopeTracer, /three to six narrow external-contract slices/i);
+  assert.match(scopeTracer, /Never invent a repository file, symbol, integration point, or `file:line` citation/i);
+});
+
 test("research now.mjs preserves the upstream timestamp contract", () => {
   const output = runNode(nowPath, repositoryRoot);
   assert.equal(output.includes("\n"), false);
