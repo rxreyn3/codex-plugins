@@ -110,7 +110,7 @@ The directive is a machine-findable literal replacement:
 - never target snapshots, fixtures, golden masters, or other extensions;
 - record only a concrete one-file replacement.
 
-Anything requiring restructuring or a non-test target is plan-level work for the future `$rpivc-revise` stage.
+Anything requiring restructuring or a non-test target is plan-level work for the `$rpivc-revise` stage.
 
 ## Verification and plan state
 
@@ -122,7 +122,7 @@ After each in-scope phase:
 4. Flip only the corresponding `#### Automated Verification:` items from `- [ ]` to `- [x]` after their commands pass.
 5. Anchor every checkbox edit on the full unique line, including its command, path, or phase-specific criterion. Never edit by matching only the repeated checkbox prefix.
 
-Implement owns verification checkboxes, not plan content. Do not rewrite steps, code fences, criteria, decisions, phase ownership, or architecture from inside this stage. A plan-level change belongs to the future `$rpivc-revise <plan-path>` stage.
+Implement owns verification checkboxes, not plan content. Do not rewrite steps, code fences, criteria, decisions, phase ownership, or architecture from inside this stage. A plan-level change belongs to the `$rpivc-revise <plan-path>` stage.
 
 ## Handle a mismatch
 
@@ -135,11 +135,28 @@ Found: {actual situation}
 Why this matters: {explanation}
 ```
 
+Classify the mismatch before choosing the handoff:
+
+- A **confirmed plan-owned problem** requires changing plan content that Implement cannot own. Examples include an unavailable or invalid verification command, contradictory phase ownership, an impossible success criterion, or a required behavior, scope, or architecture decision. Do not ask the generic mismatch question. Stop and render:
+
+  ```text
+  Implementation paused at Phase {N}.
+
+  The plan must be revised before implementation can continue.
+
+  Next step: `$rpivc-revise <plan-path> "<specific plan correction grounded in the observed mismatch>"`
+  ```
+
+  Make the feedback concrete enough that Revise can propose the surgical correction without rediscovering the failure. Do not invoke Revise automatically.
+- An **implementation ambiguity** exists when more than one valid in-scope response remains, such as mechanically adapting the planned approach to moved code or intentionally omitting a change.
+
+For an implementation ambiguity:
+
 Ask exactly one focused question with header `Mismatch` and these options:
 
 - `Follow the plan` — adapt the planned approach to the current code state while preserving its intended behavior.
 - `Skip this change` — omit this planned change, accepting that the phase may remain incomplete.
-- `Update the plan` — stop implementation so the plan can be revised before continuing.
+- `Revise the plan` — stop implementation and use `$rpivc-revise <plan-path> "<specific feedback>"` before continuing.
 
 Use native structured input when available and keep its header at sixteen characters or fewer. If the structured-input call succeeds, wait for that answer.
 
@@ -150,7 +167,7 @@ What should I do about this mismatch?
 
 - Follow the plan — adapt the planned approach to the current code state while preserving its intended behavior.
 - Skip this change — omit this planned change, accepting that the phase may remain incomplete.
-- Update the plan — stop implementation so the plan can be revised before continuing.
+- Revise the plan — stop implementation and use `$rpivc-revise <plan-path> "<specific feedback>"` before continuing.
 
 Reply with one option.
 ```
@@ -175,7 +192,7 @@ Please review the diff and let me know if anything should reopen this phase.
 
 ---
 
-💬 Follow-up: surface code/plan mismatches inline through the Mismatch choice (Follow the plan / Skip this change / Update the plan). For plan-level changes use the future `$rpivc-revise <plan-path>` stage; for a session pause use the future `$rpivc-create-handoff` stage.
+💬 Follow-up: route confirmed plan-owned problems directly to the `$rpivc-revise <plan-path> "<specific feedback>"` stage. Use the Mismatch choice (Follow the plan / Skip this change / Revise the plan) only for genuine implementation ambiguity; for a session pause use the future `$rpivc-create-handoff` stage.
 
 Next step: `$rpivc-implement .rpiv/artifacts/plans/{filename}.md {next phase}` — implement the next phase in the plan's declared dependency order.
 
@@ -195,7 +212,7 @@ Please review the diff and let me know if anything should reopen a phase.
 
 ---
 
-💬 Follow-up: surface code/plan mismatches inline through the Mismatch choice (Follow the plan / Skip this change / Update the plan). For plan-level changes use the future `$rpivc-revise <plan-path>` stage; for a session pause use the future `$rpivc-create-handoff` stage.
+💬 Follow-up: route confirmed plan-owned problems directly to the `$rpivc-revise <plan-path> "<specific feedback>"` stage. Use the Mismatch choice (Follow the plan / Skip this change / Revise the plan) only for genuine implementation ambiguity; for a session pause use the future `$rpivc-create-handoff` stage.
 
 Next step: `$rpivc-validate .rpiv/artifacts/plans/{filename}.md` — verify the implementation against the plan's success criteria before committing.
 
@@ -215,7 +232,7 @@ Please review what landed and let me know if anything needs to change before res
 
 ---
 
-💬 Follow-up: surface code/plan mismatches inline through the Mismatch choice (Follow the plan / Skip this change / Update the plan). For plan-level changes use the future `$rpivc-revise <plan-path>` stage first.
+💬 Follow-up: route confirmed plan-owned problems directly to the `$rpivc-revise <plan-path> "<specific feedback>"` stage. Use the Mismatch choice (Follow the plan / Skip this change / Revise the plan) only for genuine implementation ambiguity.
 
 Next step: use the future `$rpivc-create-handoff` stage to capture the in-flight state for a clean resume.
 
@@ -234,4 +251,5 @@ If a named successor skill is not installed, say so plainly. Successor names are
 - Check off only commands that passed, using full unique line anchors.
 - Keep scratch under `.rpiv/tmp/` and remove it after use.
 - Never redesign plan content from inside implementation.
+- Route a confirmed plan-owned problem to a concrete `$rpivc-revise` handoff; do not ask a choice whose other outcomes cannot validly continue.
 - Never invoke a successor skill, commit, push, publish, or continue into another workflow stage.

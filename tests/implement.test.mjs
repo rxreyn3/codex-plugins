@@ -55,7 +55,8 @@ test("implement hands off named phases before reserving validation for plan comp
 
 test("implement keeps mismatch handling inline and stops before successor stages", () => {
   const skill = read(skillPath);
-  for (const option of ["Follow the plan", "Skip this change", "Update the plan"]) {
+  assert.doesNotMatch(skill, /Update the plan/);
+  for (const option of ["Follow the plan", "Skip this change", "Revise the plan"]) {
     assert.ok(skill.includes(option), option);
   }
   assert.match(skill, /Ask exactly one focused question/);
@@ -65,12 +66,28 @@ test("implement keeps mismatch handling inline and stops before successor stages
   assert.ok(fallbackEnd > fallbackStart);
   const fallback = skill.slice(fallbackStart, fallbackEnd);
   assert.match(fallback, /What should I do about this mismatch\?/);
-  for (const option of ["Follow the plan", "Skip this change", "Update the plan"]) {
+  for (const option of ["Follow the plan", "Skip this change", "Revise the plan"]) {
     assert.ok(fallback.includes(option), `direct fallback missing ${option}`);
   }
   assert.match(fallback, /Never refer to a "displayed prompt"/);
   assert.match(skill, /Successor names are handoffs, not permission/);
   assert.match(skill, /Never invoke a successor skill, commit, push, publish/);
+});
+
+test("implement routes confirmed plan-owned failures directly to revise", () => {
+  const skill = read(skillPath);
+  const mismatchStart = skill.indexOf("## Handle a mismatch");
+  const ambiguityStart = skill.indexOf("An **implementation ambiguity**", mismatchStart);
+  assert.ok(mismatchStart >= 0);
+  assert.ok(ambiguityStart > mismatchStart);
+  const planOwned = skill.slice(mismatchStart, ambiguityStart);
+
+  assert.match(planOwned, /unavailable or invalid verification command/);
+  assert.match(planOwned, /Do not ask the generic mismatch question/);
+  assert.match(planOwned, /Implementation paused at Phase \{N\}/);
+  assert.match(planOwned, /Next step: `\$rpivc-revise <plan-path>/);
+  assert.match(planOwned, /Do not invoke Revise automatically/);
+  assert.doesNotMatch(planOwned, /What should I do about this mismatch\?/);
 });
 
 test("implement keeps plan structure literal and chat references as relative Markdown links", () => {

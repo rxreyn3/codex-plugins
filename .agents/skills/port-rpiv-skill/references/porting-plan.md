@@ -82,6 +82,8 @@ For every Pi `Agent` edge, record the role's required tools, whether separate ex
 
 Trace orchestration assumptions as dependencies too. If source completion relies on an outer dispatcher to schedule sibling phases or stages, map that dispatcher to the actual Codex carrier. When no dispatcher exists, a completed named unit must hand off to the next unit in declared order; suggest final validation only when no implementation unit remains. Preserve the stop boundary: a handoff names the next command but never invokes it.
 
+Map abstract decision labels to concrete installed workflow stages. When the current stage cannot own a required mutation and the evidence leaves exactly one valid successor, recommend that successor with its specific input instead of asking a choice whose other outcomes cannot proceed honestly. Retain a developer choice gate when multiple valid in-stage consequences remain. In both cases, stop rather than invoking the successor automatically.
+
 Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
 
 Before editing, summarize:
