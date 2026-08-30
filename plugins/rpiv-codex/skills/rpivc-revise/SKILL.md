@@ -125,6 +125,8 @@ When native collaboration agents are available, dispatch the required independen
 
 When collaboration agents are unavailable, execute the same required roles as separately labeled, bounded inline tasks. Keep each role's search, file-read, evidence, and output limits; do not collapse them into one broad repository sweep. Finish every inline role before synthesis.
 
+Retain which carrier ran. Report `Research carrier: collaboration agents`, `Research carrier: bounded inline`, or `Research carrier: not used` in the proposed-revision summary.
+
 After the roles finish:
 
 1. read every newly relevant implementation or artifact file completely;
@@ -144,6 +146,8 @@ Based on the feedback, I understand the plan should:
 
 Evidence that affects the revision:
 - {verified current constraint or "No new research needed"}
+
+Research carrier: {collaboration agents | bounded inline | not used}
 
 Proposed edits:
 1. {specific section and modification}

@@ -79,6 +79,7 @@ test("revise keeps optional research bounded with a verified inline fallback", (
   assert.match(skill, /When collaboration agents are unavailable/);
   assert.match(skill, /separately labeled, bounded inline tasks/);
   assert.match(skill, /parent reads relevant files and verifies every finding/);
+  assert.match(skill, /Research carrier: \{collaboration agents \| bounded inline \| not used\}/);
 });
 
 test("revise preserves plan state, phase metadata, and append-only history", () => {
