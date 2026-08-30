@@ -51,8 +51,8 @@ The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The
 
 Keep file evidence usable in both Zed and Codex without making plan artifacts machine-specific.
 
-- **Chat responses:** always show a backticked repository-relative path with one starting line, for example `backend/path/to/file.py:42`. For a range, keep only the start line inside the code span and write `(lines 42–55)` immediately after it; do not emit backticked `path:42-55`, which Zed does not reliably resolve. When host instructions explicitly support absolute local Markdown links, also add a concise `Open in Codex` link targeting the absolute file path and starting line. The repository-relative code span remains mandatory.
-- **Plan artifacts:** render prose citations, Pattern References, precedent links, review-table `codebase-loc` values, and other evidence as real Markdown links. Use the repository-relative path and line range as the label; use the same repository-relative path as the target with a GitHub-style `#Lstart` or `#Lstart-Lend` fragment. Never write machine-specific absolute paths into an artifact.
+- **Chat responses and plan prose:** render verified repository evidence with the same relative Markdown-link form. Use `[descriptive label — line 42](backend/path/to/file.py#L42)` for one line and `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment. This includes Pattern References, precedent links, review-table `codebase-loc` values, and other human-readable evidence.
+- Keep every target repository-relative, use a label that names the file or subject and line or range, and never add a machine-specific absolute companion link. Render links as ordinary Markdown, not inside fenced code blocks.
 - **Structural plan fields:** keep `#### N. path`, `**File**: path`, frontmatter `files:`, and other parser-consumed fields as plain repository-relative paths. Do not turn them into links.
 
 Normalize role output into these formats before presenting checkpoints or writing the artifact. A role's raw citation is evidence input, not the final rendering contract.
@@ -394,7 +394,7 @@ Do not auto-apply reviewer findings. Present counts for blockers, concerns, and 
 
 Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise ask the same grounded choice directly and stop. Every row must receive a resolution.
 
-After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path, fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
+After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path as a repository-relative Markdown link without a fragment, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 
 ```text
 Next step: $rpivc-implement .rpiv/artifacts/plans/{filename}.md Phase 1

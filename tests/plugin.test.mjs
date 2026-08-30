@@ -47,7 +47,10 @@ test("plugin packaging is valid and every skill is self-contained", () => {
     assert.match(policy, /allow_implicit_invocation:\s*false/);
 
     const skill = read(skillPath);
-    for (const match of skill.matchAll(/\]\((?!https?:\/\/)([^)#]+)(?:#[^)]+)?\)/g)) {
+    const authoredMarkdown = skill
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`[^`\n]*`/g, "");
+    for (const match of authoredMarkdown.matchAll(/\]\((?!https?:\/\/)([^)#]+)(?:#[^)]+)?\)/g)) {
       assert.ok(existsSync(resolve(skillRoot, match[1])), `${skillName} missing ${match[1]}`);
     }
   }

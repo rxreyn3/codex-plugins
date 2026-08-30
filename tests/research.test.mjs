@@ -94,13 +94,13 @@ test("the research template preserves downstream artifact compatibility", () => 
   assert.match(template, /\[another\/file\.ts:NN–MM\]\(another\/file\.ts#LNN-LMM\)/);
 });
 
-test("research asks one developer question per response and emits portable file links", () => {
+test("research asks one developer question per response and emits relative Markdown links", () => {
   const skill = read(skillPath);
   assert.match(skill, /Ask exactly one developer question per response/);
   assert.doesNotMatch(skill, /independent questions may share one structured-input call/i);
-  assert.match(skill, /backticked repository-relative path with one starting line/);
-  assert.match(skill, /GitHub-style `#Lstart` or `#Lstart-Lend` fragment/);
-  assert.match(skill, /Never write machine-specific absolute paths into an artifact/);
+  assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
+  assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
+  assert.match(skill, /never add a machine-specific absolute companion link/i);
 });
 
 test("research keeps the bounded workflow when agents or live code are unavailable", () => {

@@ -46,6 +46,18 @@ node <discovery-skill-root>/scripts/git-context.mjs
 
 The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The second returns labeled repository metadata with explicit fallbacks.
 
+## Navigable file references
+
+Use one representation for human-facing repository evidence in both chat and the Feature Requirements Document:
+
+- Render a verified line as a repository-relative Markdown link such as `[Orders service — line 42](src/orders.ts#L42)`.
+- Render a verified range as `[Orders service — lines 42–55](src/orders.ts#L42-L55)`.
+- When no verified line exists, link the repository-relative path without a fragment.
+- Use a descriptive label that names the file or subject and line or range. Never add a machine-specific absolute companion link or place the link inside a fenced code block.
+- Keep invocation arguments, frontmatter values, filenames, and other parser-consumed fields as plain repository-relative paths.
+
+Normalize raw locator or analyzer `file:line` evidence at this parent boundary before presenting a question or writing the artifact. The raw role result remains evidence input, not the final rendering contract.
+
 ## Workflow
 
 Follow these steps in order. Never skip the developer-facing interview; it is the work, not decorative ceremony.
@@ -96,13 +108,13 @@ Build the decision tree internally. Do not show it unless asked.
 
 Do not build grandchildren yet. Expand a node's children only after its parent is resolved.
 
-Mark evidence-based pre-resolutions with `file:line` citations, but do not record them as decisions. Confirm them with the developer in one consolidated interaction before the interview loop:
+Mark evidence-based pre-resolutions with navigable repository links, but do not record them as decisions. Confirm them with the developer in one consolidated interaction before the interview loop:
 
 ```text
-From the probe I inferred: <observed behavior> (`path:line`). Keep this for the feature, or change it as part of the work?
+From the probe I inferred: <observed behavior> ([descriptive label — line N](path/to/file.ext#LN)). Keep this for the feature, or change it as part of the work?
 ```
 
-Use one structured call when its capacity fits. Otherwise ask one concise consolidated question and stop for the answer. Confirmation becomes a decision with rationale `evidence: path:line + confirmed`. A correction changes the decision direction and schedules one narrow correction probe.
+Use one structured call when its capacity fits. Otherwise ask one concise consolidated question and stop for the answer. Confirmation becomes a decision with rationale `evidence: [descriptive label — line N](path/to/file.ext#LN) + confirmed`. A correction changes the decision direction and schedules one narrow correction probe.
 
 ### 4. Walk the interview lazily
 
@@ -111,7 +123,7 @@ Walk depth-first, parent before child. Ask one unresolved question, wait for its
 #### Question tiers
 
 - **Intent** was handled before the probe. Do not repeat it in this loop.
-- **Scope** covers goals, exclusions, requirements, and constraints. Lead with one recommendation grounded in intent and project convention. Cite `file:line` only when an option references existing code; otherwise say `no codebase precedent`.
+- **Scope** covers goals, exclusions, requirements, and constraints. Lead with one recommendation grounded in intent and project convention. Use a navigable repository link only when an option references existing code; otherwise say `no codebase precedent`.
 - **Shape** covers the architectural seam, pattern, or integration point. Name the tradeoff axis. Generate at least two real options. Every option must state what it optimizes and what it sacrifices or costs. Put the recommended option first with a one-line rationale. Cite every option that relies on existing code; otherwise label the options as conventions with `no codebase precedent`.
 - **Detail** covers acceptance criteria and routine child decisions. It may be batched only when sibling answers are independent.
 
@@ -151,10 +163,10 @@ Redistribute the dependency-ordered interview into these document roles:
 - **Constraints & Assumptions:** technical, environmental, schedule, and organizational boundaries plus claims for research to verify.
 - **Acceptance Criteria:** observable commands, outputs, or visible behavior. Reject phrases such as `works correctly` or `user experience is acceptable`.
 - **Recommended Approach:** one or two sentences naming the architectural shape implied by decisions. This is the topic passed to later repository research.
-- **Decisions:** one heading per decision, containing the asked question, recommendation, chosen answer, and substantive rationale. Evidence-derived rationale uses `evidence: path:line + confirmed`.
+- **Decisions:** one heading per decision, containing the asked question, recommendation, chosen answer, and substantive rationale. Evidence-derived rationale uses `evidence: [descriptive label — line N](path/to/file.ext#LN) + confirmed`.
 - **Open Questions:** only explicit deferrals. Use `None.` when there are none so the template remains complete.
-- **Suggested Follow-ups:** related findings the developer did not add to scope, with `file:line` when available. Omit the entire section when empty.
-- **References:** input artifacts, tickets, and user-mentioned files.
+- **Suggested Follow-ups:** related findings the developer did not add to scope, with a navigable repository link when available. Omit the entire section when empty.
+- **References:** input artifacts, tickets, and user-mentioned files. Render local human-facing references as repository-relative Markdown links while preserving external ticket links.
 
 ### 6. Write the new artifact
 
@@ -170,11 +182,11 @@ Write one new file with frontmatter `status: ready`. Create the parent artifact 
 
 ### 7. Present the handoff and stop
 
-Report:
+Render this report as ordinary Markdown without a surrounding code fence:
 
 ```text
 Intent captured to:
-`.rpiv/artifacts/discover/<slug>_<topic>.md`
+[Feature Requirements Document](.rpiv/artifacts/discover/<slug>_<topic>.md)
 
 {N} requirements, {M} decisions, {K} open questions.
 

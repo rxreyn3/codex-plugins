@@ -32,7 +32,7 @@ A checkpoint or mismatch may span multiple turns. Resume the current phase after
 
 ## File references
 
-- In chat, show a backticked repository-relative path with one starting line, for example `src/orders.ts:42`. Put a range outside the code span as `(lines 42–55)`. When host instructions explicitly support absolute local Markdown links, a concise absolute `Open in Codex` link may accompany it, but the portable repository-relative form remains mandatory.
+- In chat, render verified repository evidence as relative Markdown links: `[Orders service — line 42](src/orders.ts#L42)` for one line and `[Orders service — lines 42–55](src/orders.ts#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment. Use a descriptive label, never add a machine-specific absolute companion link, and keep the link outside fenced code blocks.
 - In the plan, preserve parser-consumed fields such as frontmatter `files:`, `#### N. path`, `**File**: path`, phase names, and reconciliation targets as plain repository-relative values. Do not convert them to links or write machine-specific absolute paths into the artifact.
 - Implement normally changes only verification checkboxes and, when required, a reconciliation directive in the current phase. It does not rewrite existing artifact citations.
 
@@ -138,11 +138,11 @@ Do not use this mismatch flow for a missing earlier-phase prerequisite in single
 
 ## Completion and pause reports
 
-When every in-scope phase is complete, print:
+When every in-scope phase is complete, render this report as ordinary Markdown without a surrounding code fence:
 
 ```text
 Implementation complete:
-`.rpiv/artifacts/plans/{filename}.md`
+[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
 
 {P} phases completed, {M} files changed, {T} tests passing.
 Outstanding: none.
@@ -158,11 +158,11 @@ Next step: `$rpivc-validate .rpiv/artifacts/plans/{filename}.md` — verify the 
 Tip: start a fresh task first; chained skills work best with a clean context window.
 ```
 
-If implementation pauses mid-plan, print:
+If implementation pauses mid-plan, render this report as ordinary Markdown without a surrounding code fence:
 
 ```text
 Implementation paused at Phase {N}:
-`.rpiv/artifacts/plans/{filename}.md`
+[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
 
 {P} phases completed, {M} files changed, {T} tests passing.
 Outstanding: {unchecked items and blockers}.

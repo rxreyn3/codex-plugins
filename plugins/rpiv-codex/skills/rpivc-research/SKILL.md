@@ -43,8 +43,8 @@ The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The
 
 Keep file evidence usable in both Zed and Codex without making artifacts machine-specific.
 
-- **Chat responses:** always show a backticked repository-relative path with one starting line, for example `backend/path/to/file.py:42`. For a range, keep only the start line inside the code span and write `(lines 42–55)` immediately after it; do not emit backticked `path:42-55`, which Zed does not reliably resolve. When host instructions explicitly support absolute local Markdown links, also add a concise `Open in Codex` link targeting the absolute file path and starting line. The repository-relative code span remains mandatory.
-- **Artifact Markdown:** render code and artifact citations as real Markdown links. Use the repository-relative path and line range as the label; use the same repository-relative path as the target with a GitHub-style `#Lstart` or `#Lstart-Lend` fragment. Never write machine-specific absolute paths into an artifact.
+- **Chat responses and artifact prose:** render verified repository evidence with the same relative Markdown-link form. Use `[descriptive label — line 42](backend/path/to/file.py#L42)` for one line and `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment.
+- Keep every target repository-relative, use a label that names the file or subject and line or range, and never add a machine-specific absolute companion link. Render links as ordinary Markdown, not inside fenced code blocks.
 - **Structural fields:** preserve plain paths where a downstream parser consumes them. Do not turn frontmatter fields or another skill's load-bearing path fields into links.
 
 Normalize role output into these formats before presenting chat evidence or writing the artifact. A role's raw backticked citation is evidence input, not the final rendering contract.
@@ -151,7 +151,7 @@ With collaboration agents, dispatch as many roles concurrently as the current Co
 Ask only when the reports expose a material pattern conflict, scope boundary, priority conflict, integration ambiguity, or missing developer context. Each question must be self-contained and include:
 
 1. observed behavior;
-2. at least one verified `file:line` reference in codebase mode, or one direct primary-source link with a version or date boundary in greenfield or external-only mode;
+2. at least one verified navigable repository link in codebase mode, or one direct primary-source link with a version or date boundary in greenfield or external-only mode;
 3. why the decision matters;
 4. two to four concrete evidence-based options or hypotheses.
 
@@ -221,7 +221,7 @@ Create the parent directory when necessary and write exactly one new artifact. D
 
 ### 5. Present the handoff and stop
 
-Report:
+Render this report as ordinary Markdown without a surrounding code fence:
 
 ```text
 Research document written to:

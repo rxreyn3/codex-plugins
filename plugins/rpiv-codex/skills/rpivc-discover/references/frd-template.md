@@ -50,7 +50,7 @@ last_updated_by: {`author:` from Metadata}
 **Question**: {Question as asked, or "Pre-resolved from codebase evidence — confirmed"}
 **Recommended**: {Recommendation, or "n/a — intent question"}
 **Chosen**: {Developer's answer}
-**Rationale**: {Why, or `evidence: path/to/file.ext:line + confirmed`}
+**Rationale**: {Why, or `evidence: [descriptive label — line N](path/to/file.ext#LN) + confirmed`}
 
 ## Open Questions
 - {Only an item the developer explicitly deferred, or "None."}
@@ -58,7 +58,7 @@ last_updated_by: {`author:` from Metadata}
 ## Suggested Follow-ups
 {Omit this entire section when no related but out-of-scope findings exist.}
 
-- {Observed item and `file:line` when applicable}
+- {Observed item and a repository-relative [descriptive label — line N](path/to/file.ext#LN) when applicable}
 
 ## References
-- {Input artifact, ticket, or explicitly mentioned file}
+- {Repository-relative [input artifact or file](path/to/input.md), or external ticket link}

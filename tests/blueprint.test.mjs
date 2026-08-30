@@ -136,11 +136,11 @@ test("blueprint asks one question at a time and uses present-tense triage action
   assert.doesNotMatch(skill, /Independent questions may be batched/);
 });
 
-test("blueprint emits Zed-friendly chat paths and portable artifact links", () => {
+test("blueprint emits relative Markdown links and preserves structural paths", () => {
   const skill = read(skillPath);
   const reviewer = read(join(skillRoot, "references/artifact-code-reviewer.md"));
-  assert.match(skill, /backticked repository-relative path with one starting line/);
-  assert.match(skill, /GitHub-style `#Lstart` or `#Lstart-Lend` fragment/);
+  assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
+  assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
   assert.match(skill, /keep `#### N\. path`, `\*\*File\*\*: path`/);
   assert.match(reviewer, /\[path\/to\/orders\.ts:55\]\(path\/to\/orders\.ts#L55\)/);
 });

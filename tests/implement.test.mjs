@@ -44,9 +44,10 @@ test("implement keeps mismatch handling inline and stops before successor stages
   assert.match(skill, /Never invoke a successor skill, commit, push, publish/);
 });
 
-test("implement keeps plan structure literal and chat references portable", () => {
+test("implement keeps plan structure literal and chat references as relative Markdown links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /backticked repository-relative path with one starting line/);
+  assert.match(skill, /\[Orders service — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders service — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /frontmatter `files:`/);
   assert.match(skill, /plain repository-relative values/);
   assert.match(skill, /Do not convert them to links/);
