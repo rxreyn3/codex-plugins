@@ -132,7 +132,21 @@ Ask exactly one focused question with header `Mismatch` and these options:
 - `Skip this change` — omit this planned change, accepting that the phase may remain incomplete.
 - `Update the plan` — stop implementation so the plan can be revised before continuing.
 
-Use native structured input when available. Otherwise ask the same concise question directly and stop. Keep any structured-input header at sixteen characters or fewer. After the answer, state the selected consequence plainly before continuing.
+Use native structured input when available and keep its header at sixteen characters or fewer. If the structured-input call succeeds, wait for that answer.
+
+When structured input is unavailable, fails, or does not actually display an input surface, end the response with this direct fallback and stop:
+
+```text
+What should I do about this mismatch?
+
+- Follow the plan — adapt the planned approach to the current code state while preserving its intended behavior.
+- Skip this change — omit this planned change, accepting that the phase may remain incomplete.
+- Update the plan — stop implementation so the plan can be revised before continuing.
+
+Reply with one option.
+```
+
+A mismatch response is incomplete unless the developer receives either the successful structured-input surface or the direct question with all three options. Never refer to a "displayed prompt", dialog, panel, or input surface unless that surface was successfully created in the current response. After the answer, state the selected consequence plainly before continuing.
 
 Do not use this mismatch flow for a missing earlier-phase prerequisite in single-phase mode; that case always uses the exact hard-error message above.
 
