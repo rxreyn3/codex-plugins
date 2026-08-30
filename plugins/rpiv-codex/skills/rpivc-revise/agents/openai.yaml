@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Revise"
+  short_description: "Surgical, evidence-backed plan revisions"
+
+policy:
+  allow_implicit_invocation: false
