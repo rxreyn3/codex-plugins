@@ -34,6 +34,25 @@ test("implement preserves checkbox ownership and reconciliation restrictions", (
   assert.match(skill, /never target snapshots, fixtures, golden masters/);
 });
 
+test("implement hands off named phases before reserving validation for plan completion", () => {
+  const skill = read(skillPath);
+  const completionStart = skill.indexOf("## Completion and pause reports");
+  const completionEnd = skill.indexOf("If implementation pauses", completionStart);
+  assert.ok(completionStart >= 0);
+  assert.ok(completionEnd > completionStart);
+  const completion = skill.slice(completionStart, completionEnd);
+
+  assert.match(completion, /single-phase mode completes and a later implementation phase remains/);
+  assert.match(completion, /Phase \{N\} complete:/);
+  assert.match(completion, /Implementation phases remaining: \{remaining phase names in declared order\}/);
+  assert.match(completion, /Next step: `\$rpivc-implement .* \{next phase\}`/);
+  assert.match(completion, /single-phase mode completes the final implementation phase/);
+  assert.match(completion, /Implementation phases remaining: none/);
+  assert.match(completion, /Next step: `\$rpivc-validate /);
+  assert.match(skill, /Do not use `Manual Verification`.*to decide whether implementation phases remain/);
+  assert.match(skill, /Never invoke the next phase or validation automatically/);
+});
+
 test("implement keeps mismatch handling inline and stops before successor stages", () => {
   const skill = read(skillPath);
   for (const option of ["Follow the plan", "Skip this change", "Update the plan"]) {

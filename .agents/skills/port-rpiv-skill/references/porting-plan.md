@@ -80,6 +80,8 @@ For every dependency, record a compact working table with these columns:
 
 For every Pi `Agent` edge, record the role's required tools, whether separate execution is part of the observable contract, and the behavior when native collaboration agents are unavailable. Do not infer semantic isolation merely because the source happens to use an agent as its execution carrier.
 
+Trace orchestration assumptions as dependencies too. If source completion relies on an outer dispatcher to schedule sibling phases or stages, map that dispatcher to the actual Codex carrier. When no dispatcher exists, a completed named unit must hand off to the next unit in declared order; suggest final validation only when no implementation unit remains. Preserve the stop boundary: a handoff names the next command but never invokes it.
+
 Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
 
 Before editing, summarize:

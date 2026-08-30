@@ -12,7 +12,7 @@ This port preserves the `implement` workflow from RPIV-Pi commit `7bf83f7a15c661
 ```text
 ready plan -> read full context -> implement one or all phases in order
            -> run the in-scope verification -> check off verified criteria
-           -> stop for review and hand off to validation
+           -> stop for review -> hand off to the next phase or final validation
 ```
 
 Implementation edits product source and the plan's verification checkboxes. It does not redesign the plan, perform the successor validation stage, commit, push, publish, or invoke another workflow stage.
@@ -68,6 +68,15 @@ Hard boundaries:
 - Run only commands under the named phase's `#### Automated Verification:` section. Do not run whole-plan build or test commands; those belong to the later validation stage.
 - Keep formatters and automatic fixes write-scoped to the named phase's files. A repository-wide rewrite can corrupt another lane's changes with impressive efficiency.
 - Stop immediately after the named phase's own checks pass and its checkboxes are updated.
+
+After the stop, derive the handoff from the plan's declared phase and dependency order:
+
+- If a later implementation phase follows the named phase, suggest the first such phase as the next separately runnable `$rpivc-implement` step.
+- If the named phase is the final implementation phase, suggest `$rpivc-validate`.
+- Do not use `Manual Verification`, whole-plan success criteria, or checkmarks outside the named phase to decide whether implementation phases remain. Those checks belong to final validation or another sequenced lane.
+- If the plan's phase order is missing or internally inconsistent, report the mismatch and stop rather than guessing the next phase.
+
+A suggested handoff is informational. Never invoke the next phase or validation automatically.
 
 ### Sequential full-plan mode
 
@@ -152,14 +161,35 @@ Do not use this mismatch flow for a missing earlier-phase prerequisite in single
 
 ## Completion and pause reports
 
-When every in-scope phase is complete, render this report as ordinary Markdown without a surrounding code fence:
+When single-phase mode completes and a later implementation phase remains, render this report as ordinary Markdown without a surrounding code fence:
+
+```text
+Phase {N} complete:
+[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
+
+1 phase completed in this run, {M} files changed, {T} tests passing.
+Phase {N} outstanding: none.
+Implementation phases remaining: {remaining phase names in declared order}.
+
+Please review the diff and let me know if anything should reopen this phase.
+
+---
+
+💬 Follow-up: surface code/plan mismatches inline through the Mismatch choice (Follow the plan / Skip this change / Update the plan). For plan-level changes use the future `$rpivc-revise <plan-path>` stage; for a session pause use the future `$rpivc-create-handoff` stage.
+
+Next step: `$rpivc-implement .rpiv/artifacts/plans/{filename}.md {next phase}` — implement the next phase in the plan's declared dependency order.
+
+Tip: start a fresh task first; chained skills work best with a clean context window.
+```
+
+When sequential full-plan mode completes, or single-phase mode completes the final implementation phase, render this report as ordinary Markdown without a surrounding code fence:
 
 ```text
 Implementation complete:
 [Implementation plan](.rpiv/artifacts/plans/{filename}.md)
 
-{P} phases completed, {M} files changed, {T} tests passing.
-Outstanding: none.
+{P} phases completed in this run, {M} files changed, {T} tests passing.
+Implementation phases remaining: none.
 
 Please review the diff and let me know if anything should reopen a phase.
 
@@ -200,6 +230,7 @@ If a named successor skill is not installed, say so plainly. Successor names are
 - Preserve single-phase file ownership and stop after the named phase.
 - In single-phase mode, run only that phase's automated verification commands.
 - In full-plan mode, execute phases sequentially and run the plan's whole-plan commands after each phase.
+- Hand a completed non-final named phase to the next declared phase; suggest validation only when no implementation phase remains.
 - Check off only commands that passed, using full unique line anchors.
 - Keep scratch under `.rpiv/tmp/` and remove it after use.
 - Never redesign plan content from inside implementation.
