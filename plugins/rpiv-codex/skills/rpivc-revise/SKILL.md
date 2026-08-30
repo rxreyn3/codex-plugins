@@ -106,9 +106,16 @@ With one real plan path and a feedback set:
 1. verify that the plan exists under `.rpiv/artifacts/plans/`;
 2. read the entire plan, including frontmatter, every phase, success criteria, Plan History, and existing Follow-up sections;
 3. identify the exact sections and acceptance claims the feedback affects;
-4. determine whether the change needs new technical evidence.
+4. build a bounded **plan-consistency cone** for any factual invariant in the feedback, such as an executable, command convention, path, dependency, environment assumption, or repeated acceptance claim:
+   - search the entire plan for the same literal and clearly equivalent occurrences;
+   - classify each occurrence as the same correction, unrelated context, or unresolved;
+   - include every same-correction occurrence in the proposed revision, even when it appears in another phase;
+   - ask one focused question before proposing edits when an occurrence cannot be classified safely;
+5. determine whether the change needs new technical evidence.
 
 Never infer the plan's structure from a partial read.
+
+The consistency cone is not a general plan audit and does not authorize edits. It prevents a plan-wide invariant discovered in one phase from being repaired one phase at a time. Implementation phase ownership does not limit this scan because Revise owns the single plan artifact; the developer's later approval still controls every proposed edit.
 
 ### 2. Research only when needed
 
@@ -147,6 +154,9 @@ Based on the feedback, I understand the plan should:
 Evidence that affects the revision:
 - {verified current constraint or "No new research needed"}
 
+Plan consistency scan:
+- {same-correction occurrences by phase and section, or "No analogous occurrences found"}
+
 Research carrier: {collaboration agents | bounded inline | not used}
 
 Proposed edits:
@@ -155,6 +165,8 @@ Proposed edits:
 ```
 
 Point out vague, conflicting, or technically invalid feedback plainly. Ask one focused clarification question and stop whenever a material issue remains unresolved.
+
+When the consistency cone finds same-correction occurrences outside the phase or section named in the feedback, list them explicitly in `Plan consistency scan` and include them in `Proposed edits`. This expands the proposal, not the edit authorization. Never change an analogous occurrence unless the developer approves that listed modification.
 
 When the proposal is actionable, ask `{short summary}. Proceed with these edits?` using header `Changes` and these options:
 
@@ -171,6 +183,7 @@ Use the available patch or edit mechanism against the existing plan. Never overw
 Apply only the approved modifications:
 
 - preserve unaffected structure, decisions, code blocks, criteria, and history;
+- apply every analogous correction explicitly listed in the approved proposal, across all affected phases;
 - keep new file references accurate and measurable;
 - update `## What We're NOT Doing` when scope changes;
 - update the implementation approach or decision section when the approach changes;
@@ -241,6 +254,7 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 - Read the complete plan and every workflow review artifact before proposing edits.
 - Research only the new technical surface the feedback introduces.
 - Resolve every material question before editing.
+- Scan the complete plan for analogous occurrences of the same factual invariant before proposing edits; do not inherit an implementation phase's ownership boundary as the revision boundary.
 - Require explicit approval after presenting the proposed revision.
 - Make surgical edits; never rewrite the plan wholesale.
 - Reopen affected checked work and synchronize phase frontmatter.

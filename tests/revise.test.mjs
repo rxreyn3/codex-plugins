@@ -71,6 +71,29 @@ test("revise preserves workflow and manual input boundaries", () => {
   assert.match(skill, /No entries:[\s\S]*\.rpiv\/artifacts\/plans\//);
 });
 
+test("revise expands repeated plan invariants inside one approval proposal", () => {
+  const skill = read(skillPath);
+  const readStart = skill.indexOf("#### Read the artifact");
+  const researchStart = skill.indexOf("### 2. Research only when needed", readStart);
+  const proposalStart = skill.indexOf("### 3. Present the proposed revision", researchStart);
+  const updateStart = skill.indexOf("### 4. Update the plan surgically", proposalStart);
+  assert.ok(readStart >= 0);
+  assert.ok(researchStart > readStart);
+  assert.ok(proposalStart > researchStart);
+  assert.ok(updateStart > proposalStart);
+
+  const readBoundary = skill.slice(readStart, researchStart);
+  const proposalBoundary = skill.slice(proposalStart, updateStart);
+  assert.match(readBoundary, /plan-consistency cone/);
+  assert.match(readBoundary, /executable, command convention, path, dependency, environment assumption/);
+  assert.match(readBoundary, /search the entire plan/);
+  assert.match(readBoundary, /include every same-correction occurrence.*another phase/s);
+  assert.match(readBoundary, /not a general plan audit and does not authorize edits/);
+  assert.match(proposalBoundary, /Plan consistency scan:/);
+  assert.match(proposalBoundary, /expands the proposal, not the edit authorization/);
+  assert.match(proposalBoundary, /Never change an analogous occurrence unless the developer approves/);
+});
+
 test("revise keeps optional research bounded with a verified inline fallback", () => {
   const skill = read(skillPath);
   assert.match(skill, /Skip this step for a purely editorial or structural change/);

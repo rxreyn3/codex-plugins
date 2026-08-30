@@ -84,6 +84,8 @@ Trace orchestration assumptions as dependencies too. If source completion relies
 
 Map abstract decision labels to concrete installed workflow stages. When the current stage cannot own a required mutation and the evidence leaves exactly one valid successor, recommend that successor with its specific input instead of asking a choice whose other outcomes cannot proceed honestly. Retain a developer choice gate when multiple valid in-stage consequences remain. In both cases, stop rather than invoking the successor automatically.
 
+Do not let an implementation unit's ownership boundary leak into a plan-owning revision stage. When feedback establishes a factual invariant that may repeat in the same artifact—such as an unavailable executable, command convention, path, dependency, or environment assumption—the revision stage must scan the complete plan for analogous occurrences before proposing edits. Surface every same-correction occurrence under one approval gate; do not silently broaden into a general plan audit or edit anything not listed in the approved proposal.
+
 Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
 
 Before editing, summarize:
