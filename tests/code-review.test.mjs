@@ -83,6 +83,21 @@ test("code review preserves the source wave, reconciliation, verification, artif
   assert.match(skill, /never edits reviewed source, invokes a successor, commits, pushes, publishes/i);
 });
 
+test("code review excludes reviewed commits from precedent evidence", () => {
+  const skill = read(skillPath);
+  const reconciliation = skill.slice(
+    skill.indexOf("### Step 5: Reconcile Findings"),
+    skill.indexOf("### Step 6: Verify Findings"),
+  );
+
+  assert.match(skill, /`ReviewedCommits` — commit hashes that belong to the review itself/);
+  assert.match(skill, /Input it needs: `ChangedFiles` plus `ReviewedCommits`/);
+  assert.match(skill, /Exclude every hash in ReviewedCommits/);
+  assert.match(reconciliation, /drop every returned precedent whose hash is in `ReviewedCommits`/);
+  assert.match(reconciliation, /cannot appear in `## Precedents`/);
+  assert.match(reconciliation, /If no independent precedents remain, treat Precedents as empty/);
+});
+
 test("code review preserves artifact structure and adapts human-facing links", () => {
   const skill = read(skillPath);
   const template = read(join(skillRoot, "templates/review.md"));

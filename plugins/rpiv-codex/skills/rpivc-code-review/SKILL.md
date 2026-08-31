@@ -131,6 +131,11 @@ Beyond the required bundled Diff Auditor role prompt, every Wave-2 task payload 
 3. **Bail-out**: if `ChangedFiles` is empty, print `No changes in scope {scope}. Exiting.` and STOP. Do not write an artifact.
 
 4. **Derive scope + flags** (orchestrator-side, used in later steps):
+   - `ReviewedCommits` — commit hashes that belong to the review itself and therefore cannot be treated as historical precedents:
+     - strategy=`first-parent` → `ReviewedCommits = git log "<range>" --first-parent --no-merges --pretty=%H`. For commit-list input, use exactly the user-named resolved hashes instead of the first-parent walk.
+     - strategy=`explicit-range` → `ReviewedCommits = git log "<range>" --no-merges --pretty=%H`.
+     - strategy=`working-tree` with scope=`commit` → `ReviewedCommits = {HEAD}`. For `staged`, `working`, or `modified`, use the empty set.
+     - strategy=`tree` → the empty set.
    - `InScopeFiles` — used by the Step 6 pre-filter. `ChangedFiles` reflects *tree-reachability* (inflated on branches that back-merged the default branch — each post-merge first-parent commit inherits the merge's tree, so `--name-only` includes every file the merge resolved); `InScopeFiles` reflects *commits' own diffs* and is what the developer actually authored. Derivation:
      - strategy=`first-parent` (`auto` / PR branch / commit-list inputs) → `InScopeFiles = ⋃ git diff-tree --no-commit-id --name-only -r <h>` over `git log "<range>" --first-parent --no-merges --pretty=%H` (each feature commit's own file delta; back-merge sidecars drop out even when the merge is on the first-parent line). For commit-list input, iterate over the user-named hashes instead of the first-parent walk to preserve non-contiguous-list intent.
      - strategy=`explicit-range` → `InScopeFiles = ChangedFiles` (user explicitly asked for range semantics; merges in the range are part of the intent).
@@ -156,7 +161,7 @@ Dispatch all applicable Wave-1 roles concurrently up to available collaboration 
 **Role — Integration map:** read [Integration Scanner](references/integration-scanner.md), include it in the collaboration-agent task, and add this assignment:
 - Prompt: "Map inbound references, outbound dependencies, and infrastructure wiring for the following changed files: {ChangedFiles, one per line}. Flag any auth-boundary crossings (middleware, guards, interceptors, authorize-style decorators) and config/DI/event registration touching these paths. Do NOT analyse code quality — connections only, in your standard output format."
 
-**Role — Precedents** (always, **except `strategy: tree`**): read [Precedent Locator](references/precedent-locator.md) and use the assignment defined in Step 3 below. Dispatch it here, not in Wave 2. Input it needs: `ChangedFiles` only. For `tree` strategy, skip entirely — there is no creation history to compare, and the files *are* the baseline.
+**Role — Precedents** (always, **except `strategy: tree`**): read [Precedent Locator](references/precedent-locator.md) and use the assignment defined in Step 3 below. Dispatch it here, not in Wave 2. Input it needs: `ChangedFiles` plus `ReviewedCommits`. For `tree` strategy, skip entirely — there is no creation history to compare, and the files *are* the baseline.
 
 **Tree strategy Wave-1 note (load-bearing):** for `strategy: tree`, skip **only** `precedent-locator`. Still dispatch `integration-scanner`; still dispatch Dependencies and CVE / advisory when `ManifestChanged`; still dispatch `peer-comparator` when `len(PeerPairs) > 0`.
 
@@ -325,7 +330,9 @@ When in tree direct-read mode, adapt the Quality and Security prompts below by r
 **Precedents lens** (`precedent-locator`):
   ```
   Code review of {scope}. Changed files: {ChangedFiles}.
+  Reviewed commits (exclude all of these): {ReviewedCommits}.
   Find similar past changes touching these files or nearby. Per precedent: commit hash, blast radius, follow-up fixes within 30 days, one-sentence takeaway. Distil composite lessons.
+  Exclude every hash in ReviewedCommits: those commits are the subject of this review, not precedents.
   ```
 
 **CVE/advisory lens** (`web-search-researcher`, only when `ManifestChanged`):
@@ -425,6 +432,8 @@ No agent dispatch. Compute inline while 4a / 4b run:
 ### Step 5: Reconcile Findings
 
 **Barrier**: Step 5 MUST NOT begin until the Precedents agent has returned. Severity weighting depends on historical follow-up counts; starting reconciliation without them produces mis-weighted severities that the verification pass (Step 6) cannot correct. For `strategy: tree`, no Precedents agent was dispatched — the barrier is satisfied immediately.
+
+**Reviewed-scope precedent exclusion** (load-bearing): before the resolution integrity check, severity weighting, cascade reproduction, or artifact compilation, drop every returned precedent whose hash is in `ReviewedCommits`. Reviewed commits cannot appear in `## Precedents`, composite lessons, `resolved-by` annotations, cascade reproduction evidence, or severity weighting. If no independent precedents remain, treat Precedents as empty and apply the existing section-omission rule.
 
 **Resolution integrity check** (load-bearing): when Precedents returns a commit that claims to resolve or supersede a current finding, run `git merge-base --is-ancestor <precedent-hash> <TIP>` before accepting the resolution.
   - Ancestor: the precedent IS in the reviewed branch; mark the finding `resolved-by: <hash>` and demote its severity to 💭 (kept for context).
