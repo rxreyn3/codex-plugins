@@ -69,3 +69,44 @@ test("plugin packaging is valid and every skill is self-contained", () => {
     }
   }
 });
+
+test("every skill renders recommended actions as labels plus arguments-only fences", () => {
+  const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  for (const skillName of skillNames) {
+    const skill = read(join(skillsRoot, skillName, "SKILL.md"));
+    assert.match(skill, /^## Recommended action format$/m, skillName);
+    assert.match(skill, /Recommended next step: \*\*\{Action\}\*\*/, skillName);
+    assert.match(skill, /Never put `\$`, a skill identifier, or explanatory prose inside the arguments fence/, skillName);
+    assert.doesNotMatch(skill, /Next step[^\n]*\$rpivc-/i, skillName);
+  }
+
+  const expectedHandoffs = new Map([
+    [
+      "rpivc-discover",
+      "Recommended next step: **Research**\n\n```text\n.rpiv/artifacts/discover/<slug>_<topic>.md\n```",
+    ],
+    [
+      "rpivc-research",
+      "**Blueprint**\n\n```text\n.rpiv/artifacts/research/{filename}.md\n```",
+    ],
+    [
+      "rpivc-blueprint",
+      "Recommended next step: **Implement**\n\n```text\n.rpiv/artifacts/plans/{filename}.md Phase 1\n```",
+    ],
+    [
+      "rpivc-implement",
+      "Recommended next step: **Validate**\n\n```text\n.rpiv/artifacts/plans/{filename}.md\n```",
+    ],
+    [
+      "rpivc-revise",
+      "Recommended next step: **Implement**\n\n```text\n.rpiv/artifacts/plans/{filename}.md Phase {N}\n```",
+    ],
+  ]);
+
+  for (const [skillName, handoff] of expectedHandoffs) {
+    assert.ok(read(join(skillsRoot, skillName, "SKILL.md")).includes(handoff), skillName);
+  }
+});

@@ -58,6 +58,20 @@ Use one representation for human-facing repository evidence in both chat and the
 
 Normalize raw locator or analyzer `file:line` evidence at this parent boundary before presenting a question or writing the artifact. The raw role result remains evidence input, not the final rendering contract.
 
+## Recommended action format
+
+When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
+
+````markdown
+Recommended next step: **{Action}**
+
+```text
+{arguments only}
+```
+````
+
+Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. Put the reason after the fence. If an action takes no arguments, omit the fence. A recommendation is a handoff, never permission to invoke the stage automatically.
+
 ## Workflow
 
 Follow these steps in order. Never skip the developer-facing interview; it is the work, not decorative ceremony.
@@ -184,7 +198,7 @@ Write one new file with frontmatter `status: ready`. Create the parent artifact 
 
 Render this report as ordinary Markdown without a surrounding code fence:
 
-```text
+````markdown
 Intent captured to:
 [Feature Requirements Document](.rpiv/artifacts/discover/<slug>_<topic>.md)
 
@@ -194,12 +208,18 @@ The Feature Requirements Document's Decisions block is translated into research'
 
 ---
 
-Follow-up: discover writes a fresh document per call. Re-invoke `$rpivc-discover` to iterate; the prior document stays unchanged.
+Follow-up: Discover writes a fresh document per call. Start another Discover run to iterate; the prior document stays unchanged.
 
-Next step: `$rpivc-research .rpiv/artifacts/discover/<slug>_<topic>.md` — ground the intent in repository reality.
+Recommended next step: **Research**
+
+```text
+.rpiv/artifacts/discover/<slug>_<topic>.md
+```
+
+Ground the intent in repository reality.
 
 Tip: start a fresh task first; chained skills work best with a clean context window.
-```
+````
 
 The successor name is a handoff, not permission to invoke or port it. Stop after presenting the discovery artifact.
 

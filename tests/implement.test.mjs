@@ -45,10 +45,16 @@ test("implement hands off named phases before reserving validation for plan comp
   assert.match(completion, /single-phase mode completes and a later implementation phase remains/);
   assert.match(completion, /Phase \{N\} complete:/);
   assert.match(completion, /Implementation phases remaining: \{remaining phase names in declared order\}/);
-  assert.match(completion, /Next step: `\$rpivc-implement .* \{next phase\}`/);
+  assert.match(
+    completion,
+    /Recommended next step: \*\*Implement\*\*\n\n```text\n\.rpiv\/artifacts\/plans\/\{filename\}\.md \{next phase\}\n```/,
+  );
   assert.match(completion, /single-phase mode completes the final implementation phase/);
   assert.match(completion, /Implementation phases remaining: none/);
-  assert.match(completion, /Next step: `\$rpivc-validate /);
+  assert.match(
+    completion,
+    /Recommended next step: \*\*Validate\*\*\n\n```text\n\.rpiv\/artifacts\/plans\/\{filename\}\.md\n```/,
+  );
   assert.match(skill, /Do not use `Manual Verification`.*to decide whether implementation phases remain/);
   assert.match(skill, /Never invoke the next phase or validation automatically/);
 });
@@ -85,7 +91,10 @@ test("implement routes confirmed plan-owned failures directly to revise", () => 
   assert.match(planOwned, /unavailable or invalid verification command/);
   assert.match(planOwned, /Do not ask the generic mismatch question/);
   assert.match(planOwned, /Implementation paused at Phase \{N\}/);
-  assert.match(planOwned, /Next step: `\$rpivc-revise <plan-path>/);
+  assert.match(
+    planOwned,
+    /Recommended next step: \*\*Revise\*\*\n\n  ```text\n  <plan-path> "<specific plan correction grounded in the observed mismatch>"\n  ```/,
+  );
   assert.match(planOwned, /Do not invoke Revise automatically/);
   assert.doesNotMatch(planOwned, /What should I do about this mismatch\?/);
 });

@@ -57,6 +57,20 @@ Keep file evidence usable in both Zed and Codex without making plan artifacts ma
 
 Normalize role output into these formats before presenting checkpoints or writing the artifact. A role's raw citation is evidence input, not the final rendering contract.
 
+## Recommended action format
+
+When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
+
+````markdown
+Recommended next step: **{Action}**
+
+```text
+{arguments only}
+```
+````
+
+Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. Put the reason after the fence. If an action takes no arguments, omit the fence. A recommendation is a handoff, never permission to invoke the stage automatically.
+
 ## Workflow
 
 Follow every numbered step in order.
@@ -396,9 +410,13 @@ Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words
 
 After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path as a repository-relative Markdown link without a fragment, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 
+````markdown
+Recommended next step: **Implement**
+
 ```text
-Next step: $rpivc-implement .rpiv/artifacts/plans/{filename}.md Phase 1
+.rpiv/artifacts/plans/{filename}.md Phase 1
 ```
+````
 
 The successor name is a handoff, not permission to invoke or port it. If that skill is not installed yet, say so plainly.
 
@@ -412,7 +430,7 @@ For a surgical change to the plan produced in this task:
 4. return to Step 4 when a new ambiguity appears;
 5. re-run affected verification and review before restoring `status: ready`.
 
-Prefer the future `$rpivc-revise <plan-path>` handoff once that skill exists. Re-run `$rpivc-blueprint` only when the underlying research changed materially. Never start either stage automatically.
+Prefer a **Revise** handoff in the recommended-action format once that skill exists. Start a fresh **Blueprint** run only when the underlying research changed materially. Never start either stage automatically.
 
 ## Non-negotiable boundaries
 

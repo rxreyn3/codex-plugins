@@ -56,6 +56,20 @@ The first helper returns `<iso>\t<slug>` without a trailing newline. Retain the 
 
 Raw role output is evidence input. Verify and normalize it at the parent boundary before presenting it or writing it into the plan.
 
+## Recommended action format
+
+When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
+
+````markdown
+Recommended next step: **{Action}**
+
+```text
+{arguments only}
+```
+````
+
+Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. Put the reason after the fence. If an action takes no arguments, omit the fence. A recommendation is a handoff, never permission to invoke the stage automatically.
+
 ## Workflow
 
 Follow every numbered step in order.
@@ -89,7 +103,7 @@ $rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Address the 
 
 If no plan path was supplied, use the retained recent-plan listing:
 
-- **No entries:** report that `.rpiv/artifacts/plans/` has no plan to revise. Suggest the future `$rpivc-plan` stage if installed; otherwise note that `$rpivc-blueprint` can create a compatible phased plan. Stop.
+- **No entries:** report that `.rpiv/artifacts/plans/` has no plan to revise. Render `Recommended next step: **Plan**` if that future stage is installed; otherwise render `Recommended next step: **Blueprint**` and note that it can create a compatible phased plan. Neither action has concrete arguments here, so omit the fence. Stop.
 - **Exactly one entry:** ask `Revise this plan?` with `Revise <filename> (Recommended)` and `Pick a different path`.
 - **Two or more entries:** offer the four newest filenames and ask the developer to choose one.
 
@@ -225,7 +239,7 @@ After editing, re-read the complete plan and verify:
 
 Render the completion report as ordinary Markdown:
 
-```text
+````markdown
 Plan updated at:
 [Updated implementation plan](.rpiv/artifacts/plans/{filename}.md)
 
@@ -237,14 +251,20 @@ The revised plan now:
 - {key improvement}
 - {reopened work or metadata synchronization}
 
-Let me know if you want another surgical revision; each `$rpivc-revise` invocation appends a timestamped Follow-up section.
+Let me know if you want another surgical revision; each Revise invocation appends a timestamped Follow-up section.
 
 ---
 
-Next step: `$rpivc-implement .rpiv/artifacts/plans/{filename}.md Phase {N}` — resume at the affected phase. Omit `Phase {N}` only when all phases should run sequentially.
+Recommended next step: **Implement**
+
+```text
+.rpiv/artifacts/plans/{filename}.md Phase {N}
+```
+
+Resume at the affected phase. Omit `Phase {N}` only when all phases should run sequentially.
 
 Tip: start a fresh task first; chained skills work best with a clean context window.
-```
+````
 
 If no single affected phase can be named, use the full-plan handoff without a phase argument. The successor name is a handoff, not permission to invoke it. Stop after the report.
 

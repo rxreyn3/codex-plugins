@@ -49,6 +49,20 @@ Keep file evidence usable in both Zed and Codex without making artifacts machine
 
 Normalize role output into these formats before presenting chat evidence or writing the artifact. A role's raw backticked citation is evidence input, not the final rendering contract.
 
+## Recommended action format
+
+When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
+
+````markdown
+Recommended next step: **{Action}**
+
+```text
+{arguments only}
+```
+````
+
+Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. Put the reason after the fence. If an action takes no arguments, omit the fence. A recommendation is a handoff, never permission to invoke the stage automatically.
+
 ## Workflow
 
 Follow every step in order. A checkpoint may span multiple turns; resume the current step after the developer answers instead of restarting the investigation.
@@ -223,7 +237,7 @@ Create the parent directory when necessary and write exactly one new artifact. D
 
 Render this report as ordinary Markdown without a surrounding code fence:
 
-```text
+````markdown
 Research document written to:
 {artifact path rendered with the chat file-reference rule}
 
@@ -233,14 +247,28 @@ Please review and let me know if you have follow-up questions.
 
 ---
 
-Follow-up: describe the question in chat to append a timestamped Follow-up Research section to this artifact. Re-run `$rpivc-research` for a fresh artifact.
+Follow-up: describe the question in chat to append a timestamped Follow-up Research section to this artifact. Start a fresh Research run for a separate artifact.
 
-Next step (choose one):
-- `$rpivc-design .rpiv/artifacts/research/{filename}.md` — iterative design with vertical-slice decomposition.
-- `$rpivc-blueprint .rpiv/artifacts/research/{filename}.md` — lightweight combined design and phased-plan path for smaller work.
+Recommended next steps (choose one):
+
+**Design**
+
+```text
+.rpiv/artifacts/research/{filename}.md
+```
+
+Use iterative design with vertical-slice decomposition.
+
+**Blueprint**
+
+```text
+.rpiv/artifacts/research/{filename}.md
+```
+
+Use the lightweight combined design and phased-plan path for smaller work.
 
 Tip: start a fresh task first; chained skills work best with a clean context window.
-```
+````
 
 These successor names are handoffs, not permission to invoke or port them. Stop after presenting the research artifact.
 
@@ -254,7 +282,7 @@ When the developer asks a follow-up about the artifact produced in the current t
 4. Verify new citations and append `## Follow-up Research {ISO 8601 timestamp}` with the new findings.
 5. Update only `last_updated`, `last_updated_by`, and `last_updated_note: "Added follow-up research for <brief description>"` in frontmatter.
 
-If the question changes the feature surface or research target materially, do not append. Tell the developer to run `$rpivc-research <new topic>` for a fresh artifact. Never invoke that fresh run automatically.
+If the question changes the feature surface or research target materially, do not append. Recommend a fresh **Research** run and render the new topic as an arguments-only `text` fence using the standard format above. Never invoke that fresh run automatically.
 
 ## Non-negotiable boundaries
 
