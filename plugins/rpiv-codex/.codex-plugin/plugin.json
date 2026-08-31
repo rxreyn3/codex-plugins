@@ -1,7 +1,7 @@
 {
   "name": "rpiv-codex",
-  "version": "0.1.0+codex.20260831071929",
-  "description": "Intent-first feature discovery, evidence-backed research, interactive vertical-slice planning, surgical plan revision, and plan-driven implementation for Codex.",
+  "version": "0.1.0+codex.20260831081035",
+  "description": "Intent-first feature discovery, research, planning, revision, implementation, and plan-based validation for Codex.",
   "author": {
     "name": "Ryan Reynolds"
   },
@@ -14,13 +14,14 @@
     "architecture",
     "planning",
     "revision",
-    "implementation"
+    "implementation",
+    "validation"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "RPIV Codex",
-    "shortDescription": "Feature discovery through implementation",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, and execute approved plans phase by phase.",
+    "shortDescription": "Feature discovery through validation",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, and validate the result against the plan.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
