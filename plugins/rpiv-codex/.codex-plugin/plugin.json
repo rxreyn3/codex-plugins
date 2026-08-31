@@ -1,7 +1,7 @@
 {
   "name": "rpiv-codex",
-  "version": "0.1.0+codex.20260831081035",
-  "description": "Intent-first feature discovery, research, planning, revision, implementation, and plan-based validation for Codex.",
+  "version": "0.1.0+codex.20260831122337",
+  "description": "Intent-first feature discovery, research, planning, revision, implementation, validation, and verified code review for Codex.",
   "author": {
     "name": "Ryan Reynolds"
   },
@@ -15,13 +15,14 @@
     "planning",
     "revision",
     "implementation",
-    "validation"
+    "validation",
+    "code-review"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "RPIV Codex",
-    "shortDescription": "Feature discovery through validation",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, and validate the result against the plan.",
+    "shortDescription": "Feature discovery through verified review",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, and review code through independent specialist passes.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -34,7 +35,8 @@
       "Use $rpivc-research to investigate a codebase area before design.",
       "Use $rpivc-blueprint to turn research into an implement-ready phased plan.",
       "Use $rpivc-revise to update an existing plan from review feedback or implementation discoveries.",
-      "Use $rpivc-implement to execute an approved plan one phase at a time or sequentially."
+      "Use $rpivc-implement to execute an approved plan one phase at a time or sequentially.",
+      "Use $rpivc-code-review to review a change set and write a verified review artifact."
     ]
   }
 }

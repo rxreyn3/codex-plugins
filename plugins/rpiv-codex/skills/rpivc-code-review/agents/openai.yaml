@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Code Review"
+  short_description: "Run a verified multi-lens code review"
+
+policy:
+  allow_implicit_invocation: false
