@@ -98,6 +98,21 @@ test("code review excludes reviewed commits from precedent evidence", () => {
   assert.match(reconciliation, /If no independent precedents remain, treat Precedents as empty/);
 });
 
+test("code review recommends Blueprint only when findings survive verification", () => {
+  const skill = read(skillPath);
+  const presentation = skill.slice(
+    skill.indexOf("### Step 8: Present Summary"),
+    skill.indexOf("### Step 9: Handle Follow-ups"),
+  );
+
+  assert.match(skill, /set `SurvivingFindings` to every reconciled finding that remains/);
+  assert.match(presentation, /If `SurvivingFindings` is non-empty/);
+  assert.match(presentation, /Recommended next step: \*\*Blueprint\*\*/);
+  assert.match(presentation, /If `SurvivingFindings` is empty/);
+  assert.match(presentation, /No action recommended; the review contains no surviving findings/);
+  assert.match(presentation, /Do not render `Recommended next step` or an arguments fence/);
+});
+
 test("code review preserves artifact structure and adapts human-facing links", () => {
   const skill = read(skillPath);
   const template = read(join(skillRoot, "templates/review.md"));

@@ -1,6 +1,6 @@
 ---
 name: rpivc-code-review
-description: Review pending changes, a commit, branch, range, folder, or file set through independent quality, security, dependency, precedent, interaction, and verification passes. Write one verified review artifact under .rpiv/artifacts/reviews/ and stop at a Blueprint handoff. Invoke explicitly with an optional scope.
+description: Review pending changes, a commit, branch, range, folder, or file set through independent quality, security, dependency, precedent, interaction, and verification passes. Write one verified review artifact under .rpiv/artifacts/reviews/ and stop after presentation, with a Blueprint handoff only when findings survive verification. Invoke explicitly with an optional scope.
 ---
 
 # RPIV Code Review for Codex
@@ -12,7 +12,7 @@ This port preserves the `code-review` workflow from RPIV-Pi commit `7bf83f7a15c6
 ```text
 scope -> discovery and precedents -> independent quality/security lenses
       -> interaction and gap analysis -> reconciliation -> claim verification
-      -> one review artifact -> Blueprint handoff
+      -> one review artifact -> conditional Blueprint handoff
 ```
 
 Code Review writes only its review artifact. It never edits reviewed source, invokes a successor, commits, pushes, publishes, or starts another stage.
@@ -503,7 +503,7 @@ Before writing the artifact, read [Claim Verifier](references/claim-verifier.md)
 - **Verified** findings — carry through unchanged to Step 7.
 - **Edge case**: if a 🔴 Cross-Finding Interaction bullet relies on constituents that are now Falsified or Weakened, re-evaluate the interaction. Drop the interaction if it no longer stands on ≥2 Verified constituents from different files.
 
-**Gate**: after verification, set `blockers_count` = remaining 🔴 + 🟡 findings and `status: ready` in the artifact frontmatter. Emit no verdict — the review reports the count, nothing more.
+**Gate**: after verification, set `SurvivingFindings` to every reconciled finding that remains after the scope pre-filter and verifier tags are applied (Verified findings plus demoted Weakened findings; Falsified findings are absent). Set `blockers_count` = remaining 🔴 + 🟡 findings and `status: ready` in the artifact frontmatter. Emit no verdict — the review reports the count, nothing more.
 
 **Do not skip this step** — it is the only mechanism that stops confident-but-unread lens assertions from reaching the artifact.
 
@@ -560,7 +560,9 @@ Ask follow-ups, or chain forward.
 Follow-up: describe the question in chat to append a timestamped Follow-up section. Retired IDs stay retired; re-run `$rpivc-code-review` for a fresh review.
 ```
 
-Then render this concrete handoff and stop:
+Then choose exactly one terminal branch from `SurvivingFindings` and stop:
+
+- If `SurvivingFindings` is non-empty, render this concrete handoff:
 
 Recommended next step: **Blueprint**
 
@@ -568,14 +570,20 @@ Recommended next step: **Blueprint**
 .rpiv/artifacts/reviews/{filename}.md "Address the verified review findings"
 ```
 
-Blueprint is the Codex carrier for the source Design handoff. This successor name is a handoff, not permission to invoke it automatically.
+  Blueprint is the Codex carrier for the source Design handoff. This successor name is a handoff, not permission to invoke it automatically.
+
+- If `SurvivingFindings` is empty, render:
+
+  `No action recommended; the review contains no surviving findings.`
+
+  Do not render `Recommended next step` or an arguments fence. There is nothing for Blueprint to plan.
 
 ### Step 9: Handle Follow-ups
 
 - **Append, never rewrite.** Edit the artifact to add a `## Follow-up {ISO 8601 timestamp}` section. The section heading's timestamp is the append-time record — no frontmatter update needed.
 - **Re-dispatch narrowly.** Read [Codebase Analyzer](references/codebase-analyzer.md) and dispatch one targeted collaboration agent on the area in question.
 - **Retired IDs stay retired.** Findings dropped at Step 6 (Falsified) do not re-enter follow-ups; new findings introduce new IDs with the same lens-prefix scheme (next ordinal).
-- **When to re-invoke instead.** If the diff itself changed (new commits, scope shift, different branch), re-run `$rpivc-code-review` for a fresh review. The previous Blueprint handoff stays valid for the existing review.
+- **When to re-invoke instead.** If the diff itself changed (new commits, scope shift, different branch), re-run `$rpivc-code-review` for a fresh review. A previously emitted Blueprint handoff stays valid for the existing review.
 
 ## Important Notes
 
