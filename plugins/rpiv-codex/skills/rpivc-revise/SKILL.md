@@ -47,6 +47,12 @@ The first helper returns `<iso>\t<slug>` without a trailing newline. Retain the 
 
 Raw role output is evidence input. Verify and normalize it at the parent boundary before presenting it or writing it into the plan.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -84,7 +90,7 @@ If no plan path was supplied, use the retained recent-plan listing:
 - **Exactly one entry:** ask `Revise this plan?` with `Revise <filename> (Recommended)` and `Pick a different path`.
 - **Two or more entries:** offer the four newest filenames and ask the developer to choose one.
 
-Use native structured input when available. Keep its header at sixteen characters or fewer, put the recommended option first, and rely on the control's custom-response field instead of authoring `Other`. If structured input is unavailable or fails to display, ask the same concise question directly and stop.
+Use native structured input when available. Keep its header at sixteen characters or fewer, put the recommended option first, and rely on the control's custom-response field instead of authoring `Other`. If structured input is unavailable or fails to display, use the lettered prose choice format, permit another written answer, and stop.
 
 If a plan path exists but feedback is empty, ask what should change and stop. Give brief examples such as adding a migration phase, splitting a phase, tightening success criteria, or excluding a scope item.
 
@@ -165,7 +171,7 @@ When the proposal is actionable, ask `{short summary}. Proceed with these edits?
 - `Adjust approach` — change what will be edited before touching the file.
 - `Show me first` — present the exact patch or replacement text without applying it.
 
-Use native structured input when available. If unavailable or unsuccessful, present the same three choices directly and stop. Do not edit until the developer chooses Proceed. After `Show me first`, display the exact proposed text and repeat the approval gate; after `Adjust approach`, ask one focused question and revise the proposal.
+Use native structured input when available. If unavailable or unsuccessful, use the lettered prose choice format without a custom-answer suffix and stop. Do not edit until the developer chooses Proceed. After `Show me first`, display the exact proposed text and repeat the gate with fresh `A` through `C` letters; after `Adjust approach`, ask one focused open-ended question and revise the proposal.
 
 ### 4. Update the plan surgically
 

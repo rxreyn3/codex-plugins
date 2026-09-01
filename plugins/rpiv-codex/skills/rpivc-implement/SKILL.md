@@ -36,6 +36,12 @@ A checkpoint or mismatch may span multiple turns. Resume the current phase after
 - In the plan, preserve parser-consumed fields such as frontmatter `files:`, `#### N. path`, `**File**: path`, phase names, and reconciliation targets as plain repository-relative values. Do not convert them to links or write machine-specific absolute paths into the artifact.
 - Implement normally changes only verification checkboxes and, when required, a reconciliation directive in the current phase. It does not rewrite existing artifact citations.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -183,11 +189,11 @@ When structured input is unavailable, fails, or does not actually display an inp
 ```text
 What should I do about this mismatch?
 
-- Follow the plan — adapt the planned approach to the current code state while preserving its intended behavior.
-- Skip this change — omit this planned change, accepting that the phase may remain incomplete.
-- Revise the plan — stop implementation and show a Revise handoff in the recommended-action format before continuing.
+A. Follow the plan — adapt the planned approach to the current code state while preserving its intended behavior.
+B. Skip this change — omit this planned change, accepting that the phase may remain incomplete.
+C. Revise the plan — stop implementation and show a Revise handoff in the recommended-action format before continuing.
 
-Reply with one option.
+Reply with A, B, or C.
 ```
 
 A mismatch response is incomplete unless the developer receives either the successful structured-input surface or the direct question with all three options. Never refer to a "displayed prompt", dialog, panel, or input surface unless that surface was successfully created in the current response. After the answer, state the selected consequence plainly before continuing. If the developer selects `Revise the plan`, stop and render `Recommended next step: **Revise**` followed by an arguments-only `text` fence containing `<plan-path> "<specific feedback>"`.

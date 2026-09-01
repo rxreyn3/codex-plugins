@@ -45,6 +45,12 @@ The first helper returns `<iso>\t<slug>` with no trailing newline. Retain both f
 - **Structural fields:** preserve the report's `parent`, `blockers[].file`, commands, filenames, frontmatter values, and plan `files:` entries as plain repository-relative values. Do not convert them to Markdown links.
 - Raw command output is evidence input. Summarize verified outcomes; do not paste logs into the report.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When the report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -71,7 +77,7 @@ Follow every numbered step in order.
    - With no path and no recent plans, state that `.rpiv/artifacts/plans/` is empty, ask for a plan path in one concise question, and stop.
    - With exactly one recent plan, ask `Validate this plan?` with `Validate <filename> (Recommended)` and `Pick a different path`.
    - With two or more recent plans, offer the four newest filenames and ask the developer to choose one.
-3. Use native structured input when it is available. Put the recommended option first and rely on the control's custom-response field rather than authoring `Other`. If structured input is unavailable or fails to display, ask the same concise question directly and stop.
+3. Use native structured input when it is available. Put the recommended option first and rely on the control's custom-response field rather than authoring `Other`. If structured input is unavailable or fails to display, use the lettered prose choice format, permit another written answer, and stop.
 4. Read the resolved plan completely: frontmatter, every phase, every checked item, automated and manual verification, risks, history, and follow-ups.
 5. Record the expected files, phase behavior, success criteria, manual checks, and key functionality.
 6. If metadata says `in_repo: no`, skip `git log` and `git diff`. Validate from file inspection, plan commands, and the checklist, and include `Git history unavailable — validation based on file inspection only` in the report.

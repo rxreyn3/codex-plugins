@@ -101,6 +101,8 @@ test("research asks one developer question per response and emits relative Markd
   assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
   assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
   assert.match(skill, /never add a machine-specific absolute companion link/i);
+  assert.match(skill, /lettered prose choice format, permit another written answer/);
+  assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
 });
 
 test("research keeps the bounded workflow when agents or live code are unavailable", () => {

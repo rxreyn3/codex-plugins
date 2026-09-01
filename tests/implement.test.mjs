@@ -72,9 +72,15 @@ test("implement keeps mismatch handling inline and stops before successor stages
   assert.ok(fallbackEnd > fallbackStart);
   const fallback = skill.slice(fallbackStart, fallbackEnd);
   assert.match(fallback, /What should I do about this mismatch\?/);
-  for (const option of ["Follow the plan", "Skip this change", "Revise the plan"]) {
-    assert.ok(fallback.includes(option), `direct fallback missing ${option}`);
+  for (const [letter, option] of [
+    ["A", "Follow the plan"],
+    ["B", "Skip this change"],
+    ["C", "Revise the plan"],
+  ]) {
+    assert.ok(fallback.includes(`${letter}. ${option}`), `direct fallback missing ${letter}. ${option}`);
   }
+  assert.match(fallback, /Reply with A, B, or C\./);
+  assert.doesNotMatch(fallback, /or write another answer/);
   assert.match(fallback, /Never refer to a "displayed prompt"/);
   assert.match(skill, /Successor names are handoffs, not permission/);
   assert.match(skill, /Never invoke a successor skill, commit, push, publish/);

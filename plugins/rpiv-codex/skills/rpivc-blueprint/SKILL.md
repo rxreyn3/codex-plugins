@@ -57,6 +57,12 @@ Keep file evidence usable in both Zed and Codex without making plan artifacts ma
 
 Normalize role output into these formats before presenting checkpoints or writing the artifact. A role's raw citation is evidence input, not the final rendering contract.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -101,7 +107,7 @@ Use the retained recent listings:
 - If exactly one file exists across both listings, ask `Blueprint from this artifact?` with `Blueprint from [research|solutions] <filename> (Recommended)` and `Pick a different path`.
 - If two or more files exist, offer up to four newest entries across both lists, each visibly labeled `[research]` or `[solutions]`.
 
-Use native structured input when available. Otherwise ask the same concise question directly and stop. The custom-response field supplies unlisted choices; never author an `Other` option.
+Use native structured input when available. Otherwise use the lettered prose choice format, permit another written answer, and stop. The custom-response field supplies unlisted choices; never author an `Other` option.
 
 #### Free text or another input form
 
@@ -154,6 +160,8 @@ Pre-validate every option against current runtime behavior and inherited constra
 Prefix each visible decision question with `❓ Question:`. Every question must contain observed behavior, at least one current navigable file reference, why the choice matters, and two to four concrete options. Keep structured-input headers at sixteen characters or fewer.
 
 Ask exactly one developer question per response and stop for its answer. This applies to directional confirmations, genuine ambiguities, decomposition, slice approval, and review triage. Never batch multiple questions or multiple review findings into one structured-input call or prose response, even when they are independent.
+
+Use native structured input when available. For every finite prose fallback in this checkpoint, use the lettered prose choice format. Permit another written answer only for a checkpoint whose structured control already exposes a custom-response field.
 
 For every checkpoint in this workflow, render each option as both a short label and a plain-language description. The description must explain:
 
@@ -406,7 +414,7 @@ Do not auto-apply reviewer findings. Present counts for blockers, concerns, and 
 - `Defer` — leave the plan unchanged and record the developer's scope or follow-up reason as `deferred: {reason}`;
 - `Dismiss` — leave the plan unchanged and record why the finding does not apply as `dismissed: {reason}`.
 
-Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise ask the same grounded choice directly and stop. Every row must receive a resolution.
+Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise use the lettered prose choice format without a custom-answer suffix and stop. Every row must receive a resolution.
 
 After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path as a repository-relative Markdown link without a fragment, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 

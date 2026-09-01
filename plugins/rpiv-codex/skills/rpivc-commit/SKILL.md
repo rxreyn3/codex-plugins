@@ -40,6 +40,12 @@ The recent-subjects block may be empty in a repository with no commits.
 
 When presenting a commit plan, render each in-scope file as a repository-relative Markdown link, such as `[src/orders.ts](src/orders.ts)`. Keep Git commands and helper output as plain repository-relative paths. Never add a machine-specific absolute companion path.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 This is a terminal RPIV stage and emits no successor recommendation after a successful commit. If a stopped run must refer to another RPIV action, put the bold action name outside any code fence and put only pasteable arguments inside a `text` fence:
@@ -99,7 +105,7 @@ Then ask exactly: `{N} commit(s) with {M} files. Proceed?` with header `Commit` 
 - `Adjust` — change the grouping or commit messages.
 - `Review files` — show the full eligible diff before committing.
 
-Use native structured input when it is available. Keep the recommended option first and rely on the control's custom-response field rather than authoring an `Other` option. If structured input is unavailable or fails to display, present the same three choices directly and stop.
+Use native structured input when it is available. Keep the recommended option first and rely on the control's custom-response field rather than authoring an `Other` option. If structured input is unavailable or fails to display, use the lettered prose choice format, permit another written answer, and stop.
 
 Do not stage or commit anything until the developer chooses `Commit`. After `Review files`, show the requested diff and repeat the gate. After `Adjust`, ask one focused question, revise the plan, and repeat the gate.
 

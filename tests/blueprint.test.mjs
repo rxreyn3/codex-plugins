@@ -123,6 +123,11 @@ test("blueprint checkpoint options explain their consequences in plain language"
   assert.match(skill, /what existing ownership, behavior, or scope remains unchanged/);
   assert.match(skill, /material scope, cost, or trade-off/);
   assert.match(skill, /Do not present bare labels/);
+  assert.match(skill, /two to four finite authored options/);
+  assert.match(skill, /Offer both options with concrete consequences/);
+  assert.match(skill, /offer up to four newest entries/);
+  assert.match(skill, /lettered prose choice format, permit another written answer/);
+  assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
 });
 
 test("blueprint asks one question at a time and uses present-tense triage actions", () => {

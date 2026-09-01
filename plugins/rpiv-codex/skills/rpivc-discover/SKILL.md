@@ -58,6 +58,12 @@ Use one representation for human-facing repository evidence in both chat and the
 
 Normalize raw locator or analyzer `file:line` evidence at this parent boundary before presenting a question or writing the artifact. The raw role result remains evidence input, not the final rendering contract.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -141,7 +147,7 @@ Walk depth-first, parent before child. Ask one unresolved question, wait for its
 - **Shape** covers the architectural seam, pattern, or integration point. Name the tradeoff axis. Generate at least two real options. Every option must state what it optimizes and what it sacrifices or costs. Put the recommended option first with a one-line rationale. Cite every option that relies on existing code; otherwise label the options as conventions with `no codebase precedent`.
 - **Detail** covers acceptance criteria and routine child decisions. It may be batched only when sibling answers are independent.
 
-For every non-intent question, use structured user input when available, put the recommended authored option first, and label it `(Recommended)`. Do not author an `Other` option when the control already supplies a custom-response field. When structured input is unavailable, ask the same concise question directly and stop for the answer.
+For every non-intent question, use structured user input when available, put the recommended authored option first, and label it `(Recommended)`. Do not author an `Other` option when the control already supplies a custom-response field. When structured input is unavailable, use the lettered prose choice format, permit another written answer, and stop for the answer.
 
 If the probe finds an existing feature that might replace the requested work, do not silently rescope. Ask an intent question with citations and offer both “use what exists” and “build as requested.”
 

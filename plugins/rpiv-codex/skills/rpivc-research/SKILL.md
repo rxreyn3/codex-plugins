@@ -49,6 +49,12 @@ Keep file evidence usable in both Zed and Codex without making artifacts machine
 
 Normalize role output into these formats before presenting chat evidence or writing the artifact. A role's raw backticked citation is evidence input, not the final rendering contract.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -171,7 +177,7 @@ Ask only when the reports expose a material pattern conflict, scope boundary, pr
 
 Prefix the visible question with `❓ Question:`. Ask exactly one developer question per response and stop for its answer. This applies even when questions are independent: never batch multiple questions into one structured-input call or one prose response.
 
-Use native structured input when available. Put the recommended evidence-based option first and rely on the control's custom-response field rather than authoring `Other`. If structured input is unavailable, ask the same concise question directly and stop for the answer.
+Use native structured input when available. Put the recommended evidence-based option first and rely on the control's custom-response field rather than authoring `Other`. If structured input is unavailable, use the lettered prose choice format, permit another written answer, and stop for the answer.
 
 Never ask the developer to validate the research with “does this look correct?” and never ask a preference question that lacks evidence appropriate to the active mode. The checkpoint must pull new information from the developer.
 
@@ -192,7 +198,7 @@ Precedents — {count and top lesson, or git history unavailable}
 Inconsistencies: {count and short names}
 ```
 
-Then ask one gated question: `Scan complete — write the doc, or adjust first?` Offer `Write the doc (Recommended)`, `Add an area`, and `Correct a finding`. Wait for the answer.
+Then ask one gated question: `Scan complete — write the doc, or adjust first?` Offer `Write the doc (Recommended)`, `Add an area`, and `Correct a finding`. Use native structured input when available; otherwise use the lettered prose choice format without a custom-answer suffix. Wait for the answer.
 
 Classify the response:
 

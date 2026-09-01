@@ -76,6 +76,25 @@ test("plugin packaging is valid and every skill is self-contained", () => {
   }
 });
 
+test("every skill uses the self-contained lettered prose choice contract", () => {
+  const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  for (const skillName of skillNames) {
+    const skill = read(join(skillsRoot, skillName, "SKILL.md"));
+    assert.match(skill, /^## Choice response format$/m, skillName);
+    assert.match(skill, /prefer native structured input without letter prefixes/, skillName);
+    assert.match(skill, /render the same options in prose as `A\.` through `D\.`/, skillName);
+    assert.match(skill, /Preserve the recommended option first so it becomes `A`/, skillName);
+    assert.match(skill, /write `Reply with A, B, \.\.\.` using only the letters actually shown/, skillName);
+    assert.match(skill, /Add `, or write another answer` only when .* permits a custom response/, skillName);
+    assert.match(skill, /Accept an uppercase or lowercase letter, the full option label/, skillName);
+    assert.match(skill, /Reset the letters for every new question/, skillName);
+    assert.match(skill, /Do not letter open-ended requests/, skillName);
+  }
+});
+
 test("every skill renders recommended actions as labels plus arguments-only fences", () => {
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())

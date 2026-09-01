@@ -40,6 +40,12 @@ The first helper returns `<iso>\t<slug>` with no trailing newline. Retain both f
 - **Structural fields:** keep frontmatter values, filenames, finding identifiers, commit hashes, `scope`, and other parser-consumed values plain. Do not convert them to Markdown links.
 - Raw specialist output is evidence input. Normalize its `file:line` citations at the parent boundary before presenting or writing them.
 
+## Choice response format
+
+When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+
 ## Recommended action format
 
 When the review recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -82,7 +88,7 @@ Beyond the required bundled Diff Auditor role prompt, every Wave-2 task payload 
 
 ### Step 1: Resolve Scope and Assemble the Diff
 
-1. **Resolve scope via the bundled helper.** Determine the scope spec from the invocation text. If empty, use the literal string `auto`. If ambiguous (prose, mixed list, unrecognised branch name), ask exactly one scope question. Prefer native structured input with: (A) `Current branch (Recommended)` → `auto`, (B) `Every tracked change` → `modified`, and (C) `Unstaged only` → `working`; rely on the control's free-text response for a restated scope. If structured input is unavailable or fails to display, ask the same question and list those three choices directly, then stop. After one scope is selected, run:
+1. **Resolve scope via the bundled helper.** Determine the scope spec from the invocation text. If empty, use the literal string `auto`. If ambiguous (prose, mixed list, unrecognised branch name), ask exactly one scope question. Prefer native structured input with `Current branch (Recommended)` → `auto`, `Every tracked change` → `modified`, and `Unstaged only` → `working`; do not add letter prefixes to the structured control, and rely on its free-text response for a restated scope. If structured input is unavailable or fails to display, use the lettered prose choice format, permit another written answer, and stop. After one scope is selected, run:
 
    ```bash
    node <code-review-skill-root>/scripts/review-range.mjs "<scope-spec>"
