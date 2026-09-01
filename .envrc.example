@@ -1,0 +1,5 @@
+# Optional: pin GitHub CLI operations in this repository to one account.
+# Copy this file to .envrc, replace USERNAME, then review it before running
+# `direnv allow`. The token remains in the GitHub CLI keyring.
+export GH_HOST=github.com
+export GH_TOKEN="$(gh auth token --hostname github.com --user USERNAME)"
