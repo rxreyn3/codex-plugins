@@ -128,6 +128,12 @@ test("blueprint checkpoint options explain their consequences in plain language"
   assert.match(skill, /offer up to four newest entries/);
   assert.match(skill, /lettered prose choice format, permit another written answer/);
   assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
+  assert.match(skill, /Never render a finite prose fallback as unlettered bullets/);
+  assert.match(skill, /A\. Follow \{pattern\}.*B\. Moving off \{pattern\}/);
+  assert.match(skill, /A\. Proceed \(Recommended\).*B\. Adjust decisions.*C\. Change scope/);
+  assert.match(skill, /A\. Approve \(Recommended\).*B\. Adjust slices.*C\. Change scope/);
+  assert.match(skill, /preserve that order as `A\.` through `D\.`/);
+  assert.match(skill, /A\. Apply.*B\. Defer.*C\. Dismiss/);
 });
 
 test("blueprint asks one question at a time and uses present-tense triage actions", () => {

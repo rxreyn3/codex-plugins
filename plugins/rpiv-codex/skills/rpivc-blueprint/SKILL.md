@@ -63,6 +63,8 @@ When a checkpoint offers two to four finite authored options, prefer native stru
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 
+Never render a finite prose fallback as unlettered bullets. Checkpoint-specific option bullets later in this skill describe option content, not the final prose format; convert them to `A.` through `D.` when structured input is unavailable.
+
 ## Recommended action format
 
 When a report recommends another RPIV stage, put the bold action name outside the code fence and put only the arguments the developer should paste after selecting that skill inside a `text` fence:
@@ -184,6 +186,8 @@ Offer both options with concrete consequences:
 - `Follow {pattern}` — explain which existing components keep their current responsibility and what narrow surface the plan adds or extends.
 - `Moving off {pattern}` — explain which responsibility or abstraction would be consolidated, replaced, or newly shared, and why that makes the plan materially larger or different.
 
+For the prose fallback, render those same options as `A. Follow {pattern}` and `B. Moving off {pattern}`, then write `Reply with A or B, or write another answer.` Do not emit the two options as unlettered bullets.
+
 Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity.
 
 #### Genuine ambiguities
@@ -209,7 +213,7 @@ Scope: {included} | Not building: {excluded}
 Files: {N} new, {M} modified
 ```
 
-Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Wait for explicit Proceed.
+Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. In the prose fallback, render them as `A. Proceed (Recommended)`, `B. Adjust decisions`, and `C. Change scope`, followed by `Reply with A, B, or C.` Wait for explicit Proceed.
 
 ### 5. Decompose the feature and create the skeleton
 
@@ -225,7 +229,7 @@ Slice 1: {name} — {end-to-end outcome}
   Depends on: nothing
 ```
 
-Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Wait for approval.
+Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. In the prose fallback, render them as `A. Approve (Recommended)`, `B. Adjust slices`, and `C. Change scope`, followed by `Reply with A, B, or C.` Wait for approval.
 
 Immediately after approval, create exactly one skeleton artifact at:
 
@@ -359,6 +363,8 @@ Ask `Slice N/M: {name} — {files}. Approve?` with:
 - `Rethink remaining slices` or, on the final slice, `Reopen earlier phase`;
 - `Revisit a decision`.
 
+For the prose fallback, preserve that order as `A.` through `D.` and write `Reply with A, B, C, or D, or write another answer.` Never emit the four options as unlettered bullets.
+
 On the final slice, prepend the verifier's Cross-slice result and state that approval automatically runs finalization and independent review, then pauses at triage.
 
 #### 6.4 Apply the response
@@ -415,6 +421,8 @@ Do not auto-apply reviewer findings. Present counts for blockers, concerns, and 
 - `Dismiss` — leave the plan unchanged and record why the finding does not apply as `dismissed: {reason}`.
 
 Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise use the lettered prose choice format without a custom-answer suffix and stop. Every row must receive a resolution.
+
+For the prose fallback, render `A. Apply`, `B. Defer`, and `C. Dismiss`, each with its existing consequence description, then write `Reply with A, B, or C.`
 
 After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path as a repository-relative Markdown link without a fragment, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 
