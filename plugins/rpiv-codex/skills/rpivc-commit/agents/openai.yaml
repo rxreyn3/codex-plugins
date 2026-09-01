@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Commit"
+  short_description: "Plan and create atomic local Git commits"
+
+policy:
+  allow_implicit_invocation: false

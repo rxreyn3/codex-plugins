@@ -1,7 +1,7 @@
 {
   "name": "rpiv-codex",
-  "version": "0.1.0+codex.20260831153216",
-  "description": "Intent-first feature discovery, research, planning, revision, implementation, validation, and verified code review for Codex.",
+  "version": "0.1.0+codex.20260901063128",
+  "description": "Intent-first feature discovery, research, planning, revision, implementation, validation, atomic local commits, and verified code review for Codex.",
   "author": {
     "name": "Ryan Reynolds"
   },
@@ -16,13 +16,14 @@
     "revision",
     "implementation",
     "validation",
+    "commit",
     "code-review"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "RPIV Codex",
     "shortDescription": "Feature discovery through verified review",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, and review code through independent specialist passes.",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, create approved atomic local commits, and review code through independent specialist passes.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -36,6 +37,7 @@
       "Use $rpivc-blueprint to turn research into an implement-ready phased plan.",
       "Use $rpivc-revise to update an existing plan from review feedback or implementation discoveries.",
       "Use $rpivc-implement to execute an approved plan one phase at a time or sequentially.",
+      "Use $rpivc-commit to group current changes into approved atomic local commits.",
       "Use $rpivc-code-review to review a change set and write a verified review artifact."
     ]
   }

@@ -1,0 +1,129 @@
+---
+name: rpivc-commit
+description: Create structured Git commits by analyzing staged and unstaged changes, grouping files logically, matching the repository's message style, and requiring developer approval before committing. Supports an optional message hint and --baseline path that fences off changes which predate the workflow run.
+---
+
+# RPIV Commit for Codex
+
+Create one or more atomic Git commits from the current repository changes.
+
+This port preserves the `commit` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
+
+```text
+dirty tree -> inspect scope and history -> propose atomic commits
+           -> developer approval -> stage explicit paths -> commit and report
+```
+
+The approval gate is mandatory. This stage creates local commits only; it never pushes, publishes, invokes another workflow stage, or stages a path that the run-start baseline marks as pre-existing.
+
+## Input
+
+Treat all text following `$rpivc-commit` as an optional commit-message hint plus an optional `--baseline <path>` flag. Peel the baseline flag and its value first. The remaining text, if any, is the message hint. With no hint, infer the message from conversation context, repository history, and the changes.
+
+The baseline file is a workflow run-start snapshot shaped as JSON with a `paths` array. Its listed paths were dirty before the workflow began and are out of scope for this commit. A checkpoint may span several turns; after the developer answers the commit-plan gate, resume execution rather than rebuilding a different plan.
+
+## Metadata
+
+Resolve this skill's root as the directory containing the loaded `SKILL.md`; never infer it from the caller's working directory. Before inspecting individual changes, run the bundled helper by absolute path from that root, followed by the recent subjects:
+
+```bash
+node <commit-skill-root>/scripts/git-changes.mjs [--baseline <path>]
+echo "---recent-subjects---"
+git log --pretty=%s -n 20 2>/dev/null || true
+```
+
+When `--baseline` was supplied, pass it to the helper on this first run and treat that output as authoritative. The helper emits:
+
+- `in_repo: yes|no`;
+- `---status---`, capped at 200 current in-scope paths;
+- an optional `---pre-existing (do NOT commit — dirty before this run)---` section;
+- `---diffstat---`, capped at 200 lines, with a safe no-HEAD fallback.
+
+The recent-subjects block may be empty in a repository with no commits.
+
+## File references
+
+When presenting a commit plan, render each in-scope file as a repository-relative Markdown link, such as `[src/orders.ts](src/orders.ts)`. Keep Git commands and helper output as plain repository-relative paths. Never add a machine-specific absolute companion path.
+
+## Recommended action format
+
+This is a terminal RPIV stage and emits no successor recommendation after a successful commit. If a stopped run must refer to another RPIV action, put the bold action name outside any code fence and put only pasteable arguments inside a `text` fence:
+
+````markdown
+Recommended next step: **{Action}**
+
+```text
+{arguments only}
+```
+````
+
+Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. A recommendation is a handoff, never permission to invoke another stage automatically.
+
+## Workflow
+
+Follow every numbered step in order.
+
+### 1. Check the repository and establish scope
+
+1. Run the metadata commands above.
+2. If the helper reports `in_repo: no`, tell the developer: `This directory is not a git repository. Run git init to initialize one.` Stop without changing anything.
+3. Treat only paths in `---status---` as eligible. Never stage a path from the pre-existing section, even if conversation context discusses it.
+4. If the status is truncated, say so and inspect the full status before proposing a plan. Preserve the baseline exclusion while resolving the omitted paths.
+5. If the working tree is clean, report that there is nothing to commit and stop.
+
+### 2. Understand the changes
+
+1. Use the conversation history when it explains what was built or changed. In a standalone invocation, infer intent from repository state and file inspection.
+2. For a path with a small diffstat of about five changed lines or fewer, use the filename and line counts when they make intent clear. Inspect `git diff <path>` only when the change is larger or its purpose is ambiguous.
+3. For an untracked directory, treat its contents as the change unless it contains many files. Do not read obvious files merely to prove that their names mean what they say.
+4. Determine whether the paths form one logical change or several atomic groups.
+5. Check the eligible changes for suspected application programming interface keys, credentials, tokens, private keys, or other sensitive values. If a suspected secret would be committed, identify the affected path and stop before staging.
+
+### 3. Plan the commit or commits
+
+For each logical group:
+
+1. list the exact eligible files that belong together;
+2. draft a clear imperative subject focused on why the change exists;
+3. match the style of `---recent-subjects---`, including any established prefix, casing, and approximate length budget;
+4. when recent subjects are empty or inconsistent, use imperative sentence case with no prefix;
+5. use the optional message hint as intent, while still checking that it accurately describes the files.
+
+Split unrelated features, fixes, refactors, or documentation changes into separate commits. Group by file path; do not pretend a path-only staging plan can split independent hunks in the same file.
+
+### 4. Present and gate the plan
+
+Present every planned commit in order with:
+
+- its proposed subject;
+- its exact file links;
+- any pre-existing baseline paths that will remain untouched.
+
+Then ask exactly: `{N} commit(s) with {M} files. Proceed?` with header `Commit` and these choices:
+
+- `Commit (Recommended)` — create the commits exactly as planned.
+- `Adjust` — change the grouping or commit messages.
+- `Review files` — show the full eligible diff before committing.
+
+Use native structured input when it is available. Keep the recommended option first and rely on the control's custom-response field rather than authoring an `Other` option. If structured input is unavailable or fails to display, present the same three choices directly and stop.
+
+Do not stage or commit anything until the developer chooses `Commit`. After `Review files`, show the requested diff and repeat the gate. After `Adjust`, ask one focused question, revise the plan, and repeat the gate.
+
+### 5. Execute the approved plan
+
+For each approved commit, in order:
+
+1. run `git add -- <path>...` with the exact files in that commit;
+2. never use `git add -A`, `git add .`, or another broad staging command;
+3. verify the staged paths match that commit and contain no pre-existing baseline path;
+4. create the commit with the approved subject and no co-author or tool attribution;
+5. if staging or committing fails, report the exact failure and stop rather than broadening the command or bypassing repository hooks.
+
+After all approved commits succeed, run `git log --oneline -n <N>` where `<N>` is the number of commits just created. Report those commits and any intentionally uncommitted baseline paths. Stop without pushing or starting another stage.
+
+## Invariants
+
+- Commits are authored solely by the developer. Never add `Co-Authored-By`, tool attribution, or generated-by text.
+- Stage only explicit paths from the authoritative in-scope status.
+- Preserve the approved grouping and subjects; any change requires a new approval gate.
+- Never push, publish, or invoke another workflow stage.
