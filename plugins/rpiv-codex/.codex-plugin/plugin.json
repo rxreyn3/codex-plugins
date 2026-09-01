@@ -1,6 +1,6 @@
 {
   "name": "rpiv-codex",
-  "version": "0.1.0+codex.20260901065457",
+  "version": "0.2.0",
   "description": "Intent-first feature discovery, research, planning, revision, implementation, validation, atomic local commits, and verified code review for Codex.",
   "author": {
     "name": "Ryan Reynolds"

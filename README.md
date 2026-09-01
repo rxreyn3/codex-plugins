@@ -2,7 +2,38 @@
 
 RPIV Codex is an independent Codex port of the RPIV feature-development workflow. It provides Codex-native skills for discovery, research, planning, revision, implementation, validation, local commits, and code review.
 
-The plugin is under active development and currently targets local installation through its bundled Codex marketplace definition.
+The plugin is under active development and is distributed through the Git marketplace bundled in this repository. Codex fetches and caches it internally; users do not need to clone the repository.
+
+## Install
+
+Add the GitHub repository as a Codex marketplace, then install the plugin:
+
+```bash
+codex plugin marketplace add rxreyn3/rpiv-codex --ref main
+codex plugin add rpiv-codex@rpiv-codex
+```
+
+Start a fresh Codex task after installation so the new skills are loaded.
+
+## Update
+
+Refresh the Git marketplace snapshot, then reinstall the plugin:
+
+```bash
+codex plugin marketplace upgrade rpiv-codex
+codex plugin add rpiv-codex@rpiv-codex
+```
+
+Start a fresh Codex task after updating.
+
+## Remove
+
+Remove the installed plugin and its marketplace source:
+
+```bash
+codex plugin remove rpiv-codex@rpiv-codex
+codex plugin marketplace remove rpiv-codex
+```
 
 ## Skills
 

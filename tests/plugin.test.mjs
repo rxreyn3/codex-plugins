@@ -20,13 +20,15 @@ const walkFiles = (root) =>
 
 test("plugin packaging is valid and every skill is self-contained", () => {
   const marketplace = json(marketplacePath);
+  assert.equal(marketplace.name, "rpiv-codex");
+  assert.equal(marketplace.interface.displayName, "RPIV Codex");
   const entry = marketplace.plugins.find((plugin) => plugin.name === "rpiv-codex");
   assert.ok(entry);
   assert.equal(resolve(repositoryRoot, entry.source.path), pluginRoot);
 
   const manifest = json(manifestPath);
   assert.equal(manifest.name, "rpiv-codex");
-  assert.match(manifest.version, /^0\.1\.0\+codex\.[A-Za-z0-9.-]+$/);
+  assert.equal(manifest.version, "0.2.0");
   assert.equal(resolve(pluginRoot, manifest.skills), skillsRoot);
 
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })

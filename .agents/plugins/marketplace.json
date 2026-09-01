@@ -1,7 +1,7 @@
 {
-  "name": "rpiv-codex-local",
+  "name": "rpiv-codex",
   "interface": {
-    "displayName": "RPIV Codex Local"
+    "displayName": "RPIV Codex"
   },
   "plugins": [
     {
