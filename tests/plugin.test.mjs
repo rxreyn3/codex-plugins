@@ -28,7 +28,8 @@ test("plugin packaging is valid and every skill is self-contained", () => {
 
   const manifest = json(manifestPath);
   assert.equal(manifest.name, "rpiv-codex");
-  assert.equal(manifest.version, "0.2.0");
+  assert.match(manifest.version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/);
+  assert.doesNotMatch(manifest.version, /\+codex\./);
   assert.equal(resolve(pluginRoot, manifest.skills), skillsRoot);
 
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })

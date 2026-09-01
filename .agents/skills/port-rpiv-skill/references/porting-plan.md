@@ -53,7 +53,7 @@ The allowed change cone is:
 2. dependency files the target executes or instructs the model to read;
 3. shared plugin infrastructure required to package or run those files;
 4. tests and concise provenance documentation for this target;
-5. local marketplace metadata and the plugin version needed to install this candidate.
+5. tests and development-install mechanics needed to install this candidate without changing the tracked public version.
 
 Do not port predecessor or successor skills merely because the source names them. Preserve their names, artifact links, and handoff text so they can be ported later.
 
@@ -202,7 +202,7 @@ Before committing:
 - show the exact files to be committed;
 - confirm tests pass;
 - confirm no unrelated changes are staged;
-- confirm the plugin version and marketplace entry identify this candidate.
+- confirm the tracked public plugin version is unchanged and the development installer will identify this candidate with an ignored cache-busted copy.
 
 Create one candidate commit with the subject:
 
@@ -212,10 +212,10 @@ Port <source-name> from RPIV-Pi
 
 Do not amend an accepted prior skill's commit. If installed testing exposes a defect, make a focused repair commit for the same skill.
 
-After the commit, use the `plugin-creator` skill's current local development installation flow. Install or refresh from the repository's local marketplace. Do not publish or push. Record:
+After the commit, run `scripts/install-dev.sh`. It builds an ignored development marketplace copy, applies the cache-buster only to that copy, installs it, and byte-verifies the installed cache. Do not change the tracked public manifest version for a candidate, and do not publish or push. Record:
 
 - candidate commit;
-- plugin manifest version;
+- development-copy plugin version;
 - installed cache path or installation identifier;
 - validation commands and outcomes;
 - exact fresh-task test prompts.
@@ -257,7 +257,7 @@ End every porting task with:
 - named skill and source pin;
 - dependency closure actually ported;
 - Codex substitutions and any known differences;
-- candidate commit and plugin version;
+- candidate commit and development-copy plugin version;
 - source-tree validation results;
 - installed-plugin status;
 - fresh-task test card or accepted test evidence;

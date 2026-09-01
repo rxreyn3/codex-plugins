@@ -48,6 +48,13 @@ codex plugin marketplace remove rpiv-codex
 
 Each stage preserves an explicit stop boundary. Recommended successor stages are handoffs for a fresh Codex task, not permission to continue automatically.
 
+## Maintainer workflow
+
+New skills are developed and accepted one at a time using an ignored, cache-busted local marketplace copy. Public releases use clean semantic versions and treat pushes to `main` as the publication boundary.
+
+- [Development workflow](docs/DEVELOPMENT.md)
+- [Release workflow](docs/RELEASING.md)
+
 ## Origin and attribution
 
 RPIV Codex is a port and adaptation of [`@juicesharp/rpiv-pi`](https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-pi), created by [Sergii Guslystyi (`juicesharp`)](https://github.com/juicesharp).
