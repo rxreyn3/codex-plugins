@@ -1,6 +1,6 @@
 ---
 name: rpivc-commit
-description: Create structured Git commits by analyzing staged and unstaged changes, grouping files logically, matching the repository's message style, and requiring developer approval before committing. Supports an optional message hint and --baseline path that fences off changes which predate the workflow run.
+description: Create structured Git commits by analyzing staged and unstaged changes, grouping files logically, matching the repository's message style, and requiring developer approval before committing. Supports an optional commit-message hint.
 ---
 
 # RPIV Commit for Codex
@@ -14,29 +14,24 @@ dirty tree -> inspect scope and history -> propose atomic commits
            -> developer approval -> stage explicit paths -> commit and report
 ```
 
-The approval gate is mandatory. This stage creates local commits only; it never pushes, publishes, invokes another workflow stage, or stages a path that the run-start baseline marks as pre-existing.
+The approval gate is mandatory. This stage creates local commits only; it never pushes, publishes, or invokes another workflow stage.
 
 ## Input
 
-Treat all text following `$rpivc-commit` as an optional commit-message hint plus an optional `--baseline <path>` flag. Peel the baseline flag and its value first. The remaining text, if any, is the message hint. With no hint, infer the message from conversation context, repository history, and the changes.
-
-The baseline file is a workflow run-start snapshot shaped as JSON with a `paths` array. Its listed paths were dirty before the workflow began and are out of scope for this commit. A checkpoint may span several turns; after the developer answers the commit-plan gate, resume execution rather than rebuilding a different plan.
+Treat all text following `$rpivc-commit` as an optional commit-message hint. With no hint, infer the message from conversation context, repository history, and the changes. A checkpoint may span several turns; after the developer answers the commit-plan gate, resume execution rather than rebuilding a different plan.
 
 ## Metadata
 
 Resolve this skill's root as the directory containing the loaded `SKILL.md`; never infer it from the caller's working directory. Before inspecting individual changes, run the bundled helper by absolute path from that root, followed by the recent subjects:
 
 ```bash
-node <commit-skill-root>/scripts/git-changes.mjs [--baseline <path>]
+node <commit-skill-root>/scripts/git-changes.mjs
 echo "---recent-subjects---"
 git log --pretty=%s -n 20 2>/dev/null || true
 ```
 
-When `--baseline` was supplied, pass it to the helper on this first run and treat that output as authoritative. The helper emits:
-
 - `in_repo: yes|no`;
-- `---status---`, capped at 200 current in-scope paths;
-- an optional `---pre-existing (do NOT commit — dirty before this run)---` section;
+- `---status---`, capped at 200 current paths;
 - `---diffstat---`, capped at 200 lines, with a safe no-HEAD fallback.
 
 The recent-subjects block may be empty in a repository with no commits.
@@ -67,8 +62,8 @@ Follow every numbered step in order.
 
 1. Run the metadata commands above.
 2. If the helper reports `in_repo: no`, tell the developer: `This directory is not a git repository. Run git init to initialize one.` Stop without changing anything.
-3. Treat only paths in `---status---` as eligible. Never stage a path from the pre-existing section, even if conversation context discusses it.
-4. If the status is truncated, say so and inspect the full status before proposing a plan. Preserve the baseline exclusion while resolving the omitted paths.
+3. Treat only paths in `---status---` as eligible.
+4. If the status is truncated, say so and inspect the full status before proposing a plan.
 5. If the working tree is clean, report that there is nothing to commit and stop.
 
 ### 2. Understand the changes
@@ -96,8 +91,7 @@ Split unrelated features, fixes, refactors, or documentation changes into separa
 Present every planned commit in order with:
 
 - its proposed subject;
-- its exact file links;
-- any pre-existing baseline paths that will remain untouched.
+- its exact file links.
 
 Then ask exactly: `{N} commit(s) with {M} files. Proceed?` with header `Commit` and these choices:
 
@@ -115,11 +109,11 @@ For each approved commit, in order:
 
 1. run `git add -- <path>...` with the exact files in that commit;
 2. never use `git add -A`, `git add .`, or another broad staging command;
-3. verify the staged paths match that commit and contain no pre-existing baseline path;
+3. verify the staged paths match that commit;
 4. create the commit with the approved subject and no co-author or tool attribution;
 5. if staging or committing fails, report the exact failure and stop rather than broadening the command or bypassing repository hooks.
 
-After all approved commits succeed, run `git log --oneline -n <N>` where `<N>` is the number of commits just created. Report those commits and any intentionally uncommitted baseline paths. Stop without pushing or starting another stage.
+After all approved commits succeed, run `git log --oneline -n <N>` where `<N>` is the number of commits just created. Report those commits and stop without pushing or starting another stage.
 
 ## Invariants
 

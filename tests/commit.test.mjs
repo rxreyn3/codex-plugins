@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -13,8 +13,8 @@ const gitChangesPath = join(skillRoot, "scripts/git-changes.mjs");
 
 const read = (path) => readFileSync(path, "utf8");
 const gitIn = (cwd, ...args) => execFileSync("git", args, { cwd, stdio: ["ignore", "pipe", "ignore"] });
-const run = (cwd, ...args) =>
-  execFileSync(process.execPath, [gitChangesPath, ...args], {
+const run = (cwd) =>
+  execFileSync(process.execPath, [gitChangesPath], {
     cwd,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "ignore"],
@@ -62,10 +62,9 @@ test("commit preserves the load-bearing workflow order and approval boundary", (
   assert.match(skill, /Never push, publish, or invoke another workflow stage/);
 });
 
-test("commit preserves the baseline fence and direct approval fallback", () => {
+test("commit is standalone and preserves the direct approval fallback", () => {
   const skill = read(skillPath);
-  assert.match(skill, /--baseline <path>/);
-  assert.match(skill, /Never stage a path from the pre-existing section/);
+  assert.match(skill, /optional commit-message hint/);
   assert.match(skill, /Commit \(Recommended\)/);
   assert.match(skill, /Adjust/);
   assert.match(skill, /Review files/);
@@ -127,26 +126,18 @@ test("git-changes caps status and diffstat at 200 lines", (t) => {
   assert.match(diffOutput.slice(diffOutput.indexOf("---diffstat---")), /more files truncated/);
 });
 
-test("git-changes fences baseline paths without changing standalone behavior", (t) => {
+test("git-changes exposes staged, unstaged, and untracked paths", (t) => {
   const directory = temporaryDirectory(t);
   initRepository(directory);
-  commitFile(directory, ".gitignore", "");
-  writeFileSync(join(directory, "blog.md"), "unrelated edit\n");
-  writeFileSync(join(directory, "src.ts"), "the run's own change\n");
-  mkdirSync(join(directory, ".rpiv/artifacts/goal"), { recursive: true });
-  writeFileSync(
-    join(directory, ".rpiv/artifacts/goal/baseline-t1.json"),
-    JSON.stringify({ paths: ["blog.md"] }),
-  );
+  commitFile(directory, "tracked.md", "before\n");
+  writeFileSync(join(directory, "tracked.md"), "after\n");
+  writeFileSync(join(directory, "staged.md"), "staged\n");
+  writeFileSync(join(directory, "untracked.md"), "untracked\n");
+  gitIn(directory, "add", "--", "staged.md");
 
-  const fenced = run(directory, "--baseline", ".rpiv/artifacts/goal/baseline-t1.json");
-  const statusBlock = fenced.slice(fenced.indexOf("---status---"), fenced.indexOf("---pre-existing"));
-  assert.match(statusBlock, /src\.ts/);
-  assert.doesNotMatch(statusBlock, /blog\.md/);
-  assert.match(fenced.slice(fenced.indexOf("---pre-existing")), /blog\.md/);
-
-  const standalone = run(directory);
-  assert.doesNotMatch(standalone, /---pre-existing/);
-  assert.match(standalone.slice(standalone.indexOf("---status---")), /blog\.md/);
-  assert.match(standalone.slice(standalone.indexOf("---status---")), /src\.ts/);
+  const output = run(directory);
+  const statusBlock = output.slice(output.indexOf("---status---"), output.indexOf("---diffstat---"));
+  assert.match(statusBlock, /^ M tracked\.md$/m);
+  assert.match(statusBlock, /^A  staged\.md$/m);
+  assert.match(statusBlock, /^\?\? untracked\.md$/m);
 });
