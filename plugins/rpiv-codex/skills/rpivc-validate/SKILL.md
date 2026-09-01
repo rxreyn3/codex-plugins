@@ -10,21 +10,15 @@ Validate one implementation plan against the delivered working tree and write on
 This port preserves the `validate` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
 
 ```text
-plan + optional run evidence -> inspect implementation -> run plan criteria
-                             -> adjudicate findings -> write pass/fail report
+plan -> inspect implementation -> run plan criteria
+     -> adjudicate findings -> write pass/fail report
 ```
 
 Validate does not edit product code or plans. Fixes belong to Implement and plan corrections belong to Revise. It does not commit, invoke a successor, push, publish, or start another stage.
 
 ## Input
 
-Treat all text following `$rpivc-validate` as an optional plan path, usually under `.rpiv/artifacts/plans/`, plus any of these optional flags:
-
-- `--goal <path>`: the developer's original brief captured at run start.
-- `--baseline <path>`: JSON containing `paths`, the paths already dirty before the run.
-- `--scope <path>`: scope-floor verdict JSON shaped as `{ verdict, findings: [{ detail, where }] }`.
-
-Peel the three named flags and their values first. What remains must be zero or one plan path. If more than one plan path remains, ask the developer which single plan to validate and stop. Do not silently validate only the first path.
+Treat all text following `$rpivc-validate` as zero or one plan path, usually under `.rpiv/artifacts/plans/`. If more than one plan path is supplied, ask the developer which single plan to validate and stop. Do not silently validate only the first path.
 
 A checkpoint may span several turns. After the developer answers a selection question, resume the current step rather than restarting or repeating completed inspection.
 
@@ -94,40 +88,15 @@ For every phase in plan order:
 2. Run every command from that phase's `#### Automated Verification:` section exactly as written, from the repository root. Do not substitute a preferred build tool or silently repair an invalid command.
 3. Record pass or fail and investigate the cause of each failure far enough to attribute it honestly.
 4. List every manual criterion as a concrete unchecked step for the developer; never claim an unperformed manual check passed.
-5. Inspect relevant error paths, validation boundaries, likely regressions, and maintainability without inventing requirements outside the plan or goal.
-
-#### Baseline-aware scope
-
-Only when `--baseline` was supplied:
-
-- Read its `paths` array. Subtract those pre-existing paths from the dirty set before judging criteria such as `only these files touched` or `no unrelated changes`.
-- List the subtracted paths under a short `Pre-existing working-tree changes (baseline)` note. They never force failure.
-- If the baseline is missing or unreadable, judge the whole tree and state that fallback explicitly.
+5. Inspect relevant error paths, validation boundaries, likely regressions, and maintainability without inventing requirements outside the plan.
 
 #### Attribute whole-plan failures
 
 Before a whole-plan command failure forces the verdict, attribute every failing finding to a file.
 
-- When every failing file is outside the run's delta—either listed in the baseline or byte-identical to the merge base—prove it per file with `git diff --quiet <base> -- <file>`. For an uncommitted implementation, `<base>` is `HEAD`.
+- When every failing file is byte-identical to the merge base, prove it per file with `git diff --quiet <base> -- <file>`. For an uncommitted implementation, `<base>` is `HEAD`.
 - Only with that proof, rule the criterion `not met, non-blocking`, report `pre-existing at base — criterion unachievable as written` under Potential Issues, and record the criterion itself as a plan deviation. That failure alone does not force `verdict: fail`.
 - Without per-file proof, or when any failing file is inside the run's delta, the command failure blocks normally.
-
-#### Adjudicate scope-floor evidence
-
-Only when `--scope` was supplied:
-
-1. Read the verdict JSON completely. A `pass` verdict or empty `findings` needs no finding ruling.
-2. Rule every finding:
-   - An explained generated file, lockfile, or baseline path is a non-blocking Potential Issue with the explanation.
-   - Demonstrable in-goal work owned and verified by a named phase is a non-blocking plan deviation because that phase's `files:` list is incomplete.
-   - An unexplained out-of-scope write is a scope violation and forces `verdict: fail`.
-3. Whatever the scope verdict says, inspect every `.rpiv/artifacts/verdicts/scope-quarantine__*.json` manifest. Rule every accumulated `moved` and `refused` entry.
-   - Moved scratch is a non-blocking note.
-   - A moved or refused load-bearing deliverable is a blocking plan deviation: name the quarantine path it can be restored from and force `verdict: fail` because the working tree lacks the file.
-
-#### Check goal conformance
-
-Only when `--goal` was supplied, read the goal file completely and verify every explicit ask and constraint. A goal requirement omitted from the plan remains a gap. Report the shortfall under Deviations from Plan using the goal's actual wording; do not infer unstated scope.
 
 #### Rule plan-authored risks
 
@@ -149,7 +118,7 @@ Read [Validation report template](references/validation-template.md) completely.
 - `topic`: `Validation of <plan topic>`;
 - `status`: always `ready`, written once.
 
-Set `verdict: pass` only when all checked phases match the code, every blocking automated command passes, there is no actionable deviation or potential issue, every risk ruling passes, and every scope or quarantine finding is explained. Set `verdict: fail` for any phase gap, blocking command failure, actionable deviation or issue, failing risk ruling, or unexplained/missing scope item.
+Set `verdict: pass` only when all checked phases match the code, every blocking automated command passes, there is no actionable deviation or potential issue, and every risk ruling passes. Set `verdict: fail` for any phase gap, blocking command failure, actionable deviation or issue, or failing risk ruling.
 
 When risks exist, add one frontmatter `risk_rulings` entry per risk. When a blocking command failure is not already represented by `pass: false`, add one frontmatter blocker per failing command:
 
@@ -186,13 +155,13 @@ Recommended next step: **Revise**
 <plan-path> "<specific plan correction grounded in the validation finding>"
 ```
 
-If the verdict passes, render `Recommended next step: **Commit**` with no arguments fence. If it fails, do not recommend Commit. Commit is an unported successor name in this candidate, not permission to invoke it or to perform a normal Git commit.
+If the verdict passes, render `Recommended next step: **Commit**` with no arguments fence. If it fails, do not recommend Commit.
 
 Always stop after the report and handoff. A successor name is never permission to invoke that stage automatically.
 
 ## Scratch and safety boundaries
 
 - Any scratch file created while running a plan command or risk procedure belongs under `.rpiv/tmp/` or outside the repository. Remove repository-located scratch when its command finishes.
-- Never create scratch elsewhere in the repository; the workflow scope floor counts untracked files.
-- Do not alter product code, tests, documentation, the plan, baseline, goal, scope verdict, or quarantine manifest during validation.
+- Never create scratch elsewhere in the repository; untracked scratch contaminates the working tree being validated.
+- Do not alter product code, tests, documentation, or the plan during validation.
 - Do not hide a failing criterion by changing its command, output, or evidence file.

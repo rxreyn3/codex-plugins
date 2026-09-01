@@ -60,14 +60,14 @@ test("revise preserves the load-bearing workflow order and edit gate", () => {
   assert.match(skill, /Never commit, invoke implementation/);
 });
 
-test("revise preserves workflow and manual input boundaries", () => {
+test("revise preserves standalone input boundaries", () => {
   const skill = read(skillPath);
-  assert.match(skill, /--plans <plan-path> --reviews <review-path>/);
-  assert.match(skill, /read every distinct review artifact completely/);
-  assert.match(skill, /require exactly one distinct plan path before editing/);
+  assert.match(skill, /Treat all text following `\$rpivc-revise` as `<plan-path> <feedback>`/);
+  assert.match(skill, /Feedback may cite one or more review artifacts/);
+  assert.match(skill, /Read every distinct cited review completely/);
   assert.match(skill, /updates implementation plans, not review artifacts/);
   assert.match(skill, /If a plan path exists but feedback is empty, ask what should change and stop/);
-  assert.match(skill, /manual feedback cites a review artifact[\s\S]*read that review completely/);
+  assert.match(skill, /feedback cites one or more review artifacts[\s\S]*read every distinct review completely/i);
   assert.match(skill, /No entries:[\s\S]*\.rpiv\/artifacts\/plans\//);
 });
 

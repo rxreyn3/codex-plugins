@@ -63,14 +63,11 @@ test("validate preserves the audit, verdict, report, and stop order", () => {
   assert.match(skill, /Always stop after the report and handoff/);
 });
 
-test("validate preserves baseline, scope, goal, risk, and blocker adjudication", () => {
+test("validate preserves standalone failure attribution, risk, and blocker adjudication", () => {
   const skill = read(skillPath);
-  assert.match(skill, /Subtract those pre-existing paths from the dirty set/);
+  assert.match(skill, /Treat all text following `\$rpivc-validate` as zero or one plan path/);
   assert.match(skill, /prove it per file with `git diff --quiet <base> -- <file>`/);
   assert.match(skill, /pre-existing at base — criterion unachievable as written/);
-  assert.match(skill, /inspect every `.rpiv\/artifacts\/verdicts\/scope-quarantine__\*\.json` manifest/);
-  assert.match(skill, /A moved or refused load-bearing deliverable is a blocking plan deviation/);
-  assert.match(skill, /Only when `--goal` was supplied, read the goal file completely/);
   assert.match(skill, /run the declared `procedure`; reading code alone is insufficient/);
   assert.match(skill, /Any `pass: false` forces `verdict: fail`/);
   assert.match(skill, /These are the remediation stage's only structured handles/);

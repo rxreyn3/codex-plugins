@@ -18,18 +18,9 @@ This stage edits only the selected plan artifact. It must not edit a review arti
 
 ## Input
 
-Treat all text following `$rpivc-revise` as one of two forms:
+Treat all text following `$rpivc-revise` as `<plan-path> <feedback>`, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
 
-1. **Workflow form:** `--plans <plan-path> --reviews <review-path>`. Flag order does not matter. Both flags may repeat when an upstream workflow contributes several artifacts.
-2. **Manual form:** `<plan-path> <feedback>`, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
-
-Recognize workflow form when either flag token appears. Otherwise use manual form.
-
-For repeated workflow flags:
-
-- collapse identical path values;
-- read every distinct review artifact completely and synthesize their findings into one feedback set;
-- require exactly one distinct plan path before editing; when several distinct plan paths are supplied, ask which single plan to revise and stop.
+Feedback may cite one or more review artifacts. Read every distinct cited review completely and synthesize its findings into the feedback set before proposing changes. Revise still edits exactly one plan.
 
 A checkpoint may span several turns. Resume the current step after the developer answers; do not restart input handling or repeat completed research.
 
@@ -76,20 +67,6 @@ Follow every numbered step in order.
 
 ### 1. Resolve the plan and feedback
 
-#### Workflow form
-
-When both `--plans` and `--reviews` are present:
-
-1. resolve one distinct plan path using the repeated-flag rule above;
-2. verify that every value points to its declared artifact kind;
-3. read every review artifact completely;
-4. synthesize all findings, recommendations, and unresolved conflicts as the feedback set;
-5. continue without a preliminary feedback question.
-
-If either required flag is missing, state which one is missing and stop for corrected input. Do not reinterpret a partial workflow invocation as manual form.
-
-#### Manual form
-
 Parse the first plan-looking token as the plan path and the remaining text as feedback.
 
 If the supplied positional path is under `.rpiv/artifacts/reviews/`, reply with this adapted guard and stop:
@@ -111,7 +88,7 @@ Use native structured input when available. Keep its header at sixteen character
 
 If a plan path exists but feedback is empty, ask what should change and stop. Give brief examples such as adding a migration phase, splitting a phase, tightening success criteria, or excluding a scope item.
 
-When manual feedback cites a review artifact as evidence, read that review completely before treating its findings as part of the feedback set.
+When feedback cites one or more review artifacts as evidence, read every distinct review completely before treating its findings as part of the feedback set.
 
 #### Read the artifact
 
@@ -271,7 +248,7 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 ## Non-negotiable boundaries
 
 - Update exactly one existing plan artifact per invocation.
-- Read the complete plan and every workflow review artifact before proposing edits.
+- Read the complete plan and every referenced review artifact before proposing edits.
 - Research only the new technical surface the feedback introduces.
 - Resolve every material question before editing.
 - Scan the complete plan for analogous occurrences of the same factual invariant before proposing edits; do not inherit an implementation phase's ownership boundary as the revision boundary.
