@@ -24,7 +24,7 @@
   "interface": {
     "displayName": "RPIV Codex",
     "shortDescription": "Feature discovery through verified review and handoff",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, create approved atomic local commits, and review code through independent specialist passes.",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, resume it against verified current state, create approved atomic local commits, and review code through independent specialist passes.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -40,6 +40,7 @@
       "Use $rpivc-implement to execute an approved plan one phase at a time or sequentially.",
       "Use $rpivc-commit to group current changes into approved atomic local commits.",
       "Use $rpivc-create-handoff to preserve in-flight work for a fresh task.",
+      "Use $rpivc-resume-handoff to verify a handoff against current state and continue its next task.",
       "Use $rpivc-code-review to review a change set and write a verified review artifact."
     ]
   }

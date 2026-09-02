@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Resume Handoff"
+  short_description: "Verify a handoff and continue safely"
+
+policy:
+  allow_implicit_invocation: false

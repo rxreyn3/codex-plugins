@@ -166,7 +166,7 @@ Recommended next step: **Resume Handoff**
 .rpiv/artifacts/handoffs/{timestamp}_{description}.md
 ```
 
-Start a fresh task first so it loads the handoff into a clean context. Resume Handoff must be installed separately; this skill does not invoke or port it.
+Start a fresh task first so it loads the handoff into a clean context. Resume Handoff is a separate skill; Create Handoff does not invoke it.
 ````
 
 The successor name is a handoff, not permission to invoke it. Stop after the report.
