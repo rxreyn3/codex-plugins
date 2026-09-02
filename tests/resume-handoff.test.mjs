@@ -94,6 +94,13 @@ test("resume-handoff verifies repository drift before continuing", () => {
   assert.match(skill, /verified current facts from handoff claims, inference, and unknowns/);
 });
 
+test("resume-handoff labels interpretations and preserves checkpoint-sized tasks", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /Use `Fact` only for claims directly established/);
+  assert.match(skill, /Label conclusions about what that evidence means as `Interpretation` or `Inference`/);
+  assert.match(skill, /create one task per unit rather than bundling the remainder into one task/);
+});
+
 test("resume-handoff adapts evidence links and preserves structural paths", () => {
   const skill = read(skillPath);
   assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);

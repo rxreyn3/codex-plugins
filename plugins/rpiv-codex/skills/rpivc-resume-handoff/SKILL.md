@@ -123,6 +123,8 @@ Verify the handoff against the live checkout:
 
 Never assume the handoff state still matches the repository merely because its commit is an ancestor of `HEAD`.
 
+Use `Fact` only for claims directly established by current repository evidence or a cited source. Label conclusions about what that evidence means as `Interpretation` or `Inference`, and desired future behavior as `Proposal`, even when those statements are well supported.
+
 Present:
 
 ```markdown
@@ -171,7 +173,8 @@ After Proceed:
 2. incorporate verified drift, newly discovered work, validation, and preserved approval gates;
 3. remove work already verified complete;
 4. prioritize by dependency and the handoff's settled decisions;
-5. use native plan tracking when available, otherwise keep the checklist in chat.
+5. split work at every preserved checkpoint; when the handoff requires repeated units to be handled one at a time, create one task per unit rather than bundling the remainder into one task;
+6. use native plan tracking when available, otherwise keep the checklist in chat.
 
 Present the full continuation plan and ask `Begin with {first task}?` using header `Next task` and these options:
 
