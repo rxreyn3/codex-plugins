@@ -44,6 +44,7 @@ test("plugin packaging is valid and every skill is self-contained", () => {
   assert.ok(skillNames.includes("rpivc-validate"));
   assert.ok(skillNames.includes("rpivc-code-review"));
   assert.ok(skillNames.includes("rpivc-commit"));
+  assert.ok(skillNames.includes("rpivc-create-handoff"));
 
   for (const skillName of skillNames) {
     const skillRoot = join(skillsRoot, skillName);
@@ -130,6 +131,10 @@ test("every skill renders recommended actions as labels plus arguments-only fenc
       "Recommended next step: **Implement**\n\n```text\n.rpiv/artifacts/plans/{filename}.md Phase {N}\n```",
     ],
     ["rpivc-validate", "Recommended next step: **Commit**"],
+    [
+      "rpivc-create-handoff",
+      "Recommended next step: **Resume Handoff**\n\n```text\n.rpiv/artifacts/handoffs/{timestamp}_{description}.md\n```",
+    ],
     [
       "rpivc-code-review",
       "Recommended next step: **Blueprint**\n\n```text\n.rpiv/artifacts/reviews/{filename}.md \"Address the verified review findings\"\n```",

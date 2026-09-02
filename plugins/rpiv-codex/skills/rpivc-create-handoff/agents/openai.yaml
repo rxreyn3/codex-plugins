@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Create Handoff"
+  short_description: "Capture work so a fresh task can resume"
+
+policy:
+  allow_implicit_invocation: false
