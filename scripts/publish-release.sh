@@ -3,27 +3,33 @@ set -euo pipefail
 
 usage() {
   printf '%s\n' \
-    'Usage: scripts/publish-release.sh X.Y.Z --yes' \
+    'Usage: scripts/publish-release.sh X.Y.Z --github-user USERNAME --yes' \
     '' \
     'Create an annotated tag, atomically push main and the tag, then create' \
-    'the GitHub release. Pushing main is the public plugin release boundary.'
+    'the GitHub release using USERNAME credentials already stored by gh.' \
+    'Pushing main is the public plugin release boundary.'
 }
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   usage
   exit 0
 fi
-if [[ "$#" -ne 2 || "$2" != "--yes" ]]; then
+if [[ "$#" -ne 4 || "$2" != "--github-user" || -z "$3" || "$4" != "--yes" ]]; then
   usage >&2
   exit 2
 fi
 
 version="$1"
+github_user="$3"
 repository_root="$(git rev-parse --show-toplevel)"
 cd "$repository_root"
 
 if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
   printf 'Expected a clean semantic version such as 0.3.0; build metadata is not allowed.\n' >&2
+  exit 2
+fi
+if [[ ! "$github_user" =~ ^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$ ]]; then
+  printf 'Invalid GitHub username: %s\n' "$github_user" >&2
   exit 2
 fi
 manifest_version="$(node -p 'require("./plugins/rpiv-codex/.codex-plugin/plugin.json").version')"
@@ -40,7 +46,31 @@ if [[ "$(git remote get-url origin)" != "https://github.com/rxreyn3/rpiv-codex.g
   exit 1
 fi
 
-git fetch origin main --tags
+if ! command -v gh >/dev/null 2>&1; then
+  printf 'GitHub CLI is required to select the publishing identity.\n' >&2
+  exit 1
+fi
+if ! github_token="$(gh auth token --hostname github.com --user "$github_user")"; then
+  printf 'No GitHub CLI credential is available for %s on github.com.\n' "$github_user" >&2
+  exit 1
+fi
+if ! authenticated_user="$(GH_TOKEN="$github_token" gh api user --jq .login)"; then
+  printf 'Could not verify the GitHub credential for %s.\n' "$github_user" >&2
+  exit 1
+fi
+if [[ "$authenticated_user" != "$github_user" ]]; then
+  printf 'The selected credential authenticates as %s, not %s.\n' "$authenticated_user" "$github_user" >&2
+  exit 1
+fi
+
+git_with_github_identity() {
+  GH_TOKEN="$github_token" git \
+    -c credential.helper= \
+    -c 'credential.helper=!gh auth git-credential' \
+    "$@"
+}
+
+git_with_github_identity fetch origin main --tags
 if ! git merge-base --is-ancestor origin/main HEAD; then
   printf 'origin/main is not an ancestor of the release commit.\n' >&2
   exit 1
@@ -63,15 +93,15 @@ scripts/test.sh
 scripts/validate-plugin.sh
 git tag -a "v$version" -m "RPIV Codex $version"
 
-if ! git push --atomic origin main "refs/tags/v$version"; then
+if ! git_with_github_identity push --atomic origin main "refs/tags/v$version"; then
   git tag -d "v$version" >/dev/null
   printf 'Atomic push failed; the local unpublished tag was removed.\n' >&2
   exit 1
 fi
 
-if ! gh release create "v$version" --title "RPIV Codex $version" --generate-notes; then
+if ! GH_TOKEN="$github_token" gh release create "v$version" --title "RPIV Codex $version" --generate-notes; then
   printf 'Main and v%s are public, but GitHub release creation failed. Retry with:\n' "$version" >&2
-  printf 'gh release create v%s --title "RPIV Codex %s" --generate-notes\n' "$version" "$version" >&2
+  printf 'GH_TOKEN="$(gh auth token --hostname github.com --user %s)" gh release create v%s --title "RPIV Codex %s" --generate-notes\n' "$github_user" "$version" "$version" >&2
   exit 1
 fi
 

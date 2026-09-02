@@ -70,4 +70,4 @@ printf 'Review the manifest diff, then commit it with:\n\n'
 printf 'git add plugins/rpiv-codex/.codex-plugin/plugin.json\n'
 printf 'git commit -m "Release RPIV Codex %s"\n\n' "$version"
 printf 'After reviewing that commit, publish explicitly with:\n\n'
-printf 'scripts/publish-release.sh %s --yes\n' "$version"
+printf 'scripts/publish-release.sh %s --github-user rxreyn3 --yes\n' "$version"

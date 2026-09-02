@@ -33,13 +33,15 @@ git commit -m "Release RPIV Codex 0.3.0"
 
 ## Publish
 
-Publishing is deliberately separate and requires the explicit `--yes` flag:
+Publishing is deliberately separate and requires both the intended GitHub account and the explicit `--yes` flag:
 
 ```bash
-scripts/publish-release.sh 0.3.0 --yes
+scripts/publish-release.sh 0.3.0 --github-user rxreyn3 --yes
 ```
 
-The script revalidates the release, creates an annotated tag, and atomically pushes `main` and the tag. It then creates the GitHub release. If GitHub release creation fails after the atomic push, do not rewind `main` or move the tag; retry the printed `gh release create` command.
+The script retrieves the selected account's existing credential from GitHub CLI, verifies the authenticated username, and uses that credential explicitly for Git and GitHub CLI operations. It does not change the globally active GitHub account or store a token in the repository. The selected account must already be authenticated with `gh auth login`.
+
+After revalidating the release, the script creates an annotated tag and atomically pushes `main` and the tag. It then creates the GitHub release. If GitHub release creation fails after the atomic push, do not rewind `main` or move the tag; retry the credential-scoped command printed by the script.
 
 ## Verify the remote release
 
