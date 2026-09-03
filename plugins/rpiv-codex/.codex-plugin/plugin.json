@@ -1,7 +1,7 @@
 {
   "name": "rpiv-codex",
   "version": "0.3.0",
-  "description": "Intent-first feature discovery, research, planning, revision, implementation, validation, handoffs, atomic local commits, and verified code review for Codex.",
+  "description": "Intent-first feature discovery, research, design, planning, revision, implementation, validation, handoffs, atomic local commits, and verified code review for Codex.",
   "author": {
     "name": "Ryan Reynolds"
   },
@@ -12,6 +12,7 @@
     "codebase",
     "research",
     "architecture",
+    "design",
     "planning",
     "revision",
     "implementation",
@@ -24,7 +25,7 @@
   "interface": {
     "displayName": "RPIV Codex",
     "shortDescription": "Feature discovery through verified review and handoff",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, shape complex work into reviewed vertical-slice plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, resume it against verified current state, create approved atomic local commits, and review code through independent specialist passes.",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, design complex features as resumable vertical slices, shape work into reviewed implementation plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, resume it against verified current state, create approved atomic local commits, and review code through independent specialist passes.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -35,6 +36,7 @@
     "defaultPrompt": [
       "Use $rpivc-discover to define a feature before implementation.",
       "Use $rpivc-research to investigate a codebase area before design.",
+      "Use $rpivc-design to turn ready research or compared solutions into a resumable architecture and vertical-slice design.",
       "Use $rpivc-blueprint to turn research into an implement-ready phased plan.",
       "Use $rpivc-revise to update an existing plan from review feedback or implementation discoveries.",
       "Use $rpivc-implement to execute an approved plan one phase at a time or sequentially.",

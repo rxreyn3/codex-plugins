@@ -2,7 +2,7 @@
 
 ![RPIV Codex workflow from Discover through Code Review, with Revise feeding back into Blueprint](docs/assets/rpiv-codex-workflow.png)
 
-RPIV Codex is an independent Codex port of the RPIV feature-development workflow. It provides Codex-native skills for discovery, research, planning, revision, implementation, validation, local commits, and code review.
+RPIV Codex is an independent Codex port of the RPIV feature-development workflow. It provides Codex-native skills for discovery, research, design, planning, revision, implementation, validation, local commits, and code review.
 
 The plugin is under active development and is distributed through the Git marketplace bundled in this repository. Codex fetches and caches it internally; users do not need to clone the repository.
 
@@ -41,6 +41,7 @@ codex plugin marketplace remove rpiv-codex
 
 - Discover
 - Research
+- Design
 - Blueprint
 - Revise
 - Implement

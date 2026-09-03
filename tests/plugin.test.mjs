@@ -39,6 +39,7 @@ test("plugin packaging is valid and every skill is self-contained", () => {
   assert.ok(skillNames.includes("rpivc-discover"));
   assert.ok(skillNames.includes("rpivc-research"));
   assert.ok(skillNames.includes("rpivc-blueprint"));
+  assert.ok(skillNames.includes("rpivc-design"));
   assert.ok(skillNames.includes("rpivc-revise"));
   assert.ok(skillNames.includes("rpivc-implement"));
   assert.ok(skillNames.includes("rpivc-validate"));
@@ -122,6 +123,10 @@ test("every skill renders recommended actions as labels plus arguments-only fenc
     [
       "rpivc-blueprint",
       "Recommended next step: **Implement**\n\n```text\n.rpiv/artifacts/plans/{filename}.md Phase 1\n```",
+    ],
+    [
+      "rpivc-design",
+      "Recommended next step: **Plan**\n\n```text\n.rpiv/artifacts/designs/{filename}.md\n```",
     ],
     [
       "rpivc-implement",
