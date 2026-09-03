@@ -42,6 +42,7 @@ codex plugin marketplace remove rpiv-codex
 - Discover
 - Research
 - Design
+- Plan
 - Blueprint
 - Revise
 - Implement

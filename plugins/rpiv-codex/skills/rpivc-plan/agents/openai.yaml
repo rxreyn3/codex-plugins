@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Plan"
+  short_description: "Transform a ready design into a reviewed phased plan"
+
+policy:
+  allow_implicit_invocation: false
