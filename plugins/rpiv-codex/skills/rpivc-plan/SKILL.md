@@ -200,6 +200,8 @@ _Independent post-finalization review. Findings are triaged in Step 5._
 
 Set source to `code` or `coverage`. Sort blocker, concern, suggestion; within each severity put code before coverage while preserving each role's emitted order. Leave resolution blank. If both roles return no findings, persist `_No findings — both reviewers cleared the artifact._`.
 
+Before merging coverage-reviewer rows, enforce the reviewer's ownership boundary. A row targeting purely operational guidance already actionable in its owning section—such as a tool prohibition, workflow policy, or reviewer instruction—is malformed reviewer output: exclude it from the findings table and counts rather than asking the developer to duplicate it into Success Criteria. Do not exclude product or runtime prohibitions such as a no-prefetch or no-retry constraint; those remain verification intents because implementation can violate them.
+
 If one reviewer fails after dispatch, persist the other's rows and append `_Step 4 {code|coverage} review failed: {one-line cause}._`. If both fail, persist both notes. Add `Step 4 {code|coverage} review unavailable; proceeded to developer review without {role} findings.` to Developer Context. Never invent a finding.
 
 Normalize any human-facing live-code location to the relative Markdown-link format before writing it. Keep `<n/a>` literal.

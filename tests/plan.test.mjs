@@ -121,6 +121,27 @@ test("plan requires parallel semantically isolated reviewers and persists failur
   assert.match(skill, /Never invent a finding/);
 });
 
+test("plan coverage review excludes operational guidance without suppressing runtime constraints", () => {
+  const skill = read(skillPath);
+  const reviewer = read(
+    join(skillRoot, "references/artifact-coverage-reviewer.md"),
+  );
+
+  assert.match(reviewer, /Classify each candidate entry by ownership/);
+  assert.match(reviewer, /operational-guidance/);
+  assert.match(
+    reviewer,
+    /Do not run frontend TypeScript type checking unless Ryan explicitly asks/,
+  );
+  assert.match(
+    reviewer,
+    /Do not prefetch or retry because each call persists linked backend records/,
+  );
+  assert.match(reviewer, /Do not use imperative grammar alone/);
+  assert.match(skill, /A row targeting purely operational guidance/);
+  assert.match(skill, /Do not exclude product or runtime prohibitions/);
+});
+
 test("plan preserves developer-owned one-at-a-time triage", () => {
   const skill = read(skillPath);
   assert.match(skill, /Do not auto-apply any finding/);
