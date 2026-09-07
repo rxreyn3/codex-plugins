@@ -17,6 +17,12 @@ input -> targeted research -> dimension sweep -> developer checkpoint
 
 The stage writes only its design artifact. It must not edit product source, invoke Plan or implementation, push, or publish.
 
+## Revision ownership
+
+The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. Its implementation plan owns execution progress, operational commands, and verification records; current source establishes what is implemented.
+
+For revisions to an existing design, use **Revise** with `<design-path> <feedback>`. Revise resolves the active linked plan and proposes both updates together. Do not edit a design alone once it has an active plan or ask the developer to synchronize two separate tasks. Start and Resume below remain the creation workflow.
+
 ## Input
 
 Treat all text following `$rpivc-design` as one of exactly two forms:
@@ -90,6 +96,7 @@ When the input contains `--resume`:
 
 1. Parse exactly one design artifact path after the flag. If it is missing, has extra arguments, is outside `.rpiv/artifacts/designs/`, is unreadable, or is not `status: in-progress`, report the specific error and stop.
 2. Read the design artifact completely. Extract Decisions, Architecture, Slices, Verification Notes, Developer Context, and Design History.
+   If its latest Follow-up records an unfinished Revise update or pending revision review, hand off to **Revise** with this design path and the unfinished revision description, then stop. Do not treat historic slice approvals as clearance to finalize a pending coordinated revision.
 3. Find the first Design History entry still marked `pending`. Treat every earlier `approved` entry and its persisted Architecture code and Success Criteria as locked. The artifact, not conversation memory or a task summary, is authoritative.
 4. Read the current source files for the pending slice completely, plus Architecture entries for files shared with locked predecessors.
 5. Skip Steps 2–5 and enter Step 6 at that pending slice. If no slice is pending, go directly to Step 7.
@@ -394,7 +401,7 @@ After every slice is approved:
 
 Report the artifact as a repository-relative Markdown link, the fixed-decision count, new and modified file counts, slice count, and generation revision count. State that Success Criteria were authored with each slice and independently verified before lock.
 
-Invite review of the architecture, code shape, missing integration points, and edge cases. Explain that a follow-up in the same task edits this artifact in place; materially stale research or changed scope requires a fresh Research and Design cycle.
+Invite review of the architecture, code shape, missing integration points, and edge cases. Explain that revisions use Revise to update this artifact and its active plan together. If evidence is materially stale, establish the missing research before proposing a revision; do not silently abandon the active plan or its progress.
 
 Then hand off and stop:
 
@@ -410,15 +417,13 @@ Plan consumes the ready design, preserves Slice-to-Phase boundaries one-to-one, 
 
 ### 9. Handle follow-ups
 
-For a surgical update to the design produced in this task:
+For a change to already approved design material, hand off one **Revise** invocation and stop:
 
-1. edit the artifact in place;
-2. refresh `last_updated`, `last_updated_by`, and `last_updated_note` using `now.mjs`;
-3. keep Decisions, Architecture code, and Slices Success Criteria synchronized, treating code as the source of truth;
-4. return to Step 4 when a new ambiguity appears;
-5. re-run affected slice verification and developer approval before restoring `status: ready`.
+```text
+.rpiv/artifacts/designs/{filename}.md {specific feedback}
+```
 
-If underlying research is stale or feature scope changed materially, recommend a fresh Research run followed by a new Design artifact. Do not mutate product source or start another stage.
+Revise owns pair resolution, the coordinated proposal, source verification, progress preservation, and affected review. Before an active plan exists, it can revise the design alone. Pending slice generation and its unapproved payload still use Step 6; they are not revisions to approved design material. Never invoke Plan, implementation, or Revise automatically.
 
 ## Artifact compatibility
 

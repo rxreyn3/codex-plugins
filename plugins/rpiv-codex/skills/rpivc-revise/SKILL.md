@@ -1,26 +1,26 @@
 ---
 name: rpivc-revise
-description: Surgically update one existing implementation plan under .rpiv/artifacts/plans/ from review findings, implementation discoveries, or changed constraints. Preserve the plan's useful structure and history, verify new technical claims, and require approval before editing. Do not implement product code or rewrite the plan wholesale.
+description: Surgically revise an RPIV plan or design from feedback. Coordinate architectural changes across the linked design and active plan in one proposal; keep execution-only changes plan-local. Preserve progress and decision history, verify current source evidence, and obtain approval before editing artifacts. Do not implement product code.
 ---
 
 # RPIV Revise for Codex
 
-Update one existing implementation plan from explicit feedback while preserving its useful structure, artifact history, and downstream compatibility.
+Update an existing plan or design from explicit feedback while preserving useful structure, artifact history, and downstream compatibility. Architectural changes revise the design and its active implementation plan together.
 
 This port preserves the `revise` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
 
 ```text
 input -> research only if needed -> proposed edits -> developer approval
-      -> surgical plan update -> review and implementation handoff
+      -> surgical artifact update -> affected review and handoff
 ```
 
-This stage edits only the selected plan artifact. It must not edit a review artifact, change product source, commit, invoke implementation, or start another workflow stage.
+This stage edits only the resolved artifact set: one plan, one design without an active plan, or one linked design and active plan. It must not edit a review artifact, change product source, commit, invoke implementation, or start another workflow stage.
 
 ## Input
 
-Treat all text following `$rpivc-revise` as `<plan-path> <feedback>`, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
+The existing invocation remains `$rpivc-revise <plan-path> <feedback>`. Also accept `$rpivc-revise <design-path> <feedback>` for a design revision, resolving its active plan before proposing edits. No separate Design revision task or Plan regeneration is required. For a plan input, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
 
-Feedback may cite one or more review artifacts. Read every distinct cited review completely and synthesize its findings into the feedback set before proposing changes. Revise still edits exactly one plan.
+Feedback may cite one or more review artifacts. Read every distinct cited review completely and synthesize its findings into the feedback set before proposing changes. A review path is evidence, never the revision target.
 
 A checkpoint may span several turns. Resume the current step after the developer answers; do not restart input handling or repeat completed research.
 
@@ -73,12 +73,12 @@ Follow every numbered step in order.
 
 ### 1. Resolve the plan and feedback
 
-Parse the first plan-looking token as the plan path and the remaining text as feedback.
+Parse the first artifact path as the target and the remaining text as feedback. A design path must be under `.rpiv/artifacts/designs/`; read [Design revisions](references/design-revisions.md), resolve its artifact set, then continue at Step 2. For a plan path, follow the resolution below. If feedback is empty for either input, ask what should change and stop.
 
 If the supplied positional path is under `.rpiv/artifacts/reviews/`, reply with this adapted guard and stop:
 
 ```text
-`rpivc-revise` updates implementation plans, not review artifacts.
+`rpivc-revise` updates implementation plans and designs, not review artifacts.
 
 Provide the target plan path plus the changes to make. For example:
 $rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Address the findings from .rpiv/artifacts/reviews/2026-08-30_10-00-00_feature.md by tightening Phase 2 validation."
@@ -112,7 +112,15 @@ With one real plan path and a feedback set:
 
 Never infer the plan's structure from a partial read.
 
-The consistency cone is not a general plan audit and does not authorize edits. It prevents a plan-wide invariant discovered in one phase from being repaired one phase at a time. Implementation phase ownership does not limit this scan because Revise owns the single plan artifact; the developer's later approval still controls every proposed edit.
+The consistency cone is not a general plan audit and does not authorize edits. It prevents a plan-wide invariant discovered in one phase from being repaired one phase at a time. Implementation phase ownership does not limit this scan because the revision boundary is the selected artifact set; the developer's later approval still controls every proposed edit.
+
+#### Classify ownership before proposing edits
+
+The design is authoritative for intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. The plan is authoritative for execution progress, operational commands, and verification records. Current repository source is evidence of what is implemented; artifact code fences describe intent.
+
+For a plan with a design `parent`, inspect that design's relevant decisions, Architecture entries, and slice criteria to distinguish execution details from design changes. Do not follow unrelated upstream artifact chains. Changed behavior, responsibilities, interfaces, slice boundaries, or acceptance outcomes require [Design revisions](references/design-revisions.md) and one coordinated proposal. A concrete command correction or verification method that preserves the intended outcome can stay plan-only. Resolve uncertain ownership from the linked design and source before choosing the mode.
+
+A standalone plan without a design parent retains the existing plan-only workflow, including architectural feedback within that plan. Do not invent a design or imply that a missing design was synchronized. A declared but missing or conflicting design link requires resolution before an architectural edit.
 
 ### 2. Research only when needed
 
@@ -141,10 +149,12 @@ After the roles finish:
 
 ### 3. Present the proposed revision and gate the edit
 
+For design or coordinated mode, extend this same proposal with the exact artifact paths, design edits, corresponding plan edits, preserved progress, and invalidated checks described in Design revisions. Use one approval decision for the whole set. Existing explicit authorization for that concrete proposal remains valid across turns.
+
 Before editing, present:
 
 ```text
-Based on the feedback, I understand the plan should:
+Based on the feedback, I understand the selected artifacts should:
 - {specific change}
 - {specific change}
 
@@ -175,6 +185,8 @@ Use native structured input when available. If unavailable or unsuccessful, use 
 
 ### 4. Update the plan surgically
 
+In design or coordinated mode, apply the approved artifact set using the additional update and review rules in Design revisions. The plan rules below still apply when a plan is present; the design reference governs readiness for that mode.
+
 Use the available patch or edit mechanism against the existing plan. Never overwrite the full file to make a local change.
 
 Apply only the approved modifications:
@@ -201,7 +213,7 @@ If YAML frontmatter exists:
 - set `last_updated` to the exact retained `<iso>` value;
 - set `last_updated_by: Codex`;
 - set `last_updated_note` to a one-line summary of this revision;
-- when `phases:` exists, rebuild its body-order entries from the final `## Phase N: {title}` headings so every heading has one `{ n, title }` entry and no removed heading remains.
+- when `phases:` exists, rebuild its body-order entries from the final `## Phase N: {title}` headings, keeping `n`, `title`, `files`, and `depends_on` accurate and preserving unrelated entry fields; synchronize `phase_count` when present. Do not reduce rich phase entries to only `{ n, title }`.
 
 Do not invent frontmatter when the plan has none.
 
@@ -216,11 +228,11 @@ After editing, re-read the complete plan and verify:
 3. changed work is unchecked where required;
 4. automated and manual success criteria remain distinct and measurable;
 5. no unresolved question, placeholder, or contradictory scope statement remains;
-6. no product source or second artifact changed.
+6. no product source or artifact outside the approved set changed.
 
 ### 5. Report the update and stop
 
-Render the completion report as ordinary Markdown:
+For design or coordinated mode, use the completion rules in Design revisions and stop. For plan-only mode, render the completion report as ordinary Markdown:
 
 ````markdown
 Plan updated at:
@@ -253,7 +265,7 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 
 ## Non-negotiable boundaries
 
-- Update exactly one existing plan artifact per invocation.
+- Update only the resolved artifact set; at most one design and one active plan per invocation.
 - Read the complete plan and every referenced review artifact before proposing edits.
 - Research only the new technical surface the feedback introduces.
 - Resolve every material question before editing.
@@ -262,5 +274,5 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 - Make surgical edits; never rewrite the plan wholesale.
 - Reopen affected checked work and synchronize phase frontmatter.
 - Preserve prior Follow-up history and append one new timestamped section.
-- Never edit product source, a review artifact, or another plan.
+- Never edit product source, a review artifact, or another plan outside the resolved pair.
 - Never commit, invoke implementation, push, publish, or begin another workflow stage.

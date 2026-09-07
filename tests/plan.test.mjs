@@ -74,7 +74,7 @@ test("plan preserves the one-to-one design slice contract", () => {
   assert.match(skill, /Never merge, split, reorder, reauthor, or re-derive them/);
   assert.match(skill, /Success Criteria.*byte-for-byte unchanged/s);
   assert.match(skill, /code comes only from the matching design Architecture entries/);
-  assert.match(skill, /route it back to Design/);
+  assert.match(skill, /route it to Revise/);
 });
 
 test("plan preserves the downstream artifact schema", () => {

@@ -17,6 +17,12 @@ ready design -> inherit slices as phases one-to-one -> write plan incrementally
 
 The stage writes only its plan artifact. Never edit product source, invoke implementation, push, publish, or start another workflow stage.
 
+## Revision ownership
+
+The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. The plan owns execution progress, operational commands, and verification records. Current source is evidence of implemented behavior.
+
+To change an existing plan, use **Revise** with `<plan-path> <feedback>`. Architectural feedback produces one proposal for the linked design and active plan; execution-only feedback remains plan-local. Do not regenerate an active plan to synchronize a design revision and lose its progress.
+
 ## Input
 
 Treat all text following `$rpivc-plan` as one design artifact path under `.rpiv/artifacts/designs/`.
@@ -84,7 +90,7 @@ After resolving one real input path:
 5. extract semantic dependencies and permitted parallelism from Ordering Constraints;
 6. stop if any question remains open, any slice is incomplete, an Architecture entry cannot be assigned to its declared slice, or the design's phase contract is internally inconsistent.
 
-Design decisions, slice boundaries, and Success Criteria are fixed inputs. Flag a defect and route it back to Design; do not patch it silently in Plan.
+Design decisions, slice boundaries, and Success Criteria are fixed inputs. Flag a defect and route it to Revise with the design path before a plan exists, or the plan path once created; do not patch it silently in Plan.
 
 ### 2. Inherit phase boundaries
 
@@ -104,7 +110,7 @@ Total: {unique file count} files across {N} phases. Success Criteria pass throug
 Proceeding to write the plan artifact.
 ```
 
-If the developer wants different boundaries, stop and recommend returning to Design.
+If the developer wants different boundaries, stop and recommend Revise with the design path and concrete feedback.
 
 ### 3. Write the plan incrementally
 
@@ -208,7 +214,7 @@ Normalize any human-facing live-code location to the relative Markdown-link form
 
 ### 5. Triage findings and mark ready
 
-Do not auto-apply any finding. Count blockers, concerns, and suggestions, then present exactly one unresolved row per response. The developer chooses:
+Do not auto-apply any finding. Count blockers, concerns, and suggestions, then present exactly one unresolved row per response. Classify ownership before offering Apply: a change to intended design must use the coordinated Revise handoff below, not a plan-local patch. The developer chooses:
 
 - `Apply` — edit the recommendation's named phase code fence, Success Criteria block, or both, then record `applied: {summary}`;
 - `Defer` — leave plan content unchanged and record `deferred: {developer reason}`;
@@ -216,11 +222,11 @@ Do not auto-apply any finding. Count blockers, concerns, and suggestions, then p
 
 Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense only in stored resolutions. Prefer native structured input. Otherwise render `A. Apply`, `B. Defer`, and `C. Dismiss` with their consequences, then write `Reply with A, B, or C.` Ask only one triage question per response.
 
-When a code finding's cause lives in the design Architecture, recommend returning to Design for the clean upstream repair. A plan-local tactical fix is allowed only after the developer chooses Apply; annotate it `applied (plan-local; design follow-up: <design path>): {summary}`.
+When a finding changes intended behavior, Architecture, interfaces, slice boundaries, or acceptance outcomes, keep the plan `in-review` and recommend **Revise** with `<this-plan-path> <specific finding and evidence>`. Apply means pursue that coordinated proposal; it does not authorize a tactical plan-only divergence. Leave the finding unresolved until the pair is reviewed and reconciled. Do not annotate the plan as overriding a stale design. Execution-only findings can use the plan-local Apply path above.
 
 After every finding has a resolution, rebuild `phase_count` and `phases:` from the body. Then change `status: in-review` to `status: ready`.
 
-Report the plan as a repository-relative Markdown link, phase and unique-file counts, review availability, and triage totals. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. A requested boundary change routes back to Design because Plan must preserve slice boundaries.
+Report the plan as a repository-relative Markdown link, phase and unique-file counts, review availability, and triage totals. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. A requested boundary change routes to coordinated Revise because Plan must preserve slice boundaries.
 
 End with this handoff and stop:
 
@@ -236,15 +242,7 @@ Never invoke Implement automatically.
 
 ### 6. Handle follow-ups
 
-For a follow-up about the plan created in this task:
-
-1. edit the same plan in place;
-2. refresh `last_updated`, `last_updated_by`, and `last_updated_note` using `now.mjs`;
-3. keep phase code, Success Criteria, `phase_count`, and `phases:` synchronized;
-4. return to Design when the request changes a fixed design decision, slice boundary, Architecture entry, or Success Criteria;
-5. re-run affected independent review before restoring `status: ready`.
-
-Prefer a **Revise** handoff for surgical plan edits once the initial Plan run is complete. Re-run Plan only when the underlying design changed materially. Never start either stage automatically.
+For a follow-up during initial review, retain the review and triage rules above. Once the initial Plan run is complete, hand off **Revise** with this plan's path and concrete feedback. Revise keeps execution-only changes plan-local and updates the linked design and active plan together when intent changes. Do not restart Plan over existing progress or send the developer through separate Design and Plan revision tasks. Never start Revise automatically.
 
 ## Compatibility rules
 

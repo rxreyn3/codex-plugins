@@ -27,7 +27,7 @@ const runNode = (path, cwd, ...args) =>
     stdio: ["ignore", "pipe", "ignore"],
   });
 
-test("revise includes exactly its reachable script and research-role dependencies", () => {
+test("revise bundles its reachable helpers and revision references", () => {
   for (const path of [
     "agents/openai.yaml",
     "scripts/now.mjs",
@@ -37,6 +37,8 @@ test("revise includes exactly its reachable script and research-role dependencie
     "references/codebase-pattern-finder.md",
     "references/artifacts-locator.md",
     "references/artifacts-analyzer.md",
+    "references/design-revisions.md",
+    "references/revision-reviewer.md",
   ]) {
     assert.ok(read(join(skillRoot, path)).length > 0, path);
   }
@@ -62,10 +64,10 @@ test("revise preserves the load-bearing workflow order and edit gate", () => {
 
 test("revise preserves standalone input boundaries", () => {
   const skill = read(skillPath);
-  assert.match(skill, /Treat all text following `\$rpivc-revise` as `<plan-path> <feedback>`/);
+  assert.match(skill, /The existing invocation remains `\$rpivc-revise <plan-path> <feedback>`/);
   assert.match(skill, /Feedback may cite one or more review artifacts/);
   assert.match(skill, /Read every distinct cited review completely/);
-  assert.match(skill, /updates implementation plans, not review artifacts/);
+  assert.match(skill, /updates implementation plans and designs, not review artifacts/);
   assert.match(skill, /If a plan path exists but feedback is empty, ask what should change and stop/);
   assert.match(skill, /feedback cites one or more review artifacts[\s\S]*read every distinct review completely/i);
   assert.match(skill, /No entries:[\s\S]*\.rpiv\/artifacts\/plans\//);
