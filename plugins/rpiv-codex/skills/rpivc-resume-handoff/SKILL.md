@@ -1,6 +1,6 @@
 ---
 name: rpivc-resume-handoff
-description: Resume work from one RPIV handoff artifact. Read the complete handoff and linked artifacts, verify its claims against the current repository and branch, present drift and recommended actions, require approval, then continue from the agreed next task.
+description: Resume work from one RPIV handoff artifact. Read the handoff and target artifact, expand background reading only for unresolved claims, verify relevant current repository state, then continue from the agreed next task through the approval checkpoints.
 ---
 
 # RPIV Resume Handoff for Codex
@@ -14,6 +14,8 @@ resolve handoff -> read handoff and artifacts -> verify current state
                 -> present analysis and approve approach
                 -> build and approve task list -> continue work
 ```
+
+The Codex reading policy below scopes artifact ingestion to the next action instead of requiring a complete read of every historical reference.
 
 This skill owns the interactive continuation after approval. It must not treat the handoff as authoritative over the current checkout, silently resolve open questions, invoke another RPIV skill, commit, push, or publish without separate explicit authorization.
 
@@ -99,15 +101,15 @@ Read the selected handoff completely. Extract:
 - action items, next steps, approval gates, and other constraints;
 - recorded date, repository, branch, and commit.
 
-Immediately read every linked plan, research, or solution artifact completely. Do not invoke their owning skills during this context-loading phase.
+When an artifact governs the next action, read that target artifact completely, including its current decisions, phase metadata, and verification state. For a plan revision, retain the complete-plan read so changes across phases and global constraints are visible. If the task has no target artifact, continue from the handoff and relevant current evidence. Do not invoke an artifact's owning skill during this context-loading phase.
 
-Then read [Artifact Context Reader](references/artifact-context-reader.md) completely. Its work is organizational delegation: it bounds repetitive artifact ingestion, but its output is not independent proof and the parent must verify every material claim.
+Use the handoff's **Required inputs** and **Historical references** labels to distinguish task inputs from background. Read additional required inputs to the extent needed for their stated purpose. An artifact's links do not make all of its references required inputs. For older handoffs without these labels, identify the target from the next action and treat other links as background until a specific unresolved claim requires them.
 
-When native collaboration agents are available, dispatch one artifact-context task with the complete bundled role prompt, exact repository working directory, selected handoff path, and exhaustive artifact path list. Wait for it to finish before verification.
+Expand into older handoffs, parent designs, or research only to answer a named unresolved question, resolve conflicting authority, or investigate relevant repository drift. Search and read the relevant sections first; read a whole background document when the claim or its dependencies cannot be established from those sections. Record the reason for expansion and any remaining limitation. Reuse material already read in this task unless it changed or is no longer available in context.
 
-When collaboration agents are unavailable, execute the same role as a separately labelled bounded inline task. Read every listed artifact completely and preserve the role's output contract. Do not skip the work merely because the parallel carrier is absent.
+Do the reading directly unless a bounded background investigation would benefit from delegation. In that case, read [Artifact Context Reader](references/artifact-context-reader.md) completely and dispatch it with the exact repository, unresolved questions, and relevant unread paths or sections. Its work is organizational delegation; its output is not independent proof, and the parent must verify every material claim used for the next action against the relevant source or current code. Do not assign a second complete read of artifacts the parent already read. When collaboration is unavailable, answer the same bounded questions directly without an extra ingestion pass.
 
-Record `Artifact carrier: collaboration agent` or `Artifact carrier: bounded inline` for the analysis report.
+Record `Artifact carrier: direct` or `Artifact carrier: direct with collaboration agent` for the analysis report.
 
 ### 3. Verify current state and present the analysis
 
@@ -115,7 +117,7 @@ Verify the handoff against the live checkout:
 
 1. compare the recorded repository and branch with the current Git root and branch;
 2. compare the recorded commit with current `HEAD`, using `git log` or `git diff` when needed to identify intervening changes;
-3. read every file cited in Recent changes and confirm whether each change is present, missing, or modified;
+3. inspect the Recent changes relevant to the next action and confirm against current files whether each is present, missing, or modified;
 4. read the implementation files needed to validate material Learnings and patterns;
 5. inspect newly relevant files discovered from linked artifacts;
 6. identify regressions, conflicts, missing dependencies, stale claims, and unresolved decisions;
@@ -145,6 +147,9 @@ Recent changes:
 Artifacts reviewed:
 - {artifact}: {key decision or constraint}
 
+Reading scope:
+- {required inputs read; background consulted and why; background left unread; material limitations}
+
 Recommended next actions:
 1. {smallest safe next action}
 2. {dependent action}
@@ -152,7 +157,7 @@ Recommended next actions:
 Potential issues:
 - {conflict, regression, missing dependency, or None found}
 
-Artifact carrier: {collaboration agent or bounded inline}
+Artifact carrier: {direct or direct with collaboration agent}
 ```
 
 Normalize all human-facing evidence to repository-relative Markdown links before presenting it.
@@ -207,7 +212,7 @@ When the first task completes, report the exact changes and verification, then c
 ## Non-negotiable boundaries
 
 - Resume from exactly one handoff artifact.
-- Read the complete handoff and every linked artifact needed for continuation.
+- Read the complete handoff and target artifact when one governs the next action; expand background reading only to resolve a specific question needed for continuation.
 - Verify current repository, branch, commit, files, and material learnings before acting.
 - Present the analysis before planning and obtain both approval checkpoints before editing.
 - Treat delegated artifact output as context, not independent proof.

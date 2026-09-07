@@ -74,14 +74,10 @@ test("resume-handoff preserves explicit and no-argument input behavior", () => {
   assert.match(skill, /Reject directories, paths outside `\.rpiv\/artifacts\/handoffs\/`, and multiple paths/);
 });
 
-test("resume-handoff reads all artifacts with an organizational inline fallback", () => {
+test("resume-handoff keeps handoff ingestion and delegated evidence verification", () => {
   const skill = read(skillPath);
   assert.match(skill, /Read the selected handoff completely/);
-  assert.match(skill, /read every linked plan, research, or solution artifact completely/);
   assert.match(skill, /Its work is organizational delegation/);
-  assert.match(skill, /When native collaboration agents are available/);
-  assert.match(skill, /When collaboration agents are unavailable/);
-  assert.match(skill, /bounded inline task/);
   assert.match(skill, /parent must verify every material claim/);
 });
 

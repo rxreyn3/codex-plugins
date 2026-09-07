@@ -72,7 +72,7 @@ Inspect the current conversation and available evidence before writing:
 2. use the retained Git metadata to identify the repository, branch, and commit;
 3. inspect `git status --short` and relevant diffs when file changes affect continuation;
 4. verify recent changes and important learnings against current files before describing them as facts;
-5. collect the plan, research, solution, review, or other artifacts that a fresh task must read;
+5. identify the target artifact and other required inputs for the next action, separately from historical references;
 6. separate settled decisions, current proposals, and unresolved questions;
 7. identify the smallest safe next action.
 
@@ -91,6 +91,8 @@ Create `.rpiv/artifacts/handoffs/` when needed. Write exactly one new handoff ar
 ### 3. Write the handoff
 
 Use this complete compatibility structure. Keep it concise but include enough evidence for a cold resume. Omit empty bullets, not required headings.
+
+Label artifact links as **Required inputs** or **Historical references** within the existing sections. Required inputs govern the next action; name the target artifact and explain what each additional input is needed to establish, with section pointers when useful. Historical references preserve provenance and are opened only for a specific unresolved question. Do not make the full research bibliography required merely because it was read earlier. Capture settled decisions, their authority, and the exact next action in this handoff so an older handoff is not required just to recover them; retain links to their evidence.
 
 ```markdown
 ---
@@ -113,7 +115,7 @@ type: {work_type}
 {Active tasks and exact status. Name the current phase and link the governing plan or research artifact when applicable.}
 
 ## Critical References
-{The two or three most important specifications, decisions, or design documents as repository-relative Markdown links.}
+{Required inputs for the next action as repository-relative Markdown links: target artifact, plus the purpose and relevant sections of any additional governing input. Use None for work without artifact inputs.}
 
 ## Recent changes
 {Verified recent changes with repository-relative Markdown file links and line references.}
@@ -122,7 +124,7 @@ type: {work_type}
 {Important verified patterns, root causes, constraints, and clearly labelled inferences or unknowns.}
 
 ## Artifacts
-{An exhaustive ordered list of artifacts produced or updated, using repository-relative Markdown links.}
+{An exhaustive ordered list of artifacts produced or updated, using repository-relative Markdown links. Mark each as Required input or Historical reference; an inventory entry is not itself a read requirement. Include other historical references only when they help recover a decision or resolve an open question.}
 
 ## Action Items & Next Steps
 {Small, ordered actions for the next task, including validation and approval gates.}
@@ -144,7 +146,8 @@ Before saving, confirm:
 5. every claimed change or learning is verified, labelled as inference, or labelled unknown;
 6. human-readable file links are repository-relative and structural fields remain plain text;
 7. action items preserve every explicit approval and scope boundary;
-8. the file did not already exist and no second artifact or product file changed.
+8. required inputs each have a next-action purpose, historical references are separately labelled, and settled decisions do not require replaying older handoffs;
+9. the file did not already exist and no second artifact or product file changed.
 
 Save the handoff only after these checks pass.
 
