@@ -7,12 +7,12 @@ description: Resume work from one RPIV handoff artifact. Read the handoff and ta
 
 Resume work from one handoff created by `rpivc-create-handoff` without trusting stale session state.
 
-This port preserves the `resume-handoff` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
+This port adapts the `resume-handoff` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`, combining approach and task-list approval into one checkpoint:
 
 ```text
 resolve handoff -> read handoff and artifacts -> verify current state
-                -> present analysis and approve approach
-                -> build and approve task list -> continue work
+                -> present analysis and task list -> approve first task
+                -> continue work -> checkpoint
 ```
 
 The Codex reading policy below scopes artifact ingestion to the next action instead of requiring a complete read of every historical reference.
@@ -111,7 +111,7 @@ Do the reading directly unless a bounded background investigation would benefit 
 
 Record `Artifact carrier: direct` or `Artifact carrier: direct with collaboration agent` for the analysis report.
 
-### 3. Verify current state and present the analysis
+### 3. Verify current state
 
 Verify the handoff against the live checkout:
 
@@ -127,7 +127,7 @@ Never assume the handoff state still matches the repository merely because its c
 
 Use `Fact` only for claims directly established by current repository evidence or a cited source. Label conclusions about what that evidence means as `Interpretation` or `Inference`, and desired future behavior as `Proposal`, even when those statements are well supported.
 
-Present:
+Prepare the following analysis for the combined report in step 4; do not pause for approval yet:
 
 ```markdown
 I've analyzed the handoff from {date} by {author}.
@@ -162,17 +162,9 @@ Artifact carrier: {direct or direct with collaboration agent}
 
 Normalize all human-facing evidence to repository-relative Markdown links before presenting it.
 
-Ask `{recommended next action}. Proceed?` with header `Resume` and these options:
+### 4. Present the analysis and approve the continuation plan
 
-- `Proceed (Recommended)` — continue with the first recommended action.
-- `Adjust approach` — change the order or scope before planning work.
-- `Re-analyze` — re-read current state before planning because the repository may have changed.
-
-Use native structured input when available. If unavailable or unsuccessful, use the lettered prose choice format without a custom-answer suffix and stop. Do not create the continuation plan or edit product files until the developer chooses Proceed. After Adjust approach, ask one focused open-ended question. After Re-analyze, repeat the relevant reads and present a refreshed analysis rather than reusing cached claims.
-
-### 4. Create and approve the continuation plan
-
-After Proceed:
+Before requesting approval:
 
 1. convert the handoff's remaining action items into a concise ordered task list;
 2. incorporate verified drift, newly discovered work, validation, and preserved approval gates;
@@ -181,17 +173,17 @@ After Proceed:
 5. split work at every preserved checkpoint; when the handoff requires repeated units to be handled one at a time, create one task per unit rather than bundling the remainder into one task;
 6. use native plan tracking when available, otherwise keep the checklist in chat.
 
-Present the full continuation plan and ask `Begin with {first task}?` using header `Next task` and these options:
+Present the analysis and concise continuation plan together. Identify the first task's scope and any later actions requiring separate approval. Ask `Proceed with {first task}?` using header `Resume` and these options:
 
-- `Begin (Recommended)` — start only the first task.
+- `Proceed (Recommended)` — start only the first task.
 - `Adjust plan` — change the task list before editing.
 - `Stop here` — leave the verified analysis and plan without implementation.
 
-Use native structured input when available. If unavailable or unsuccessful, use the lettered prose choice format without a custom-answer suffix and stop. Do not edit until the developer chooses Begin. After Adjust plan, ask one focused question and repeat this gate with the revised task list. After Stop here, report that no implementation was performed and stop.
+Use native structured input when available. If unavailable or unsuccessful, use the lettered prose choice format without a custom-answer suffix and stop. Do not start the first task until the developer approves it. Accept an unambiguous approval such as `proceed please` or `continue` and start that task immediately; do not ask a second Begin question for the same scope. After Adjust plan, ask one focused question and repeat this gate with the revised task list. After Stop here, report that no implementation was performed and stop.
 
 ### 5. Continue the approved work
 
-After Begin, perform only the approved first task:
+After approval, perform only the approved first task:
 
 - use the handoff's validated decisions and patterns;
 - follow current repository instructions over stale handoff prose;
@@ -201,6 +193,16 @@ After Begin, perform only the approved first task:
 - preserve any separate approvals named in the handoff.
 
 When the first task completes, report the exact changes and verification, then checkpoint before starting the next task. Do not silently chain the entire continuation plan. Do not commit, push, publish, resolve external review threads, or invoke another RPIV skill without separate explicit authorization.
+
+Within the approved task, ask again only if findings materially change its scope or an action requires separate authorization. Approval to investigate and propose a provider change does not authorize applying it. Preserve explicit human-test and implementation gates without inserting another approval for unchanged, already-approved work.
+
+### 6. Offer handoff cleanup
+
+Keep the selected handoff by default. Reading it or approving the first task does not authorize deletion. Do not offer cleanup while the first resumed task is incomplete, blocked, or awaiting the developer's input.
+
+After the first resumed task completes, include a one-time cleanup choice in its completion checkpoint before starting another task: `Keep this handoff (Recommended)` or `Delete this handoff`. Show the exact selected path and explain that keeping it preserves a recovery point and any context not recorded elsewhere. Use native structured input when available; otherwise ask a concise prose question and wait. No answer means keep the file. Cleanup approval is separate from approval to continue work.
+
+Only after an explicit Delete choice, recheck that the selected path is still the same regular file under `.rpiv/artifacts/handoffs/` and that its contents have not changed since it was read. If it changed, show the difference and obtain renewed deletion approval. Delete only that file; never delete linked artifacts, other handoffs, or the containing directory. Prefer recoverable deletion when available, and state whether recovery is available before deletion. Report the exact file removed and its recovery status, then return to the continuation checkpoint. After Keep, do not ask again in this invocation.
 
 ## Common scenarios
 
@@ -214,7 +216,7 @@ When the first task completes, report the exact changes and verification, then c
 - Resume from exactly one handoff artifact.
 - Read the complete handoff and target artifact when one governs the next action; expand background reading only to resolve a specific question needed for continuation.
 - Verify current repository, branch, commit, files, and material learnings before acting.
-- Present the analysis before planning and obtain both approval checkpoints before editing.
+- Present the analysis and continuation plan together and obtain one approval before starting the first task.
 - Treat delegated artifact output as context, not independent proof.
 - Continue one approved task at a time and preserve every explicit approval gate.
 - Never invoke another RPIV stage, commit, push, publish, or change external state without separate explicit authorization.

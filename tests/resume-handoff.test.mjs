@@ -47,20 +47,22 @@ test("create-handoff hands off to the installed resume skill without stale setup
   assert.doesNotMatch(createHandoff, /Resume Handoff must be installed separately/);
 });
 
-test("resume-handoff preserves the load-bearing workflow and two edit gates", () => {
+test("resume-handoff uses one entry approval and preserves later scope boundaries", () => {
   const skill = read(skillPath);
   const headings = [
     "### 1. Resolve the handoff",
     "### 2. Read and analyze the handoff",
-    "### 3. Verify current state and present the analysis",
-    "### 4. Create and approve the continuation plan",
+    "### 3. Verify current state",
+    "### 4. Present the analysis and approve the continuation plan",
     "### 5. Continue the approved work",
   ];
   for (let index = 1; index < headings.length; index += 1) {
     assert.ok(skill.indexOf(headings[index - 1]) < skill.indexOf(headings[index]));
   }
-  assert.match(skill, /Do not create the continuation plan or edit product files until the developer chooses Proceed/);
-  assert.match(skill, /Do not edit until the developer chooses Begin/);
+  assert.match(skill, /Do not start the first task until the developer approves it/);
+  assert.match(skill, /do not ask a second Begin question for the same scope/);
+  assert.match(skill, /Approval to investigate and propose a provider change does not authorize applying it/);
+  assert.doesNotMatch(skill, /After Begin|After Proceed|obtain both approval checkpoints/);
   assert.match(skill, /perform only the approved first task/);
   assert.match(skill, /Do not silently chain the entire continuation plan/);
 });
