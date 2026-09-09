@@ -122,6 +122,12 @@ For a plan with a design `parent`, inspect that design's relevant decisions, Arc
 
 A standalone plan without a design parent retains the existing plan-only workflow, including architectural feedback within that plan. Do not invent a design or imply that a missing design was synchronized. A declared but missing or conflicting design link requires resolution before an architectural edit.
 
+#### Keep affected current instructions consistent
+
+Apply this rule in every revision mode, including plan-only changes to commands or verification methods. Reconcile affected current instructions, implementation claims, and status summaries with verified source and dated evidence. Include repeated affected claims in the consistency scan and proposed edits even when the feedback did not quote them. Source proves implementation, not runtime acceptance; a recorded result establishes only its stated conditions. Preserve valid checkmarks and dated history, but update superseded claims presented as current guidance. Do not infer completion from a new narrative or audit unrelated work.
+
+For a linked pair, distinguish the requested change from inherited design/plan disagreement encountered in this bounded scan. If that disagreement changes the meaning or feasibility of the requested revision, include its resolution in the proposal, using coordinated mode when design intent must change; resolve any material uncertainty before editing. Otherwise leave it outside the edit scope and briefly identify it in the proposal, new Follow-up, and completion report. Do not imply that the whole pair is synchronized, add a blanket plan-overrides-design claim, or block an independent plan-only correction merely to repair older disagreement. These consistency repairs belong in the same proposal and approval as the requested change.
+
 ### 2. Research only when needed
 
 Skip this step for a purely editorial or structural change whose feasibility is already established by the plan and feedback.
@@ -227,7 +233,7 @@ After editing, re-read the complete plan and verify:
 2. phase numbering, headings, and any `phases:` array agree;
 3. changed work is unchecked where required;
 4. automated and manual success criteria remain distinct and measurable;
-5. no unresolved question, placeholder, or contradictory scope statement remains;
+5. affected current instructions and status summaries agree with verified evidence and revised criteria; unresolved questions, placeholders, or contradictions within the approved scope are resolved, and inherited disagreement left outside scope is disclosed;
 6. no product source or artifact outside the approved set changed.
 
 ### 5. Report the update and stop

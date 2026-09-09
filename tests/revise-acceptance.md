@@ -24,6 +24,31 @@ Observe a single proposal naming the exact design and active plan, source-backed
 
 On a separate copy of the initial fixture, request correction of a plan's unavailable executable from `python` to its verified `python3`, preserving acceptance outcomes. Observe one plan-only proposal covering every equivalent current occurrence. Approve it. The design and source must remain byte-identical; unrelated completion must survive. Preserve useful phase metadata and append one Follow-up.
 
+## Plan-only diagnostics after implementation and inherited disagreement
+
+Use a separate disposable fixture representing several completed revisions, not a copy of the still-aligned initial fixture:
+
+- The linked design still specifies public startup. A dated, explicitly approved plan-only revision changed the plan to private tokens and left the design unchanged. Current source implements private-token startup and cleanup.
+- The plan's current overview still says startup uses `agentId` and the endpoint returns two fields. Its current Developer Context says native inspection is outstanding. Later dated records establish three-field token responses and completed native inspection; matching implementation and inspection checks are checked.
+- A dated single-session spoken acceptance record and its checkbox are present. Later observations report intermittent silent sessions, with their conditions and limitations recorded. Unrelated screen-layout checks remain checked. Keep prior Follow-ups and a superseded sibling plan.
+
+Invoke with only the following request; do not tell the evaluating agent which summaries are stale:
+
+```text
+$rpivc-revise .rpiv/artifacts/plans/active.md Strengthen the existing spoken-answer and cleanup verification with four consecutive sessions on the same native build. Use the recorded observations to explain the diagnostic prerequisites and keep implementation completion separate from the new verification work. Preserve the intended behavior.
+```
+
+Inspect the proposal, approve its concrete artifact edits, then inspect the result:
+
+- The change stays plan-only. The proposal identifies the inherited public/private disagreement and explains why it does not alter this diagnostic method; the new Follow-up and final report retain that limitation without claiming a synchronized pair.
+- The same proposal includes correction of the affected overview and native-inspection summary from source and recorded evidence. Current prose distinguishes implemented startup, recorded observations, and unproven repeated-session acceptance. Appending a correction only in Follow-up is insufficient.
+- Valid implementation, inspection, and layout checks survive. The expanded repeated-session acceptance is unchecked; its earlier single-session result remains dated evidence with its original limits. No new narrative grants a runtime pass.
+- The linked design, sibling plan, source, and previous Follow-ups remain byte-identical. No new blanket authority override is introduced and no unrelated cleanup is required before the diagnostic revision can proceed.
+
+For the ownership boundary, use a fresh copy of this fixture and request alignment of both current artifacts around private-token startup as part of the diagnostic prerequisites. Expect one coordinated proposal resolving the now-relevant disagreement, followed by affected review; an outside-scope disclaimer alone is insufficient. Preserve source and still-valid implementation checks rather than treating alignment of prose as new implementation work.
+
+When diagnosing the original omission, run the diagnostic request against identical fresh fixtures with the earlier installed candidate and the revised candidate, recording each exact skill path and result. Stale current claims surviving only the earlier run support the instruction-gap hypothesis; both runs handling them leaves the historical execution path or subsequent progress edits unresolved. A single comparison is behavioral evidence, not proof of reliability across runs.
+
 ## Design entry and ambiguous active plan
 
 Invoke the architectural request with the design path. With one active child and one explicitly superseded child, expect selection of the active child and one coordinated proposal. With two plausible active children, expect a path-selection question before writing; timestamps alone must not decide. After selecting one, only that plan and its design may change. A supplied historical plan or conflicting parent link also requires resolution.

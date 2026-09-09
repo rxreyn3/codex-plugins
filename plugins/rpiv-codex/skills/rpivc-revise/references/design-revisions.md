@@ -19,6 +19,8 @@ If interrupted, resume from the persisted artifacts, their latest Follow-up entr
 
 Use Revise's bounded research roles for the new technical surface. Verify the actual callers, implementation, configuration, and tests relevant to the proposed change. Distinguish current source facts from intended design and unverified assumptions. Artifact payloads are not proof of deployed behavior.
 
+Apply the shared [current-instruction consistency rule](../SKILL.md#keep-affected-current-instructions-consistent), including its treatment of inherited disagreement, throughout proposal, editing, and reporting.
+
 Build one bounded consistency scan across both selected artifacts. Trace the changed intent through Decisions, Architecture, interfaces, Slices, File Map, Ordering Constraints, Desired End State, and acceptance outcomes into the corresponding plan phases, code payloads, scope, and criteria. Include dependent phases or repeated claims only where the change invalidates them. Explicitly distinguish historical quotations from current instructions.
 
 For each affected slice and phase, identify:
