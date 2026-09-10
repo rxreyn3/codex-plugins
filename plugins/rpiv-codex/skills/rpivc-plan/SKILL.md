@@ -19,9 +19,9 @@ The stage writes only its plan artifact. Never edit product source, invoke imple
 
 ## Revision ownership
 
-The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. The plan owns execution progress, operational commands, and verification records. Current source is evidence of implemented behavior.
+The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes while this initial plan is `in-progress` or `in-review`. When the plan first reaches `ready`, authority transfers once: the plan becomes the sole current specification for intent and execution, while the design remains immutable provenance. A later revision returning the plan to `in-review` does not reactivate design authority. Current source is evidence of implemented behavior.
 
-To change an existing plan, use **Revise** with `<plan-path> <feedback>`. Architectural feedback produces one proposal for the linked design and active plan; execution-only feedback remains plan-local. Do not regenerate an active plan to synchronize a design revision and lose its progress.
+To change an existing plan, use **Revise** with `<plan-path> <feedback>`. Before the first ready transition, architectural feedback may update the design and candidate plan together. After transfer, all revisions update the plan only and record material intent changes as Decision Amendments. A fundamental rethink that needs renewed architectural exploration creates a successor design and plan instead of rewriting the frozen design or discarding the current plan's history.
 
 ## Input
 
@@ -89,6 +89,7 @@ After resolving one real input path:
 4. map each slice to the corresponding Architecture entries;
 5. extract semantic dependencies and permitted parallelism from Ordering Constraints;
 6. stop if any question remains open, any slice is incomplete, an Architecture entry cannot be assigned to its declared slice, or the design's phase contract is internally inconsistent.
+7. retain `git hash-object -- <design-path>` as the initial design content fingerprint; this is a content identifier, not proof that the design was committed.
 
 Design decisions, slice boundaries, and Success Criteria are fixed inputs. Flag a defect and route it to Revise with the design path before a plan exists, or the plan path once created; do not patch it silently in Plan.
 
@@ -142,6 +143,7 @@ Create these sections:
 - `# {Feature} Implementation Plan`
 - `## Overview`
 - `## Desired End State`
+- `## Accepted Design Decisions`
 - `## What We're NOT Doing`
 - one `## Phase N: {slice name}` per design slice
 - `## Testing Strategy`
@@ -180,6 +182,8 @@ Each phase uses this structure:
 Populate `phases:` in body order. Each entry's `files:` is the complete set of plain paths in that phase's `### Changes Required:` section. `depends_on` contains only lower phase numbers supported by semantic Ordering Constraints; shared-file sequencing alone does not invent a semantic dependency.
 
 The plan's code comes only from the matching design Architecture entries. The Success Criteria come only from the matching design slice and remain byte-for-byte unchanged. Verification Notes may be summarized under Testing Strategy for context but do not replace the load-bearing per-phase criteria.
+
+Populate `## Accepted Design Decisions` with only the settled choices, interface constraints, and compact rationale needed to understand or revise the implementation later. Do not copy deliberation history or rejected alternatives. This section makes the ready plan self-contained without turning historical Design context into a routine downstream dependency.
 
 ### 4. Run independent Plan review
 
@@ -224,9 +228,9 @@ Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense
 
 When a finding changes intended behavior, Architecture, interfaces, slice boundaries, or acceptance outcomes, keep the plan `in-review` and recommend **Revise** with `<this-plan-path> <specific finding and evidence>`. Apply means pursue that coordinated proposal; it does not authorize a tactical plan-only divergence. Leave the finding unresolved until the pair is reviewed and reconciled. Do not annotate the plan as overriding a stale design. Execution-only findings can use the plan-local Apply path above.
 
-After every finding has a resolution, rebuild `phase_count` and `phases:` from the body. Then change `status: in-review` to `status: ready`.
+After every finding has a resolution, rebuild `phase_count` and `phases:` from the body. Immediately before the first ready transition, recompute `git hash-object -- <design-path>` and compare it with the fingerprint retained in Step 1. If it changed, stop and reconcile the candidate plan before transferring authority. Otherwise run the bundled `now.mjs` helper again, retain its exact ISO timestamp, add `design_fingerprint: "git-blob:<hash>"` and `materialized_at: <iso>` to plan frontmatter, and change `status: in-review` to `status: ready`. These fields record the frozen provenance boundary; they do not modify the design or require its future synchronization.
 
-Report the plan as a repository-relative Markdown link, phase and unique-file counts, review availability, and triage totals. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. A requested boundary change routes to coordinated Revise because Plan must preserve slice boundaries.
+Report the plan as a repository-relative Markdown link, phase and unique-file counts, review availability, triage totals, the design fingerprint, and the authority transfer. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. Later changes route to Revise with the plan path; the frozen design is consulted only when a specific rationale or provenance question requires it.
 
 End with this handoff and stop:
 
@@ -242,7 +246,7 @@ Never invoke Implement automatically.
 
 ### 6. Handle follow-ups
 
-For a follow-up during initial review, retain the review and triage rules above. Once the initial Plan run is complete, hand off **Revise** with this plan's path and concrete feedback. Revise keeps execution-only changes plan-local and updates the linked design and active plan together when intent changes. Do not restart Plan over existing progress or send the developer through separate Design and Plan revision tasks. Never start Revise automatically.
+For a follow-up during initial review, retain the review and triage rules above; design and candidate plan have not transferred authority yet. Once the plan has reached ready, hand off **Revise** with this plan's path and concrete feedback. Revise updates that plan alone, including later intent changes, and preserves the frozen design as provenance. Do not restart Plan over existing progress. Never start Revise automatically.
 
 ## Compatibility rules
 

@@ -19,9 +19,9 @@ The stage writes only its design artifact. It must not edit product source, invo
 
 ## Revision ownership
 
-The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. Its implementation plan owns execution progress, operational commands, and verification records; current source establishes what is implemented.
+The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes until its initial implementation plan first reaches `status: ready`. At that transition, the reviewed plan materializes the design and becomes the sole current specification; the design becomes immutable provenance for original rationale and rejected alternatives. Current source establishes what is implemented.
 
-For revisions to an existing design, use **Revise** with `<design-path> <feedback>`. Revise resolves the active linked plan and proposes both updates together. Do not edit a design alone once it has an active plan or ask the developer to synchronize two separate tasks. Start and Resume below remain the creation workflow.
+For revisions to an existing design, use **Revise** with `<design-path> <feedback>`. Before editing, discover child plans whose `parent` names this design. With no child plan, Revise may update the design. With an initial `in-progress` or `in-review` plan that has never reached ready, Revise coordinates the candidate pair. Once a child plan has reached ready, route the feedback to that plan and leave the design byte-identical. Start and Resume below remain the creation workflow.
 
 ## Input
 
@@ -96,7 +96,7 @@ When the input contains `--resume`:
 
 1. Parse exactly one design artifact path after the flag. If it is missing, has extra arguments, is outside `.rpiv/artifacts/designs/`, is unreadable, or is not `status: in-progress`, report the specific error and stop.
 2. Read the design artifact completely. Extract Decisions, Architecture, Slices, Verification Notes, Developer Context, and Design History.
-   If its latest Follow-up records an unfinished Revise update or pending revision review, hand off to **Revise** with this design path and the unfinished revision description, then stop. Do not treat historic slice approvals as clearance to finalize a pending coordinated revision.
+   If its latest Follow-up records an unfinished Revise update or pending revision review, hand off to **Revise** with this design path and the unfinished revision description, then stop. Do not treat historic slice approvals as clearance to finalize a pending pre-transfer revision.
 3. Find the first Design History entry still marked `pending`. Treat every earlier `approved` entry and its persisted Architecture code and Success Criteria as locked. The artifact, not conversation memory or a task summary, is authoritative.
 4. Read the current source files for the pending slice completely, plus Architecture entries for files shared with locked predecessors.
 5. Skip Steps 2–5 and enter Step 6 at that pending slice. If no slice is pending, go directly to Step 7.
@@ -401,7 +401,7 @@ After every slice is approved:
 
 Report the artifact as a repository-relative Markdown link, the fixed-decision count, new and modified file counts, slice count, and generation revision count. State that Success Criteria were authored with each slice and independently verified before lock.
 
-Invite review of the architecture, code shape, missing integration points, and edge cases. Explain that revisions use Revise to update this artifact and its active plan together. If evidence is materially stale, establish the missing research before proposing a revision; do not silently abandon the active plan or its progress.
+Invite review of the architecture, code shape, missing integration points, and edge cases. Explain that Revise updates this artifact before authority transfer, but routes later feedback into the ready plan while retaining this design as immutable provenance. If evidence is materially stale, establish the missing research before proposing a revision; do not silently abandon the active plan or its progress.
 
 Then hand off and stop:
 
@@ -423,7 +423,7 @@ For a change to already approved design material, hand off one **Revise** invoca
 .rpiv/artifacts/designs/{filename}.md {specific feedback}
 ```
 
-Revise owns pair resolution, the coordinated proposal, source verification, progress preservation, and affected review. Before an active plan exists, it can revise the design alone. Pending slice generation and its unapproved payload still use Step 6; they are not revisions to approved design material. Never invoke Plan, implementation, or Revise automatically.
+Revise owns lifecycle resolution, source verification, progress preservation, and affected review. It may revise the design alone before a plan exists, coordinate an initial plan candidate before transfer, or route to the sole live plan after that plan has reached ready. Pending slice generation and its unapproved payload still use Step 6; they are not revisions to approved design material. Never invoke Plan, implementation, or Revise automatically.
 
 ## Artifact compatibility
 

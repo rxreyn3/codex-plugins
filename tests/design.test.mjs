@@ -83,6 +83,14 @@ test("design preserves start, recent-selection, and resumable input modes", () =
   assert.match(skill, /no standalone free-text mode/i);
 });
 
+test("design transfers authority to the first ready plan", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /until its initial implementation plan first reaches `status: ready`/);
+  assert.match(skill, /design becomes immutable provenance/);
+  assert.match(skill, /initial `in-progress` or `in-review` plan that has never reached ready/);
+  assert.match(skill, /route the feedback to that plan and leave the design byte-identical/);
+});
+
 test("design preserves the downstream artifact contract", () => {
   const skill = read(skillPath);
   for (const field of [

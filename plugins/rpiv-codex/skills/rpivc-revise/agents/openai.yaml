@@ -1,6 +1,6 @@
 interface:
   display_name: "RPIV Revise"
-  short_description: "Coordinated design and plan revisions"
+  short_description: "Revise the live design or implementation plan"
 
 policy:
   allow_implicit_invocation: false

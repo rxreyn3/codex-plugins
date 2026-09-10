@@ -58,7 +58,7 @@ test("revise preserves the load-bearing workflow order and edit gate", () => {
   }
   assert.match(skill, /Do not edit until the developer chooses Proceed/);
   assert.match(skill, /successor name is a handoff, not permission to invoke it/i);
-  assert.match(skill, /Never edit product source, a review artifact, or another plan/);
+  assert.match(skill, /Never edit product source, a review artifact, a frozen design, or another plan/);
   assert.match(skill, /Never commit, invoke implementation/);
 });
 
@@ -71,6 +71,23 @@ test("revise preserves standalone input boundaries", () => {
   assert.match(skill, /If a plan path exists but feedback is empty, ask what should change and stop/);
   assert.match(skill, /feedback cites one or more review artifacts[\s\S]*read every distinct review completely/i);
   assert.match(skill, /No entries:[\s\S]*\.rpiv\/artifacts\/plans\//);
+});
+
+test("revise selects one live authority after plan materialization", () => {
+  const skill = read(skillPath);
+  const lifecycle = read(join(skillRoot, "references/design-revisions.md"));
+  const reviewer = read(join(skillRoot, "references/revision-reviewer.md"));
+  assert.match(skill, /Authority transfers from Design to Plan/);
+  assert.match(skill, /For a transferred plan, revise that plan alone/);
+  assert.match(skill, /do not load it by default/);
+  assert.match(skill, /Decision Amendment/);
+  assert.match(lifecycle, /materialized_at.*design_fingerprint/);
+  assert.match(lifecycle, /route the revision to that plan and keep the design byte-identical/);
+  assert.match(lifecycle, /A later `in-review` state does not reactivate the design/);
+  assert.match(lifecycle, /do not read or compare the frozen design by default/);
+  assert.match(lifecycle, /successor Design followed by a successor Plan/);
+  assert.match(reviewer, /do not require frozen design agreement/);
+  assert.match(reviewer, /flag unnecessary design loading or synchronization/);
 });
 
 test("revise expands repeated plan invariants inside one approval proposal", () => {

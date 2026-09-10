@@ -96,6 +96,7 @@ test("plan preserves the downstream artifact schema", () => {
   for (const heading of [
     "## Overview",
     "## Desired End State",
+    "## Accepted Design Decisions",
     "## What We're NOT Doing",
     "## Phase N: {slice name}",
     "## Testing Strategy",
@@ -108,6 +109,16 @@ test("plan preserves the downstream artifact schema", () => {
   }
   assert.match(skill, /files: \[<plain repository-relative paths>\]/);
   assert.match(skill, /depends_on/);
+});
+
+test("plan records the one-time design authority transfer", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /When the plan first reaches `ready`, authority transfers once/);
+  assert.match(skill, /git hash-object -- <design-path>/);
+  assert.match(skill, /design_fingerprint: "git-blob:<hash>"/);
+  assert.match(skill, /materialized_at: <iso>/);
+  assert.match(skill, /A later revision returning the plan to `in-review` does not reactivate design authority/);
+  assert.match(skill, /settled choices, interface constraints, and compact rationale/);
 });
 
 test("plan requires parallel semantically isolated reviewers and persists failures", () => {

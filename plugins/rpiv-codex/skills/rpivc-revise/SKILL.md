@@ -1,11 +1,11 @@
 ---
 name: rpivc-revise
-description: Surgically revise an RPIV plan or design from feedback. Coordinate architectural changes across the linked design and active plan in one proposal; keep execution-only changes plan-local. Preserve progress and decision history, verify current source evidence, and obtain approval before editing artifacts. Do not implement product code.
+description: Surgically revise the current RPIV design or implementation plan from feedback. Coordinate a design and candidate plan only before the plan first becomes ready; afterward revise the plan alone and retain the design as immutable provenance. Preserve progress and decision history, verify source evidence, and obtain approval before editing artifacts. Do not implement product code.
 ---
 
 # RPIV Revise for Codex
 
-Update an existing plan or design from explicit feedback while preserving useful structure, artifact history, and downstream compatibility. Architectural changes revise the design and its active implementation plan together.
+Update an existing plan or design from explicit feedback while preserving useful structure, artifact history, and downstream compatibility. Authority transfers from Design to Plan when the initial plan first reaches `ready`; later changes revise the plan alone.
 
 This port preserves the `revise` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
 
@@ -14,11 +14,11 @@ input -> research only if needed -> proposed edits -> developer approval
       -> surgical artifact update -> affected review and handoff
 ```
 
-This stage edits only the resolved artifact set: one plan, one design without an active plan, or one linked design and active plan. It must not edit a review artifact, change product source, commit, invoke implementation, or start another workflow stage.
+This stage edits only the resolved live artifact set: one design before a plan exists, one design and initial plan candidate before transfer, or one plan after transfer. It must not edit a frozen design, review artifact, product source, commit, invoke implementation, or start another workflow stage.
 
 ## Input
 
-The existing invocation remains `$rpivc-revise <plan-path> <feedback>`. Also accept `$rpivc-revise <design-path> <feedback>` for a design revision, resolving its active plan before proposing edits. No separate Design revision task or Plan regeneration is required. For a plan input, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
+The existing invocation remains `$rpivc-revise <plan-path> <feedback>`. Also accept `$rpivc-revise <design-path> <feedback>` and resolve its lifecycle before proposing edits. A design with a transferred child plan routes to that plan; the design path remains provenance, not an edit target. For a plan input, for example `$rpivc-revise .rpiv/artifacts/plans/2026-08-30_09-00-00_feature.md "Split Phase 2 into backend and frontend phases"`.
 
 Feedback may cite one or more review artifacts. Read every distinct cited review completely and synthesize its findings into the feedback set before proposing changes. A review path is evidence, never the revision target.
 
@@ -73,7 +73,7 @@ Follow every numbered step in order.
 
 ### 1. Resolve the plan and feedback
 
-Parse the first artifact path as the target and the remaining text as feedback. A design path must be under `.rpiv/artifacts/designs/`; read [Design revisions](references/design-revisions.md), resolve its artifact set, then continue at Step 2. For a plan path, follow the resolution below. If feedback is empty for either input, ask what should change and stop.
+Parse the first artifact path as the target and the remaining text as feedback. Read [Design lifecycle](references/design-revisions.md) for every design input and every plan with a design `parent`; resolve the live target and authority boundary, then continue at Step 2. If feedback is empty for either input, ask what should change and stop.
 
 If the supplied positional path is under `.rpiv/artifacts/reviews/`, reply with this adapted guard and stop:
 
@@ -116,17 +116,17 @@ The consistency cone is not a general plan audit and does not authorize edits. I
 
 #### Classify ownership before proposing edits
 
-The design is authoritative for intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes. The plan is authoritative for execution progress, operational commands, and verification records. Current repository source is evidence of what is implemented; artifact code fences describe intent.
+Before transfer, the design is authoritative for intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes; the initial plan candidate owns execution detail. After the plan first reaches ready, that plan is the sole current specification for both intent and execution, while its design parent is immutable provenance. Current repository source is evidence of what is implemented; artifact code fences describe intent.
 
-For a plan with a design `parent`, inspect that design's relevant decisions, Architecture entries, and slice criteria to distinguish execution details from design changes. Do not follow unrelated upstream artifact chains. Changed behavior, responsibilities, interfaces, slice boundaries, or acceptance outcomes require [Design revisions](references/design-revisions.md) and one coordinated proposal. A concrete command correction or verification method that preserves the intended outcome can stay plan-only. Resolve uncertain ownership from the linked design and source before choosing the mode.
+For a pre-transfer plan candidate, changed behavior, responsibilities, interfaces, slice boundaries, or acceptance outcomes require one coordinated proposal for the design and candidate plan. For a transferred plan, revise that plan alone. Read the frozen design only when a specific rationale or provenance dispute is material, and then read only the relevant sections; do not load it by default or treat it as current authority. Resolve uncertain lifecycle or ownership before choosing the mode.
 
-A standalone plan without a design parent retains the existing plan-only workflow, including architectural feedback within that plan. Do not invent a design or imply that a missing design was synchronized. A declared but missing or conflicting design link requires resolution before an architectural edit.
+A standalone plan without a design parent retains the plan-only workflow, including architectural feedback within that plan. Do not invent a design. A declared but missing or conflicting design link requires resolution only when it prevents establishing the current authority or understanding the requested change.
 
 #### Keep affected current instructions consistent
 
 Apply this rule in every revision mode, including plan-only changes to commands or verification methods. Reconcile affected current instructions, implementation claims, and status summaries with verified source and dated evidence. Include repeated affected claims in the consistency scan and proposed edits even when the feedback did not quote them. Source proves implementation, not runtime acceptance; a recorded result establishes only its stated conditions. Preserve valid checkmarks and dated history, but update superseded claims presented as current guidance. Do not infer completion from a new narrative or audit unrelated work.
 
-For a linked pair, distinguish the requested change from inherited design/plan disagreement encountered in this bounded scan. If that disagreement changes the meaning or feasibility of the requested revision, include its resolution in the proposal, using coordinated mode when design intent must change; resolve any material uncertainty before editing. Otherwise leave it outside the edit scope and briefly identify it in the proposal, new Follow-up, and completion report. Do not imply that the whole pair is synchronized, add a blanket plan-overrides-design claim, or block an independent plan-only correction merely to repair older disagreement. These consistency repairs belong in the same proposal and approval as the requested change.
+For a transferred plan, differences from its frozen design are historical unless a provenance question makes them relevant. Do not scan the design for agreement, synchronize the pair, or describe drift from frozen content as a defect. Keep the plan internally current. For a pre-transfer candidate pair, resolve affected disagreement before transfer without auditing unrelated content.
 
 ### 2. Research only when needed
 
@@ -155,7 +155,7 @@ After the roles finish:
 
 ### 3. Present the proposed revision and gate the edit
 
-For design or coordinated mode, extend this same proposal with the exact artifact paths, design edits, corresponding plan edits, preserved progress, and invalidated checks described in Design revisions. Use one approval decision for the whole set. Existing explicit authorization for that concrete proposal remains valid across turns.
+For design-only or pre-transfer coordinated mode, extend this proposal with the exact artifact paths and lifecycle details described in Design lifecycle. For a transferred plan change, name the frozen design fingerprint when present, whether its rationale was consulted, and the plan sections, progress, and checks affected. Use one approval decision for the whole set. Existing explicit authorization for that concrete proposal remains valid across turns.
 
 Before editing, present:
 
@@ -191,7 +191,7 @@ Use native structured input when available. If unavailable or unsuccessful, use 
 
 ### 4. Update the plan surgically
 
-In design or coordinated mode, apply the approved artifact set using the additional update and review rules in Design revisions. The plan rules below still apply when a plan is present; the design reference governs readiness for that mode.
+In design-only or pre-transfer coordinated mode, apply the approved artifact set using Design lifecycle. For a material change to a transferred plan's behavior, architecture, interfaces, phase boundaries, or acceptance outcomes, append `## Decision Amendment {ISO 8601 timestamp}` recording the old intent, new intent, rationale and evidence, affected phases, and reopened checks. Preserve the frozen design and its recorded fingerprint.
 
 Use the available patch or edit mechanism against the existing plan. Never overwrite the full file to make a local change.
 
@@ -201,7 +201,7 @@ Apply only the approved modifications:
 - apply every analogous correction explicitly listed in the approved proposal, across all affected phases;
 - keep new file references accurate and measurable;
 - update `## What We're NOT Doing` when scope changes;
-- update the implementation approach or decision section when the approach changes;
+- update the implementation approach or current decision section when the approach changes;
 - preserve separate `#### Automated Verification:` and `#### Manual Verification:` subsections;
 - use the project's actual commands for new automated criteria;
 - keep the existing `status` unless the approved feedback explicitly changes it.
@@ -233,12 +233,12 @@ After editing, re-read the complete plan and verify:
 2. phase numbering, headings, and any `phases:` array agree;
 3. changed work is unchecked where required;
 4. automated and manual success criteria remain distinct and measurable;
-5. affected current instructions and status summaries agree with verified evidence and revised criteria; unresolved questions, placeholders, or contradictions within the approved scope are resolved, and inherited disagreement left outside scope is disclosed;
+5. affected current instructions and status summaries agree with verified evidence and revised criteria, with no unresolved question, placeholder, or contradiction inside the approved live scope;
 6. no product source or artifact outside the approved set changed.
 
 ### 5. Report the update and stop
 
-For design or coordinated mode, use the completion rules in Design revisions and stop. For plan-only mode, render the completion report as ordinary Markdown:
+For design-only or pre-transfer coordinated mode, use the completion rules in Design lifecycle and stop. For a transferred plan, report the plan as the sole current specification, link any Decision Amendment, and state whether frozen Design rationale was consulted. Otherwise render the plan-only completion report as ordinary Markdown:
 
 ````markdown
 Plan updated at:
@@ -271,7 +271,7 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 
 ## Non-negotiable boundaries
 
-- Update only the resolved artifact set; at most one design and one active plan per invocation.
+- Update only the resolved live artifact set: a design, a pre-transfer design and candidate plan, or a transferred plan.
 - Read the complete plan and every referenced review artifact before proposing edits.
 - Research only the new technical surface the feedback introduces.
 - Resolve every material question before editing.
@@ -280,5 +280,5 @@ If no single affected phase can be named, use the full-plan handoff without a ph
 - Make surgical edits; never rewrite the plan wholesale.
 - Reopen affected checked work and synchronize phase frontmatter.
 - Preserve prior Follow-up history and append one new timestamped section.
-- Never edit product source, a review artifact, or another plan outside the resolved pair.
+- Never edit product source, a review artifact, a frozen design, or another plan outside the resolved live set.
 - Never commit, invoke implementation, push, publish, or begin another workflow stage.

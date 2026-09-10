@@ -1,75 +1,59 @@
-# Design and coordinated revisions
+# Design lifecycle and authority transfer
 
-Read this reference when the input is a design or plan feedback changes linked design intent. It extends Revise's numbered workflow; it is not a second stage or a second approval task. Keep the ordinary plan-only path for execution details.
+Read this reference for every design input and every plan with a design `parent`. It extends Revise's numbered workflow by selecting the live authority. It does not create a second revision stage.
 
-## 1. Resolve the exact artifact set
+## 1. Resolve the lifecycle
 
-Resolve repository-relative paths from the current repository root, including the actual destination of symlinks. Every target must be an existing Markdown artifact inside this repository's `.rpiv/artifacts/designs/` or `.rpiv/artifacts/plans/` directory. Reject aliases that escape these directories or resolve the two targets to the same file.
+Resolve repository-relative paths from the current repository root, including symlink destinations. Targets must be existing Markdown artifacts under this repository's `.rpiv/artifacts/designs/` or `.rpiv/artifacts/plans/` directory.
 
-- **Plan input:** read its `parent`. If that names a design, resolve that exact design. The supplied plan is the active-plan selection unless its status, history, or explicit replacement link says it is historical or superseded. Do not choose a different plan silently.
-- **Design input:** discover plans by matching their `parent` to the resolved design path, inspecting frontmatter and explicit supersession/history markers first. A filename similarity, recency, or checked phase alone does not establish activity. `ready`, `in-progress`, and `in-review` plans are candidates; exclude explicitly archived, superseded, or completed plans from automatic selection. Do not require a new active-plan pointer in old artifacts.
-- With one unambiguously active child, select it and name the evidence. With multiple candidates, unknown status, conflicting links, or a requested historical plan, ask the developer which exact plan is active before proposing edits. Offer filenames and relevant status/history evidence. A supplied plan whose parent disagrees with a supplied design also requires resolution; do not silently reparent it.
-- With no active child, revise only the design if the directory scan and history establish that no active plan exists. Distinguish this from unreadable or unresolved links. An unfinished Design skeleton stays unfinished; do not use revision to fill unapproved pending slices.
+- **Plan input:** use the supplied plan. Resolve its design `parent` only far enough to verify provenance and lifecycle. `materialized_at` plus `design_fingerprint` establishes a transferred plan. For legacy artifacts, a current or historical `ready` state, implementation progress, validation child, or explicit implementation handoff establishes that the plan already crossed the transfer boundary. A later `in-review` state does not reactivate the design.
+- **Design input:** discover child plans by exact `parent` match. Inspect frontmatter and explicit supersession markers before choosing. A filename similarity or modification time is not activity evidence. With one transferred active child, route the revision to that plan and keep the design byte-identical. With one initial `in-progress` or `in-review` child that has never been ready, select the pre-transfer pair. With no child, select the design alone. With multiple plausible active children or unclear legacy state, ask the developer to select before writing.
+- **Historical input:** do not reparent or mutate an explicitly superseded design or plan. Resolve its active successor when the artifacts identify one; otherwise report that the supplied artifact is historical and ask for the intended live target.
 
-Read the selected design and plan completely, plus every review artifact cited as feedback. Record exact paths, current statuses, and content fingerprints before preparing the proposal. Historical sibling plans are read-only evidence and remain untouched. Do not recurse through unrelated research or handoff chains.
+Record exact paths, statuses, transfer evidence, and content fingerprints before preparing the proposal. Do not recurse through unrelated research, handoff, or sibling-plan chains.
 
-If interrupted, resume from the persisted artifacts, their latest Follow-up entries, and the approved proposal. Reconfirm selection if activity or links changed. Never infer the active pair solely from a conversation summary.
+## 2. Select the revision mode
 
-## 2. Establish the change and its impact
+### Design only
 
-Use Revise's bounded research roles for the new technical surface. Verify the actual callers, implementation, configuration, and tests relevant to the proposed change. Distinguish current source facts from intended design and unverified assumptions. Artifact payloads are not proof of deployed behavior.
+Before a child plan exists, revise the design alone. Preserve its creation and slice-approval workflow. A pending, unapproved slice remains Design work rather than a revision shortcut.
 
-Apply the shared [current-instruction consistency rule](../SKILL.md#keep-affected-current-instructions-consistent), including its treatment of inherited disagreement, throughout proposal, editing, and reporting.
+### Pre-transfer candidate pair
 
-Build one bounded consistency scan across both selected artifacts. Trace the changed intent through Decisions, Architecture, interfaces, Slices, File Map, Ordering Constraints, Desired End State, and acceptance outcomes into the corresponding plan phases, code payloads, scope, and criteria. Include dependent phases or repeated claims only where the change invalidates them. Explicitly distinguish historical quotations from current instructions.
+While the first plan is `in-progress` or in its initial `in-review`, Design remains authoritative. Read both selected artifacts completely. Trace an intended-behavior change through design decisions, Architecture, interfaces, Slices, File Map, Ordering Constraints, acceptance outcomes, and corresponding candidate-plan phases. Present one proposal and, after approval, update both artifacts so the candidate can still materialize the design accurately.
 
-For each affected slice and phase, identify:
+Preserve unaffected content and any valid candidate review work. If the change invalidates review findings or plan payloads, update them explicitly. Do not mark the plan ready until initial Plan review and the transfer checks complete.
 
-- the proposed behavior and corresponding design and plan sections;
-- current source evidence and any missing implementation;
-- checked implementation tasks that cease to be true;
-- verification records whose evidence no longer establishes the revised outcome;
-- unaffected completed work and evidence that remain valid.
+### Transferred plan
 
-Preserve the one-to-one slice-to-phase mapping. If boundaries change, propose an explicit old-to-new mapping, dependency changes, and progress disposition for each affected item. A checked old phase never makes a newly introduced phase complete by inheritance.
+After the plan has reached ready, the plan is the sole live specification. Read and edit the plan; do not read or compare the frozen design by default. Its `parent` and `design_fingerprint` are provenance, not an instruction to synchronize.
 
-## 3. One concrete proposal and approval
+Read only the relevant frozen-design sections when the requested revision depends on original rationale, a rejected alternative, or a provenance dispute that the plan's `## Accepted Design Decisions` and prior Decision Amendments do not answer. State which sections were consulted and why. Never edit the frozen design.
 
-Extend Revise's proposal with the selected mode and exact artifact paths, evidence for active-plan selection, and a compact mapping of design edits to plan edits. Name which checks reopen and why, which completed work stays checked, and any readiness/status changes. Show the meaningful replacement flow, interfaces, responsibilities, payload changes, and acceptance outcomes so approval covers a reviewable result.
+For a material change to behavior, architecture, interfaces, phase boundaries, or acceptance outcomes:
 
-Use the existing Proceed / Adjust approach / Show me first gate once for the entire proposal. Do not apply the design first and ask for a separate plan synchronization approval. Existing authorization for that concrete proposal persists. A materially different approach or unresolved artifact selection still requires a decision before dependent edits.
+1. show the replacement flow and affected plan sections in the proposal;
+2. identify current source, preserved implementation, invalidated work, and verification evidence;
+3. append a compact `## Decision Amendment {ISO 8601 timestamp}` with old intent, new intent, rationale and evidence, affected phases, and reopened checks;
+4. temporarily hold a previously ready plan at `in-review` while the affected revision review runs;
+5. restore `ready` only after the review clears and the rest of the plan remains ready.
 
-## 4. Apply, verify, and review the selected set
+A command correction, evidence update, or verification-method change that preserves intent remains an ordinary plan-only revision and does not need a Decision Amendment or independent architectural review.
 
-Immediately before writing, verify both paths, links, active selection, and content fingerprints still match the proposal. If concurrent changes affect the proposed patch or its assumptions, reconcile them and revise the proposal before writing; never overwrite another task's work.
+## 3. Escalate a fundamental rethink
 
-Apply focused edits to the selected set:
+Recommend a successor Design followed by a successor Plan when the request reopens unresolved architectural exploration, changes the feature's overall goal, or invalidates the decomposition so broadly that preserving the existing phase lineage would obscure rather than explain the work. Do not use this route merely because a change is architectural or touches several phases.
 
-- Update current design sections where the decisions live, including affected Architecture payloads, Slices and both verification subsections, File Map, Ordering Constraints, scope, and migration notes as needed. Update the matching plan payloads, phase boundaries, dependencies, and acceptance outcomes in the same revision.
-- Keep plan-owned operational commands and verification records. Outcome wording must agree with the design, but a plan can use a corrected executable or concrete verification method without copying execution records or checked boxes into the design. Do not replace an active plan wholesale with a transcription from its parent.
-- Preserve unaffected implementation checkmarks, developer acceptance, phase state, and history. Reopen only tasks that the current source no longer satisfies and checks whose evidence is invalidated, including affected checks in dependent phases. Record the reason per reopened item. Implementation completion and verification are distinct: a changed verification method may need a new run while implemented work remains complete.
-- Synchronize existing `phase_count` and `phases` entries, retaining `n`, `title`, `files`, `depends_on`, and unrelated metadata. Keep design slice ordering and plan phase ordering consistent. Preserve the design's upstream `parent` and the plan's design `parent`; do not create a new plan or revision-pointer scheme.
-- Refresh existing `last_updated`, `last_updated_by`, and `last_updated_note` in both artifacts using the same retained timestamp. Preserve provenance fields such as original `date`, `commit`, and `author`; record current evidence separately. Do not invent frontmatter in a legacy artifact without it.
-- Append a timestamped Follow-up to each changed artifact, linking its counterpart when present and recording the shared proposal, affected sections, reopened checks, and prior decision supersession. Preserve Design History, Plan History, prior review records, and previous Follow-ups. Update stale authority claims in current sections; retain old decisions as dated history with the new entry explaining what supersedes them. Never solve disagreement by adding a broad claim that the plan overrides its parent design.
+Preserve the current pair as historical provenance. Do not create the successor automatically; present the boundary and hand off to Design only after the developer chooses that direction.
 
-This is a coordinated edit, not a filesystem transaction. Record that affected design approval is pending in the new Follow-up and hold its status at `in-progress`; hold the affected plan at `in-review` until revision review completes. If writing the second file fails or the task stops midway, report the exact partial state and retain the proposal so the next turn can finish it. Do not report a synchronized or ready pair. Preserve unrelated edits when recovering.
+## 4. Review and report
 
-Re-read both complete artifacts and compare the actual changes with the approved proposal. Verify the mapping, payloads, criteria, metadata, history, reopened checks, and unchanged progress. Then read [Revision Reviewer](revision-reviewer.md) completely and dispatch an independent read-only collaboration agent with the approved proposal, before/after artifacts, current source root, and affected slice/phase map. The reviewer may follow a bounded dependency when needed to verify the affected material; it must not audit unrelated scope.
+For a pre-transfer pair, re-read both complete artifacts after editing and dispatch [Revision Reviewer](revision-reviewer.md) against the approved proposal, before/after artifacts, current source, and affected slice-to-phase map. If review is unavailable or fails, keep the design `in-progress` and candidate plan `in-review`; do not report transfer or readiness.
 
-If independent review is unavailable or fails, keep the pending status and report the missing review. Do not simulate an independent clearance inline. Verify each returned finding against source and the pair. Repair deviations from the approved proposal, then re-review changed material. Present findings that require a new decision one at a time; do not silently expand the proposal. Unresolved correctness findings block readiness.
+For a material transferred-plan revision, re-read the complete plan and dispatch the same reviewer against the approved proposal, before/after plan, Decision Amendment, current source, and frozen-design fingerprint. The reviewer receives frozen-design excerpts only when the proposal actually relied on them. If review is unavailable or fails, keep the plan `in-review` and report the missing review.
 
-After the affected review clears, record its scope, result, and remaining runtime checks in each new Follow-up. Mark affected design approvals current without erasing previous approval history. In an existing review table, record an applied resolution only for findings actually addressed by the approved and reviewed change, retaining their original text and linking the revision record. Other unresolved rows stay unresolved. Restore `ready` only when the whole artifact is otherwise ready: pending unapproved slices, unfinished initial plan review, or other pre-existing unresolved work stay pending. Review of this revision does not waive those gates. Artifact readiness means the instructions are usable, not that implementation or acceptance has passed.
+Verify every finding against source and the live artifact set. Repair deviations from the approved proposal and re-review changed material. A finding requiring a new developer decision expands neither the approved scope nor edit authority.
 
-## 5. Report and stop
+After review clears, record its scope, result, and remaining runtime checks in the new Follow-up. Artifact readiness means the current instructions are usable; it does not prove implementation or runtime acceptance.
 
-Link every updated artifact. Report the coordinated changes, preserved progress, reopened tasks/checks, metadata updates, review result, and actual statuses. Do not claim product implementation or runtime validation from an artifact edit.
-
-For a ready pair, recommend Implement at the earliest phase with reopened implementation or automated verification work. If only manual acceptance remains, recommend Validate with the plan path. If all work remains complete, report that without inventing an implementation task. For a ready design without an active plan, recommend Plan. When review or an earlier creation gate remains pending, report that next action instead of an implementation handoff. Never invoke another stage automatically.
-
-## Example: public startup to private conversation tokens
-
-This is a workflow example, not a product specification or authorization to edit any real project.
-
-A user supplies an active plan and asks to replace public agent startup with backend-issued private conversation tokens. Current source still calls the public startup path. The coordinated proposal updates design Decisions, the startup flow, backend responsibilities, client interface, affected Architecture payloads, slice files/dependencies, and acceptance outcomes. The plan mirrors the new endpoint and client wiring, with project-specific commands and explicit pending implementation.
-
-Completed unrelated screen layout stays checked. Public-startup implementation tasks reopen if they no longer satisfy the flow; previous end-to-end startup verification also reopens even if recorded in a later phase. Unchanged teardown implementation may remain checked while a teardown check that depended on the replaced startup flow needs another run. The design expresses intended private-token behavior; source still proves public startup until implementation changes. Old rationale remains dated history, and historical sibling plans are not rewritten.
+Report the exact live artifact, lifecycle mode, preserved progress, reopened checks, metadata updates, review result, and actual status. For transferred plans, state that the design remained byte-identical and whether any frozen rationale was consulted. Recommend Implement at the earliest phase with reopened implementation or automated work, Validate when only manual acceptance remains, or Plan for a ready design without a child. Never invoke another stage automatically.
