@@ -129,11 +129,11 @@ test("blueprint checkpoint options explain their consequences in plain language"
   assert.match(skill, /lettered prose choice format, permit another written answer/);
   assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
   assert.match(skill, /Never render a finite prose fallback as unlettered bullets/);
-  assert.match(skill, /A\. Follow \{pattern\}.*B\. Moving off \{pattern\}/);
-  assert.match(skill, /A\. Proceed \(Recommended\).*B\. Adjust decisions.*C\. Change scope/);
-  assert.match(skill, /A\. Approve \(Recommended\).*B\. Adjust slices.*C\. Change scope/);
+  assert.match(skill, /`Follow \{pattern\}` first and `Moving off \{pattern\}` second/);
+  assert.match(skill, /Keep `\(Recommended\)` inside the bold label/);
+  assert.match(skill, /Omit the dash and consequence when the label is already self-explanatory/);
   assert.match(skill, /preserve that order as `A\.` through `D\.`/);
-  assert.match(skill, /A\. Apply.*B\. Defer.*C\. Dismiss/);
+  assert.match(skill, /with `Apply`, `Defer`, and `Dismiss` in that order/);
 });
 
 test("blueprint asks one question at a time and uses present-tense triage actions", () => {
@@ -147,10 +147,10 @@ test("blueprint asks one question at a time and uses present-tense triage action
   assert.doesNotMatch(skill, /Independent questions may be batched/);
 });
 
-test("blueprint emits relative Markdown links and preserves structural paths", () => {
+test("blueprint separates Desktop chat, artifact, and structural links", () => {
   const skill = read(skillPath);
   const reviewer = read(join(skillRoot, "references/artifact-code-reviewer.md"));
-  assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
+  assert.match(skill, /\[descriptive label — lines 42–55\]\(\/absolute\/repository\/backend\/path\/to\/file\.py:42\)/);
   assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
   assert.match(skill, /keep `#### N\. path`, `\*\*File\*\*: path`/);
   assert.match(reviewer, /\[path\/to\/orders\.ts:55\]\(path\/to\/orders\.ts#L55\)/);

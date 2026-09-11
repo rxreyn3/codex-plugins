@@ -66,11 +66,12 @@ test("the Feature Requirements Document template keeps its compatibility skeleto
   }
 });
 
-test("discover renders human-facing references as relative Markdown links", () => {
+test("discover separates Desktop chat, document, and structural links", () => {
   const skill = read(skillPath);
   const template = read(join(skillRoot, "references/frd-template.md"));
 
-  assert.match(skill, /\[Orders service — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders service — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
+  assert.match(skill, /\[Orders service — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /Keep invocation arguments, frontmatter values, filenames, and other parser-consumed fields as plain repository-relative paths/);
   assert.match(template, /\[descriptive label — line N\]\(path\/to\/file\.ext#LN\)/);
 });

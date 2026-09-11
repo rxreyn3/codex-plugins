@@ -137,12 +137,12 @@ test("revise preserves plan state, phase metadata, and append-only history", () 
   assert.match(skill, /preserve separate `#### Automated Verification:` and `#### Manual Verification:` subsections/);
 });
 
-test("revise emits relative Markdown evidence and preserves structural paths", () => {
+test("revise separates Desktop chat, artifact, and structural links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /preserve frontmatter paths, `files:` values, phase headings/);
-  assert.match(skill, /Never add a machine-specific absolute companion path/);
+  assert.match(skill, /Never write an absolute machine path into the plan/);
 });
 
 test("now keeps the source timestamp and slug contract", () => {

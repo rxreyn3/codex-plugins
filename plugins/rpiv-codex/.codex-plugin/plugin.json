@@ -33,6 +33,9 @@
       "Read",
       "Write"
     ],
+    "brandColor": "#6547E8",
+    "composerIcon": "./assets/rpiv-codex-composer.png",
+    "logo": "./assets/rpiv-codex-logo.png",
     "defaultPrompt": [
       "Use $rpivc-discover to define a feature before implementation.",
       "Use $rpivc-research to investigate a codebase area before design.",

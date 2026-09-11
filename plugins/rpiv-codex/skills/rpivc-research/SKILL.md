@@ -41,17 +41,20 @@ The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The
 
 ## Navigable file references
 
-Keep file evidence usable in both Zed and Codex without making artifacts machine-specific.
+Adapt local file references to the output surface without making artifacts machine-specific.
 
-- **Chat responses and artifact prose:** render verified repository evidence with the same relative Markdown-link form. Use `[descriptive label — line 42](backend/path/to/file.py#L42)` for one line and `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment.
-- Keep every target repository-relative, use a label that names the file or subject and line or range, and never add a machine-specific absolute companion link. Render links as ordinary Markdown, not inside fenced code blocks.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[descriptive label — lines 42–55](/absolute/repository/backend/path/to/file.py:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Human-readable artifact prose:** use repository-relative Markdown links such as `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. Never write an absolute machine path into the artifact.
 - **Structural fields:** preserve plain paths where a downstream parser consumes them. Do not turn frontmatter fields or another skill's load-bearing path fields into links.
 
-Normalize role output into these formats before presenting chat evidence or writing the artifact. A role's raw backticked citation is evidence input, not the final rendering contract.
+Normalize role output separately at the chat boundary and the artifact-writing boundary. A role's raw backticked citation is evidence input, not the final rendering contract.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 

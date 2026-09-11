@@ -36,13 +36,16 @@ If `in_repo: no`, retain the stable fallback values and omit repository-specific
 
 ## File references
 
-- In chat and human-readable handoff prose, render verified repository files as relative Markdown links. Use `[Orders handler — line 42](src/orders.ts#L42)` for one line and `[Orders handler — lines 42–55](src/orders.ts#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment.
-- Keep link targets repository-relative and outside fenced code blocks. Never write the absolute repository root or another machine-specific absolute path into the handoff.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[Orders handler — lines 42–55](/absolute/repository/src/orders.ts:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Human-readable handoff prose:** use repository-relative Markdown links such as `[Orders handler — lines 42–55](src/orders.ts#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. Never write the absolute repository root or another machine-specific path into the handoff.
 - Keep frontmatter fields, filenames, commands, identifiers, and other parser-consumed values as plain text rather than Markdown links.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests.
 
@@ -153,11 +156,11 @@ Save the handoff only after these checks pass.
 
 ### 5. Report and stop
 
-Render the completion report as ordinary Markdown, replacing the example path with the actual repository-relative path:
+Render the completion report as ordinary Markdown, replacing the example target with the actual absolute path in Codex Desktop or the active host's required form elsewhere:
 
 ````markdown
 Handoff written to:
-[Handoff document](.rpiv/artifacts/handoffs/{timestamp}_{description}.md)
+[Handoff document](/absolute/repository/.rpiv/artifacts/handoffs/{timestamp}_{description}.md)
 
 Describe extra context in chat if it should be appended before changing tasks. Re-run Create Handoff only when a new snapshot is needed.
 

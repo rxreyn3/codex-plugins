@@ -48,19 +48,20 @@ The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The
 
 ## Navigable file references
 
-Use one representation for human-facing repository evidence in both chat and the Feature Requirements Document:
+Adapt human-facing repository evidence to its output surface:
 
-- Render a verified line as a repository-relative Markdown link such as `[Orders service — line 42](src/orders.ts#L42)`.
-- Render a verified range as `[Orders service — lines 42–55](src/orders.ts#L42-L55)`.
-- When no verified line exists, link the repository-relative path without a fragment.
-- Use a descriptive label that names the file or subject and line or range. Never add a machine-specific absolute companion link or place the link inside a fenced code block.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[Orders service — lines 42–55](/absolute/repository/src/orders.ts:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Feature Requirements Document prose:** use repository-relative Markdown links such as `[Orders service — lines 42–55](src/orders.ts#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. Never write an absolute machine path into the document.
 - Keep invocation arguments, frontmatter values, filenames, and other parser-consumed fields as plain repository-relative paths.
 
-Normalize raw locator or analyzer `file:line` evidence at this parent boundary before presenting a question or writing the artifact. The raw role result remains evidence input, not the final rendering contract.
+Normalize raw locator or analyzer `file:line` evidence separately at the chat boundary and the artifact-writing boundary. The raw role result remains evidence input, not the final rendering contract.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 
@@ -206,7 +207,7 @@ Render this report as ordinary Markdown without a surrounding code fence:
 
 ````markdown
 Intent captured to:
-[Feature Requirements Document](.rpiv/artifacts/discover/<slug>_<topic>.md)
+[Feature Requirements Document](/absolute/repository/.rpiv/artifacts/discover/<slug>_<topic>.md)
 
 {N} requirements, {M} decisions, {K} open questions.
 

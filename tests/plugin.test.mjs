@@ -31,6 +31,11 @@ test("plugin packaging is valid and every skill is self-contained", () => {
   assert.match(manifest.version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/);
   assert.doesNotMatch(manifest.version, /\+codex\./);
   assert.equal(resolve(pluginRoot, manifest.skills), skillsRoot);
+  assert.equal(manifest.interface.brandColor, "#6547E8");
+  assert.equal(manifest.interface.composerIcon, "./assets/rpiv-codex-composer.png");
+  assert.equal(manifest.interface.logo, "./assets/rpiv-codex-logo.png");
+  assert.ok(existsSync(resolve(pluginRoot, manifest.interface.composerIcon)));
+  assert.ok(existsSync(resolve(pluginRoot, manifest.interface.logo)));
 
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -91,11 +96,30 @@ test("every skill uses the self-contained lettered prose choice contract", () =>
     assert.match(skill, /prefer native structured input without letter prefixes/, skillName);
     assert.match(skill, /render the same options in prose as `A\.` through `D\.`/, skillName);
     assert.match(skill, /Preserve the recommended option first so it becomes `A`/, skillName);
+    assert.match(skill, /`A\. \*\*Label \(Recommended\)\*\* — consequence\.`/, skillName);
+    assert.match(skill, /Keep `\(Recommended\)` inside the bold label/, skillName);
+    assert.match(skill, /Omit the dash and consequence when the label is already self-explanatory/, skillName);
+    assert.doesNotMatch(skill, /\*\*Recommended\.\*\*/, skillName);
     assert.match(skill, /write `Reply with A, B, \.\.\.` using only the letters actually shown/, skillName);
     assert.match(skill, /Add `, or write another answer` only when .* permits a custom response/, skillName);
     assert.match(skill, /Accept an uppercase or lowercase letter, the full option label/, skillName);
     assert.match(skill, /Reset the letters for every new question/, skillName);
     assert.match(skill, /Do not letter open-ended requests/, skillName);
+  }
+});
+
+test("every skill adapts local chat links to the active host", () => {
+  const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  for (const skillName of skillNames) {
+    const skill = read(join(skillsRoot, skillName, "SKILL.md"));
+    assert.match(skill, /Codex Desktop chat and completion reports/, skillName);
+    assert.match(skill, /absolute Markdown (?:link|target)s?/, skillName);
+    assert.match(skill, /starting line/, skillName);
+    assert.match(skill, /Other chat clients/, skillName);
+    assert.match(skill, /active host and repository instructions/, skillName);
   }
 });
 

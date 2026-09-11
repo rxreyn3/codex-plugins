@@ -94,13 +94,13 @@ test("the research template preserves downstream artifact compatibility", () => 
   assert.match(template, /\[another\/file\.ts:NN–MM\]\(another\/file\.ts#LNN-LMM\)/);
 });
 
-test("research asks one developer question per response and emits relative Markdown links", () => {
+test("research asks one developer question and separates chat from artifact links", () => {
   const skill = read(skillPath);
   assert.match(skill, /Ask exactly one developer question per response/);
   assert.doesNotMatch(skill, /independent questions may share one structured-input call/i);
-  assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
+  assert.match(skill, /\[descriptive label — lines 42–55\]\(\/absolute\/repository\/backend\/path\/to\/file\.py:42\)/);
   assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
-  assert.match(skill, /never add a machine-specific absolute companion link/i);
+  assert.match(skill, /Never write an absolute machine path into the artifact/);
   assert.match(skill, /lettered prose choice format, permit another written answer/);
   assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
 });

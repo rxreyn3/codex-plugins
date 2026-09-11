@@ -105,10 +105,9 @@ test("implement routes confirmed plan-owned failures directly to revise", () => 
   assert.doesNotMatch(planOwned, /What should I do about this mismatch\?/);
 });
 
-test("implement keeps plan structure literal and chat references as relative Markdown links", () => {
+test("implement keeps plan structure literal and adapts Desktop chat links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[Orders service — line 42\]\(src\/orders\.ts#L42\)/);
-  assert.match(skill, /\[Orders service — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
+  assert.match(skill, /\[Orders service — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /frontmatter `files:`/);
   assert.match(skill, /plain repository-relative values/);
   assert.match(skill, /Do not convert them to links/);

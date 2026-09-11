@@ -83,13 +83,13 @@ test("create-handoff preserves the load-bearing artifact contract", () => {
   assert.match(skill, /never overwrite an existing handoff/i);
 });
 
-test("create-handoff renders relative Markdown evidence and preserves structural fields", () => {
+test("create-handoff separates Desktop chat, artifact, and structural links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /Keep frontmatter fields, filenames, commands, identifiers/);
   assert.match(skill, /Never write the absolute repository root/);
-  assert.match(skill, /\[Handoff document\]\(\.rpiv\/artifacts\/handoffs\/\{timestamp\}_\{description\}\.md\)/);
+  assert.match(skill, /\[Handoff document\]\(\/absolute\/repository\/\.rpiv\/artifacts\/handoffs\/\{timestamp\}_\{description\}\.md\)/);
 });
 
 test("now preserves the source timestamp and slug contract", () => {

@@ -119,12 +119,12 @@ test("code review preserves artifact structure and adapts human-facing links", (
   for (const field of ["status: ready", "blockers_count:", "severity:", "verification:"]) {
     assert.ok(template.includes(field), field);
   }
-  assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /keep frontmatter values, filenames, finding identifiers, commit hashes, `scope`/);
   assert.match(template, /\[\{descriptive label — line N\}\]\(\{repository-relative-path\}#LN\)/);
   assert.match(skill, /Recommended next step: \*\*Blueprint\*\*/);
-  assert.match(skill, /\[Review artifact\]\(\.rpiv\/artifacts\/reviews\/\{filename\}\.md\)/);
+  assert.match(skill, /\[Review artifact\]\(\/absolute\/repository\/\.rpiv\/artifacts\/reviews\/\{filename\}\.md\)/);
 });
 
 test("review-range resolves folder scopes to tracked files including staged-only files", (t) => {

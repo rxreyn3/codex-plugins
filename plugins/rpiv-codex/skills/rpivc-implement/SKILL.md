@@ -32,13 +32,16 @@ A checkpoint or mismatch may span multiple turns. Resume the current phase after
 
 ## File references
 
-- In chat, render verified repository evidence as relative Markdown links: `[Orders service — line 42](src/orders.ts#L42)` for one line and `[Orders service — lines 42–55](src/orders.ts#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment. Use a descriptive label, never add a machine-specific absolute companion link, and keep the link outside fenced code blocks.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[Orders service — lines 42–55](/absolute/repository/src/orders.ts:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
 - In the plan, preserve parser-consumed fields such as frontmatter `files:`, `#### N. path`, `**File**: path`, phase names, and reconciliation targets as plain repository-relative values. Do not convert them to links or write machine-specific absolute paths into the artifact.
 - Implement normally changes only verification checkboxes and, when required, a reconciliation directive in the current phase. It does not rewrite existing artifact citations.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 
@@ -206,7 +209,7 @@ When single-phase mode completes and a later implementation phase remains, rende
 
 ````markdown
 Phase {N} complete:
-[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
+[Implementation plan](/absolute/repository/.rpiv/artifacts/plans/{filename}.md)
 
 1 phase completed in this run, {M} files changed, {T} tests passing.
 Phase {N} outstanding: none.
@@ -233,7 +236,7 @@ When sequential full-plan mode completes, or single-phase mode completes the fin
 
 ````markdown
 Implementation complete:
-[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
+[Implementation plan](/absolute/repository/.rpiv/artifacts/plans/{filename}.md)
 
 {P} phases completed in this run, {M} files changed, {T} tests passing.
 Implementation phases remaining: none.
@@ -259,7 +262,7 @@ If implementation pauses mid-plan, render this report as ordinary Markdown witho
 
 ````markdown
 Implementation paused at Phase {N}:
-[Implementation plan](.rpiv/artifacts/plans/{filename}.md)
+[Implementation plan](/absolute/repository/.rpiv/artifacts/plans/{filename}.md)
 
 {P} phases completed, {M} files changed, {T} tests passing.
 Outstanding: {unchecked items and blockers}.

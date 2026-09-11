@@ -162,13 +162,13 @@ test("design preserves per-slice approval, persistence, and fresh-task boundarie
   assert.match(skill, /Never invoke or port it automatically/);
 });
 
-test("design emits relative Markdown evidence and preserves structural paths", () => {
+test("design separates Desktop chat, artifact, and structural links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[descriptive label — line 42\]\(backend\/path\/to\/file\.py#L42\)/);
+  assert.match(skill, /\[descriptive label — lines 42–55\]\(\/absolute\/repository\/backend\/path\/to\/file\.py:42\)/);
   assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
   assert.match(skill, /Structural artifact fields/);
   assert.match(skill, /keep frontmatter values, filenames, `\*\*Files\*\*:` values/);
-  assert.match(skill, /never add a machine-specific absolute companion link/);
+  assert.match(skill, /Never write an absolute machine path into the design/);
 });
 
 test("design metadata helpers report the caller repository", (t) => {

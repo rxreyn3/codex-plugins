@@ -49,17 +49,20 @@ The first helper returns `<iso>\t<slug>`. Copy the timezone offset verbatim. The
 
 ## Navigable file references
 
-Keep file evidence usable in both Zed and Codex without making plan artifacts machine-specific.
+Adapt local file references to the output surface without making plan artifacts machine-specific.
 
-- **Chat responses and plan prose:** render verified repository evidence with the same relative Markdown-link form. Use `[descriptive label — line 42](backend/path/to/file.py#L42)` for one line and `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment. This includes Pattern References, precedent links, review-table `codebase-loc` values, and other human-readable evidence.
-- Keep every target repository-relative, use a label that names the file or subject and line or range, and never add a machine-specific absolute companion link. Render links as ordinary Markdown, not inside fenced code blocks.
+- **Codex Desktop chat and completion reports:** resolve the file against the caller's Git root and render an absolute Markdown target ending in the verified starting line, such as `[descriptive label — lines 42–55](/absolute/repository/backend/path/to/file.py:42)`. Keep a range only in the label. When no line is verified, link the absolute path without a line suffix. Wrap a target containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming that either the Codex Desktop or GitHub link form will navigate.
+- **Human-readable plan prose:** use repository-relative Markdown links such as `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. This includes Pattern References, precedent links, review-table `codebase-loc` values, and other human-readable evidence. Never write an absolute machine path into the plan.
 - **Structural plan fields:** keep `#### N. path`, `**File**: path`, frontmatter `files:`, and other parser-consumed fields as plain repository-relative paths. Do not turn them into links.
 
-Normalize role output into these formats before presenting checkpoints or writing the artifact. A role's raw citation is evidence input, not the final rendering contract.
+Normalize role output separately at the chat boundary and the artifact-writing boundary. A role's raw citation is evidence input, not the final rendering contract.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 
@@ -186,7 +189,7 @@ Offer both options with concrete consequences:
 - `Follow {pattern}` — explain which existing components keep their current responsibility and what narrow surface the plan adds or extends.
 - `Moving off {pattern}` — explain which responsibility or abstraction would be consolidated, replaced, or newly shared, and why that makes the plan materially larger or different.
 
-For the prose fallback, render those same options as `A. Follow {pattern}` and `B. Moving off {pattern}`, then write `Reply with A or B, or write another answer.` Do not emit the two options as unlettered bullets.
+For the prose fallback, use the choice response format with `Follow {pattern}` first and `Moving off {pattern}` second, then write `Reply with A or B, or write another answer.` Do not emit the two options as unlettered bullets.
 
 Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity.
 
@@ -213,7 +216,7 @@ Scope: {included} | Not building: {excluded}
 Files: {N} new, {M} modified
 ```
 
-Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. In the prose fallback, render them as `A. Proceed (Recommended)`, `B. Adjust decisions`, and `C. Change scope`, followed by `Reply with A, B, or C.` Wait for explicit Proceed.
+Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Use the lettered prose choice format when necessary and wait for explicit Proceed.
 
 ### 5. Decompose the feature and create the skeleton
 
@@ -229,7 +232,7 @@ Slice 1: {name} — {end-to-end outcome}
   Depends on: nothing
 ```
 
-Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. In the prose fallback, render them as `A. Approve (Recommended)`, `B. Adjust slices`, and `C. Change scope`, followed by `Reply with A, B, or C.` Wait for approval.
+Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Use the lettered prose choice format when necessary and wait for approval.
 
 Immediately after approval, create exactly one skeleton artifact at:
 
@@ -422,9 +425,9 @@ Do not auto-apply reviewer findings. Present counts for blockers, concerns, and 
 
 Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise use the lettered prose choice format without a custom-answer suffix and stop. Every row must receive a resolution.
 
-For the prose fallback, render `A. Apply`, `B. Defer`, and `C. Dismiss`, each with its existing consequence description, then write `Reply with A, B, or C.`
+For the prose fallback, use the choice response format with `Apply`, `Defer`, and `Dismiss` in that order and their existing consequence descriptions, then write `Reply with A, B, or C.`
 
-After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact path as a repository-relative Markdown link without a fragment, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
+After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact using the active chat-surface link format, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 
 ````markdown
 Recommended next step: **Implement**

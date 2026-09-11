@@ -73,16 +73,16 @@ test("validate preserves standalone failure attribution, risk, and blocker adjud
   assert.match(skill, /These are the remediation stage's only structured handles/);
 });
 
-test("validate uses relative Markdown evidence and literal structural paths", () => {
+test("validate separates Desktop chat, report, and structural links", () => {
   const skill = read(skillPath);
   const template = read(templatePath);
-  for (const contents of [skill, template]) {
-    assert.match(contents, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)|\[Descriptive evidence — line 42\]\(src\/example\.ts#L42\)/);
-    assert.match(contents, /#L42-L55/);
-  }
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
+  assert.match(template, /\[Descriptive evidence — line 42\]\(src\/example\.ts#L42\)/);
+  assert.match(template, /#L42-L55/);
   assert.match(skill, /preserve the report's `parent`, `blockers\[\]\.file`/);
   assert.match(skill, /plain repository-relative values/);
-  assert.match(skill, /Never add a machine-specific absolute companion path/);
+  assert.match(skill, /Never write an absolute machine path into the report/);
 });
 
 test("now keeps the source timestamp and slug contract", () => {

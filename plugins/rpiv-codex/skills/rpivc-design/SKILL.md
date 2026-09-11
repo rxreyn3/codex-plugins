@@ -54,15 +54,18 @@ The first helper returns `<iso>\t<slug>` without a trailing newline. Copy the ti
 
 Preserve the meaning of source evidence while adapting its representation to the output surface:
 
-- **Chat responses and human-readable design prose:** render verified repository evidence as relative Markdown links. Use `[descriptive label — line 42](backend/path/to/file.py#L42)` for one line and `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment.
-- Keep every target repository-relative, use a descriptive label, and never add a machine-specific absolute companion link. Render links as ordinary Markdown, not inside fenced code blocks.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[descriptive label — lines 42–55](/absolute/repository/backend/path/to/file.py:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Human-readable design prose:** use repository-relative Markdown links such as `[descriptive label — lines 42–55](backend/path/to/file.py#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. Never write an absolute machine path into the design.
 - **Structural artifact fields:** keep frontmatter values, filenames, `**Files**:` values, Architecture headings, File Map paths, and other parser-consumed fields as plain repository-relative paths.
 
-Normalize every role's raw `file:line` output at the parent boundary before presenting it or writing human-readable artifact prose.
+Normalize every role's raw `file:line` output separately at the chat boundary and the artifact-writing boundary.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a path, correction, or required free text.
 
@@ -399,7 +402,7 @@ After every slice is approved:
 
 ### 8. Present the design artifact
 
-Report the artifact as a repository-relative Markdown link, the fixed-decision count, new and modified file counts, slice count, and generation revision count. State that Success Criteria were authored with each slice and independently verified before lock.
+Report the artifact using the active chat-surface link format, the fixed-decision count, new and modified file counts, slice count, and generation revision count. State that Success Criteria were authored with each slice and independently verified before lock.
 
 Invite review of the architecture, code shape, missing integration points, and edge cases. Explain that Revise updates this artifact before authority transfer, but routes later feedback into the ready plan while retaining this design as immutable provenance. If evidence is materially stale, establish the missing research before proposing a revision; do not silently abandon the active plan or its progress.
 

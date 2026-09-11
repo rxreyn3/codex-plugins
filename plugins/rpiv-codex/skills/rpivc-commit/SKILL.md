@@ -38,11 +38,15 @@ The recent-subjects block may be empty in a repository with no commits.
 
 ## File references
 
-When presenting a commit plan, render each in-scope file as a repository-relative Markdown link, such as `[src/orders.ts](src/orders.ts)`. Keep Git commands and helper output as plain repository-relative paths. Never add a machine-specific absolute companion path.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and render each in-scope file as an absolute Markdown link, such as `[src/orders.ts](/absolute/repository/src/orders.ts)`. For verified lines, end the target in the starting line and keep any range only in the label. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Structural values:** keep Git commands and helper output as plain repository-relative paths.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
 

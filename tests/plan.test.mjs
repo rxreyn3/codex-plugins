@@ -160,20 +160,18 @@ test("plan preserves developer-owned one-at-a-time triage", () => {
   assert.match(skill, /`Apply` —/);
   assert.match(skill, /`Defer` —/);
   assert.match(skill, /`Dismiss` —/);
-  assert.match(skill, /A\. Apply/);
-  assert.match(skill, /B\. Defer/);
-  assert.match(skill, /C\. Dismiss/);
+  assert.match(skill, /with those labels in that order and their consequences/);
   assert.match(skill, /After every finding has a resolution, rebuild `phase_count` and `phases:`/);
   assert.match(skill, /`status: in-review` to `status: ready`/);
 });
 
-test("plan emits relative Markdown evidence and preserves structural paths", () => {
+test("plan separates Desktop chat, artifact, and structural links", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
   assert.match(skill, /Structural plan fields/);
   assert.match(skill, /keep frontmatter values, `files:` entries/);
-  assert.match(skill, /Never add a machine-specific absolute companion path/);
+  assert.match(skill, /Never write an absolute machine path into the plan/);
 });
 
 test("plan hands a ready artifact to Implement without invoking it", () => {

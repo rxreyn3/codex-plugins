@@ -49,13 +49,17 @@ The first helper returns `<iso>\t<slug>` without a trailing newline. Copy the ti
 
 ## File references
 
-- **Chat and human-readable plan prose:** render verified repository evidence as relative Markdown links. Use `[Orders handler — line 42](src/orders.ts#L42)` for one line and `[Orders handler — lines 42–55](src/orders.ts#L42-L55)` for a range. When no verified line exists, link the repository-relative path without a fragment. Never add a machine-specific absolute companion path.
+- **Codex Desktop chat and completion reports:** resolve local files against the caller's Git root and use absolute Markdown targets ending in the verified starting line, such as `[Orders handler — lines 42–55](/absolute/repository/src/orders.ts:42)`. Keep ranges only in labels. When no line is verified, link the absolute path without a suffix. Wrap targets containing spaces in angle brackets.
+- **Other chat clients:** follow the active host and repository instructions instead of assuming a Codex Desktop or GitHub link form.
+- **Human-readable plan prose:** use repository-relative Markdown links such as `[Orders handler — lines 42–55](src/orders.ts#L42-L55)`. When no verified line exists, link the repository-relative path without a fragment. Never write an absolute machine path into the plan.
 - **Structural plan fields:** keep frontmatter values, `files:` entries, phase names, `#### N. path`, `**File**: path`, commands, artifact filenames, and handoff arguments as plain repository-relative text.
-- Normalize raw reviewer citations at the parent boundary before presenting them or writing the review table.
+- Normalize raw reviewer citations separately at the chat boundary and the artifact-writing boundary.
 
 ## Choice response format
 
 When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+
+In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
 
 After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a path, correction, reason, or other required free text.
 
@@ -224,13 +228,13 @@ Do not auto-apply any finding. Count blockers, concerns, and suggestions, then p
 - `Defer` — leave plan content unchanged and record `deferred: {developer reason}`;
 - `Dismiss` — leave plan content unchanged and record `dismissed: {developer reason}`.
 
-Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense only in stored resolutions. Prefer native structured input. Otherwise render `A. Apply`, `B. Defer`, and `C. Dismiss` with their consequences, then write `Reply with A, B, or C.` Ask only one triage question per response.
+Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense only in stored resolutions. Prefer native structured input. Otherwise use the choice response format with those labels in that order and their consequences, then write `Reply with A, B, or C.` Ask only one triage question per response.
 
 When a finding changes intended behavior, Architecture, interfaces, slice boundaries, or acceptance outcomes, keep the plan `in-review` and recommend **Revise** with `<this-plan-path> <specific finding and evidence>`. Apply means pursue that coordinated proposal; it does not authorize a tactical plan-only divergence. Leave the finding unresolved until the pair is reviewed and reconciled. Do not annotate the plan as overriding a stale design. Execution-only findings can use the plan-local Apply path above.
 
 After every finding has a resolution, rebuild `phase_count` and `phases:` from the body. Immediately before the first ready transition, recompute `git hash-object -- <design-path>` and compare it with the fingerprint retained in Step 1. If it changed, stop and reconcile the candidate plan before transferring authority. Otherwise run the bundled `now.mjs` helper again, retain its exact ISO timestamp, add `design_fingerprint: "git-blob:<hash>"` and `materialized_at: <iso>` to plan frontmatter, and change `status: in-review` to `status: ready`. These fields record the frozen provenance boundary; they do not modify the design or require its future synchronization.
 
-Report the plan as a repository-relative Markdown link, phase and unique-file counts, review availability, triage totals, the design fingerprint, and the authority transfer. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. Later changes route to Revise with the plan path; the frozen design is consulted only when a specific rationale or provenance question requires it.
+Report the plan using the active chat-surface link format, phase and unique-file counts, review availability, triage totals, the design fingerprint, and the authority transfer. Ask the developer to review phase worktree scope, Success Criteria specificity, and any desired boundary change. Later changes route to Revise with the plan path; the frozen design is consulted only when a specific rationale or provenance question requires it.
 
 End with this handoff and stop:
 

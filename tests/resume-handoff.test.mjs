@@ -101,10 +101,9 @@ test("resume-handoff labels interpretations and preserves checkpoint-sized tasks
 
 test("resume-handoff adapts evidence links and preserves structural paths", () => {
   const skill = read(skillPath);
-  assert.match(skill, /\[Orders handler — line 42\]\(src\/orders\.ts#L42\)/);
-  assert.match(skill, /\[Orders handler — lines 42–55\]\(src\/orders\.ts#L42-L55\)/);
+  assert.match(skill, /\[Orders handler — lines 42–55\]\(\/absolute\/repository\/src\/orders\.ts:42\)/);
   assert.match(skill, /Keep handoff paths, frontmatter fields, commands, task identifiers/);
-  assert.match(skill, /Never add a machine-specific absolute companion path/);
+  assert.match(skill, /Normalize all local file evidence to the active chat surface/);
 });
 
 test("list-recent keeps source ordering, cap, file-only, and empty behavior", (t) => {
