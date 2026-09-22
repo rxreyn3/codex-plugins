@@ -1,6 +1,6 @@
 # Development workflow
 
-RPIV Codex ports one RPIV-Pi skill at a time. The repository orchestration skill owns the behavioral port; these scripts only make testing and installation repeatable.
+RPIV Codex ports or updates one RPIV-Pi skill at a time. The repository orchestration skill owns the behavioral work; these scripts only make testing and installation repeatable.
 
 ```text
 branch -> port one skill -> focused tests -> full tests -> candidate commit
@@ -15,7 +15,16 @@ Start from a clean branch named for the skill. Candidate branches may be pushed 
 git switch -c codex/port-<skill>
 ```
 
-In a fresh Codex task rooted in this repository, invoke `port-rpiv-skill` with exactly one upstream skill name. Follow its dependency tracing, porting, and candidate-commit gates.
+In a fresh Codex task rooted in this repository, invoke `port-rpiv-skill` with exactly one upstream skill name:
+
+```text
+$port-rpiv-skill research
+$port-rpiv-skill research --latest
+```
+
+The ordinary form uses the recorded fixed source pin. `--latest` requires a clean RPIV-Codex worktree, successfully fetches `upstream/main`, freezes that fetched commit for the invocation, and may advance the fixed pin in a separate commit before handling only the named skill. If an unfinished candidate exists, resume it with ordinary pinned mode; `--latest` stops before fetching. Neither form requires the sibling `rpiv-mono` working tree to be clean or checked out at the selected revision, and neither may mutate that source working tree.
+
+An existing target uses selective-update mode. Its original upstream baseline identifies the source behind the surviving Codex implementation. Its per-skill review baseline records the newest source commit whose reachable changes were assessed for that skill; it does not imply that every change was adopted or accepted, and it is independent of the global source pin. The first actual update to a skill treats the README's historical `rpiv-pi` hash as that skill's original plugin baseline, then records a per-skill reviewed-through baseline. Never replace the README hash with the moving global pin.
 
 ## Test the source candidate
 

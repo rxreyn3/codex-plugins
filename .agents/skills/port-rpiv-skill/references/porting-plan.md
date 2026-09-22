@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Port RPIV-Pi to Codex one named skill at a time without redesigning RPIV along the way.
+Port or selectively update RPIV-Pi in Codex one named skill at a time without redesigning RPIV along the way.
 
 Each invocation performs one bounded cycle:
 
@@ -16,36 +16,46 @@ trace required dependency closure
 port behavior with minimal Codex adapters
         |
         v
-verify source tree -> commit candidate -> install locally
+classify result -> commit when required -> install behavioral candidates
         |
         v
 fresh task tests installed plugin -> user accepts or returns for repair
 ```
 
-The final arrow is deliberately a separate task. A task that edits or installs a plugin cannot prove that a newly started Codex task will discover and execute the installed copy correctly.
+The final arrow applies only to a behavioral candidate and is deliberately a separate task. A task that edits or installs a plugin cannot prove that a newly started Codex task will discover and execute the installed copy correctly.
 
 ## Fixed source
 
-Use this source revision unless the user explicitly asks to update the pin:
+Ordinary mode uses this source revision:
 
-- Repository: sibling checkout `../rpiv-mono`
-- Package root: `../rpiv-mono/packages/rpiv-pi`
+- Repository: sibling Git repository `../rpiv-mono`
+- Package tree: `packages/rpiv-pi`
 - Upstream branch at pin time: `upstream/main`
 - Commit: `0fdf4f813980d380e826b84d1280a4960e5d088e`
 - Commit date: `2026-09-13`
 - Commit subject: `Add [Unreleased] section for next cycle`
 
-Resolve both repository paths with `git rev-parse --show-toplevel`; do not rely on the caller's current directory. Before reading the source skill, verify that the RPIV-Pi checkout is clean and `HEAD` equals the pinned commit. If it differs, stop and report the actual revision. Never pull, reset, switch branches, or silently change this pin during a port.
+Resolve the `rpiv-codex` root and its sibling `rpiv-mono` repository through `git rev-parse --show-toplevel`; do not rely on the caller's current directory or accept an arbitrary lookalike directory. Treat the source working tree and its `HEAD` as irrelevant. Read committed source only with revision-qualified Git object operations such as `git cat-file`, `git show`, `git ls-tree`, `git log`, and `git diff` against the resolved source repository. Never pull, switch, checkout, reset, merge, clean, or write files in the `rpiv-mono` working tree.
 
-To update the pin later, the user must explicitly request it. Fast-forward the source checkout from its configured upstream, record the new full commit here, validate the orchestration skill, and commit that pin change separately from a skill port.
+Before ordinary-mode inspection, test the exact pinned object with `git cat-file -e <pin>^{commit}`. When it exists, do not fetch. When it is absent, run `git fetch upstream main`; stop on fetch failure, then test the exact pinned object again and stop if it remains unavailable. Never substitute source `HEAD`, a local branch, or a cached remote-tracking revision.
+
+`--latest` is the only pin-refresh mode:
+
+1. Require a clean `rpiv-codex` worktree. If an unfinished candidate exists, stop before fetching and explain that it must be resumed through ordinary pinned mode.
+2. Run `git fetch upstream main` in the resolved source repository and stop on any failure. Do not fall back to a cached reference.
+3. Only after that successful fetch, resolve `refs/remotes/upstream/main` to one full commit and freeze that commit for the entire invocation.
+4. If the frozen commit equals the recorded pin, create no pin commit. If the recorded pin is an ancestor, update only the fixed commit, date, and subject above, validate this orchestration skill, and commit the metadata separately with subject `Update RPIV-Pi source pin`. If neither is an ancestor of the other, stop for divergence without changing the pin. Never rewind the pin.
+5. Continue the named skill against the frozen commit. A later fetch or reference movement cannot change the selected source for this invocation.
 
 ## Invocation and scope
 
-Accept one simple directory name, for example `discover`, not a path or a comma-separated list. Confirm that `<package-root>/skills/<name>/SKILL.md` exists. Reject `_shared` as the requested skill; it is a dependency namespace, not a user workflow.
+Parse one simple directory name, for example `discover`, plus at most one trailing `--latest`. Reject no name, more than one name, paths, comma-separated lists, duplicate modifiers, unknown modifiers, and `_shared`. Confirm the named source skill with `git cat-file -e <selected>:packages/rpiv-pi/skills/<name>/SKILL.md`; do not use a working-tree existence check.
 
-The invocation authorizes the bounded cycle for the named skill: source inspection, repository edits, proportionate verification, one local candidate commit, and local plugin installation or refresh. It does not authorize a push, publication, release, source-repository edits, or work on another skill.
+The invocation authorizes the bounded cycle for the named skill: source inspection, repository edits, proportionate verification, an applicable local commit, and installation or refresh only for a behavioral candidate. It does not authorize a push, publication, release, source-repository edits, or work on another skill.
 
-Start only from a clean `rpiv-codex` worktree. If it is dirty, classify every change. Continue only when all existing changes are clearly the unfinished candidate for this same named skill and the user asks to resume it. Otherwise stop rather than folding unrelated work into the port.
+Start only from a clean `rpiv-codex` worktree. In ordinary pinned mode only, continue when every existing change is clearly the unfinished candidate for this same named skill and the user asks to resume it. Otherwise stop rather than folding unrelated work into the port. `--latest` has no resume exception because fetching and possibly moving the global pin under a candidate would make its source identity ambiguous.
+
+If `plugins/rpiv-codex/skills/rpivc-<name>` is absent, use the initial-port flow. If it exists, use the selective-update flow. Do not overwrite an existing target as though it were a new port.
 
 The allowed change cone is:
 
@@ -59,7 +69,7 @@ Do not port predecessor or successor skills merely because the source names them
 
 ## Phase 1: Trace the source dependency closure
 
-Read the source `SKILL.md` fully. Then recursively inspect only items reachable from it:
+Read the source `SKILL.md` fully with `git show <selected>:packages/rpiv-pi/skills/<name>/SKILL.md`. Then recursively inspect only items reachable from it, always at an explicit source revision:
 
 - relative Markdown links and explicitly named reference files;
 - scripts, templates, schemas, fixtures, and assets;
@@ -88,6 +98,31 @@ Do not let an implementation unit's ownership boundary leak into a plan-owning r
 
 Do not inventory the whole monorepo. Stop following an edge when it does not affect the named skill's inputs, user-visible choices, execution, artifact, or handoff. The dependency closure is a reachability problem, not an invitation to develop opinions about every file in the package.
 
+For an initial port, trace the selected upstream closure. For an update, trace the union of the old-upstream, selected-upstream, and current-Codex dependency closures. A dependency removed upstream can still explain retained local behavior; a dependency added upstream can change the target even when the top-level skill barely moved.
+
+## Phase 1A: Establish update lineage and review scope
+
+For an existing target, establish these distinct baselines before proposing edits:
+
+- **Original upstream baseline:** the upstream commit represented by the implementation that survives at `HEAD`. Find the Codex commit that introduced that surviving implementation, following verified renames or moves. Inspect deletion and recreation as a possible origin reset. Stop when the origin is absent or remains ambiguous.
+- **Per-skill review baseline:** the upstream commit through which all reachable changes for this named skill were last assessed. `Reviewed through` means assessed, not necessarily adopted, installed, tested, or accepted. It is not the global source pin.
+
+Find the newest commit reachable from `HEAD` whose subject exactly equals `Update <source-name> from RPIV-Pi`. Validate its required `Upstream review` and `Codex lineage` body fields and the tracked provenance before using its new review endpoint. Repair commits do not replace this record. No prior exact-subject update commit is valid only for the first selective update, whose review baseline is the original upstream baseline.
+
+The old review baseline in the next update commit is that validated per-skill baseline, and the new review baseline is the selected pin frozen for this invocation.
+
+Require the original baseline, review baseline, and selected pin to be full available commits in the source repository. Require the review baseline to be an ancestor of the selected pin. Stop for absent, ambiguous, unavailable, or non-ancestor baselines; do not guess from dates, source `HEAD`, global pin history, or similar-looking commit subjects.
+
+Review all three comparisons:
+
+1. review-baseline upstream to selected-pin upstream, for newly reachable source changes;
+2. review-baseline upstream to the implementation and history surviving in Codex, for local intent and prior adaptations;
+3. every outstanding deferral recorded by the prior update, even when the selected pin equals the review baseline.
+
+Classify each relevant upstream change as `adopt`, `adapt`, `retain-local`, or `defer`, with a reason. These upstream-change dispositions are separate from the dependency table's copy, conversion, adapter, defer, or block dispositions. `retain-local` is valid when current Codex behavior remains intentionally better suited to Codex or preserves an accepted contract. `defer` requires a documented consequence, must remain in the complete outstanding list, and must be reconsidered on every later update.
+
+Before editing, require one focused user decision when a conflict would consequentially change user-visible behavior, artifact compatibility, or a stage boundary. Do not bundle unrelated choices or convert a deliberate local difference into an automatic upstream overwrite.
+
 Before editing, summarize:
 
 - source skill and pinned revision;
@@ -95,6 +130,8 @@ Before editing, summarize:
 - Pi-specific capabilities and their Codex mappings;
 - genuine gaps or semantic choices;
 - proposed target files and verification.
+
+For an update, also summarize the original baseline, review baseline, surviving Codex origin, three-way comparison, carried deferrals, and proposed dispositions.
 
 Proceed without another ceremony when the mapping is mechanical and within this contract. Ask one focused question when a choice changes user-visible behavior, artifact compatibility, or the stage boundary.
 
@@ -177,7 +214,45 @@ plugins/rpiv-codex/
 
 Follow the official Codex plugin manifest and local-marketplace formats. Use the installed `plugin-creator` skill for marketplace metadata, version cache-busting, and reinstall mechanics rather than preserving commands from memory.
 
-## Phase 3: Verify the candidate
+## Phase 3: Record provenance and classify the outcome
+
+On the first selective update, add durable tracked provenance for the original baseline and review status. Preserve it on later updates:
+
+```text
+Original upstream baseline: <hash>.
+Reviewed through RPIV-Pi commit <hash>; selected Codex differences remain.
+```
+
+If that wording or its placement might affect execution or user-visible behavior, treat the edit as behavioral rather than provenance-only.
+
+Every selective-update commit uses the exact subject:
+
+```text
+Update <source-name> from RPIV-Pi
+```
+
+Its body must contain:
+
+```text
+Upstream review: <old-review-baseline>..<new-review-baseline>
+Codex lineage: <surviving-origin-commit>
+
+Dispositions:
+- <source path or capability at revision>: adopt|adapt|retain-local|defer — <reason>
+
+Outstanding deferrals:
+- None.
+```
+
+Replace `None` with the complete unresolved list when any deferral remains. Carry prior unresolved items forward and reconsider them even when the pin has not advanced.
+
+Classify exactly one outcome:
+
+1. **Behavioral candidate:** runtime instructions, scripts, templates, dependencies, packaging, or installed behavior beyond provenance-only text changed. Run focused verification, development installation, and fresh-task acceptance.
+2. **Record-only update:** no behavioral condition applies, but a baseline, disposition, deferral, or provenance record changed. Run relevant source-tree validation and create the update commit. When tracked files are byte-identical, use an explicitly empty provenance commit with the required subject and body. Do not reinstall or repeat acceptance.
+3. **No-change review:** behavior and every baseline, disposition, deferral, and provenance record remain unchanged. Report the completed review without a commit, installation, or acceptance run.
+
+## Phase 4: Verify the candidate
 
 Verification must be proportional and source-aligned. Use only the checks below that apply to behavior the named skill actually has:
 
@@ -196,7 +271,7 @@ Do not require argument, artifact, failure, stop, or unrelated-working-directory
 
 Report verified facts separately from behavior that still requires the installed-plugin test.
 
-## Phase 4: Commit and install the candidate
+## Phase 5: Commit and install when required
 
 Before committing:
 
@@ -205,15 +280,15 @@ Before committing:
 - confirm no unrelated changes are staged;
 - confirm the tracked public plugin version is unchanged and the development installer will identify this candidate with an ignored cache-busted copy.
 
-Create one candidate commit with the subject:
+For an initial port, create one candidate commit with the subject:
 
 ```text
 Port <source-name> from RPIV-Pi
 ```
 
-Do not amend an accepted prior skill's commit. If installed testing exposes a defect, make a focused repair commit for the same skill.
+For an update, use the exact update subject and body from Phase 3. Do not amend an accepted prior skill's commit. If installed testing exposes a defect, make a focused repair commit for the same skill; that repair does not become the review-baseline record.
 
-After the commit, run `scripts/install-dev.sh`. It builds an ignored development marketplace copy, applies the cache-buster only to that copy, installs it, and byte-verifies the installed cache. Do not change the tracked public manifest version for a candidate, and do not publish or push. Record:
+After a behavioral-candidate commit, run `scripts/install-dev.sh`. It builds an ignored development marketplace copy, applies the cache-buster only to that copy, installs it, and byte-verifies the installed cache. Do not install for a record-only or no-change outcome. Do not change the tracked public manifest version for a candidate, and do not publish or push. Record:
 
 - candidate commit;
 - development-copy plugin version;
@@ -221,9 +296,9 @@ After the commit, run `scripts/install-dev.sh`. It builds an ignored development
 - validation commands and outcomes;
 - exact fresh-task test prompts.
 
-## Phase 5: Hand off to a fresh installed-plugin test
+## Phase 6: Hand off behavioral candidates to a fresh installed-plugin test
 
-End the porting task with a self-contained test card. Tell the user to start a new Codex task in an unrelated project with the locally installed plugin enabled. By default, use two prompt executions:
+For a behavioral candidate, end the porting task with a self-contained test card. Tell the user to start a new Codex task in an unrelated project with the locally installed plugin enabled. By default, use two prompt executions:
 
 1. **Realistic path:** one explicit invocation such as `$rpivc-<source-name> ...` that exercises the named skill's ported dependencies and observable output end to end.
 2. **Boundary:** one cheap no-argument, invalid-input, stop, or non-trigger case chosen from the source skill's actual boundary behavior.
@@ -256,12 +331,14 @@ The new task must independently verify the repository state, accepted predecesso
 End every porting task with:
 
 - named skill and source pin;
+- initial-port or update mode, its baselines, surviving origin when applicable, dispositions, and outstanding deferrals;
 - dependency closure actually ported;
 - Codex substitutions and any known differences;
-- candidate commit and development-copy plugin version;
+- outcome classification and commit, if any;
+- development-copy plugin version for a behavioral candidate;
 - source-tree validation results;
-- installed-plugin status;
-- fresh-task test card or accepted test evidence;
+- installed-plugin status for a behavioral candidate;
+- fresh-task test card or accepted test evidence for a behavioral candidate;
 - explicit statement that no successor skill, push, or publication occurred.
 
 Keep candidate, installed, tested, accepted, and published as distinct states. Software has enough ambiguous adjectives already.
