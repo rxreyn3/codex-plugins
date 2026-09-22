@@ -60,6 +60,50 @@ test("research keeps the load-bearing stage order and stop boundary", () => {
   assert.match(skill, /successor names are handoffs, not permission/i);
 });
 
+test("research narrates progress at the four upstream workflow boundaries", () => {
+  const skill = read(skillPath);
+  const questions = skill.indexOf("Research questions ready:");
+  const scoped = skill.indexOf("[Scoped]:");
+  const started = skill.indexOf("Starting {N} analysis roles");
+  const complete = skill.indexOf("Analysis complete:");
+  const synthesize = skill.indexOf("Synthesizing {N} role reports");
+  const compile = skill.indexOf("- Match each response to the question or questions it answered.");
+
+  assert.ok(questions > skill.indexOf("### 1. Formulate the research questions"));
+  assert.ok(questions < scoped);
+  assert.ok(started > skill.indexOf("### 2. Dispatch the analysis roles"));
+  assert.ok(complete > started);
+  assert.ok(synthesize > complete);
+  assert.ok(synthesize < compile);
+  assert.match(skill, /progress updates are commentary only/i);
+  assert.match(skill, /never name the artifact path in commentary before the write completes/i);
+
+  for (const marker of [
+    "Research questions ready:",
+    "Starting {N} analysis roles",
+    "Analysis complete:",
+    "Synthesizing {N} role reports",
+  ]) {
+    const line = skill.split("\n").find((candidate) => candidate.includes(marker));
+    assert.ok(line, marker);
+    assert.doesNotMatch(line, /\.rpiv\/artifacts\//);
+  }
+});
+
+test("research records its upstream review and retains strict citation verification", () => {
+  const skill = read(skillPath);
+  assert.match(
+    skill,
+    /Original upstream baseline: 7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7\./,
+  );
+  assert.match(
+    skill,
+    /Reviewed through RPIV-Pi commit d74b1c99830a565f3df3f37e0a36616d17ffc574; selected Codex differences remain\./,
+  );
+  assert.match(skill, /Verify every emitted `file:line` or `file:start-end`/);
+  assert.doesNotMatch(skill, /No separate verification pass/i);
+});
+
 test("research metadata commands separate the newline-free timestamp from Git context", () => {
   const skill = read(skillPath);
   const nowCommand = "node <research-skill-root>/scripts/now.mjs";

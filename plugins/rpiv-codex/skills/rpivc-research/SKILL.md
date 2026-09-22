@@ -7,7 +7,10 @@ description: Answer structured repository or external-contract questions with bo
 
 Answer structured questions by first tracing the investigation scope, then executing targeted analysis roles, checkpointing material ambiguities with the developer, and writing a downstream-compatible research document.
 
-This port preserves the `research` workflow from RPIV-Pi commit `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`:
+Original upstream baseline: 7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7.
+Reviewed through RPIV-Pi commit d74b1c99830a565f3df3f37e0a36616d17ffc574; selected Codex differences remain.
+
+This port preserves the upstream `research` workflow:
 
 ```text
 input -> scope tracer -> grouped analysis -> developer checkpoint -> document -> handoff
@@ -103,6 +106,15 @@ Wait for a delegated scope tracer and parse its final message, or retain the inl
 
 - retain the three-to-five-sentence Discovery Summary;
 - retain each full numbered question paragraph;
+
+After the questions are formulated and before reading shared files, send concise commentary:
+
+```text
+Research questions ready: {N}; reading shared files and grouping the analysis.
+```
+
+Then:
+
 - read key shared files that recur across questions into the main context, especially types, shared utilities, and integration wiring;
 - extract repository-relative file references from every question;
 - group questions sharing at least two file references, with two or three questions per group;
@@ -155,9 +167,27 @@ For a grouped task, include each full paragraph as `Question 1`, `Question 2`, a
 
 With collaboration agents, dispatch as many roles concurrently as the current Codex environment permits. If the analysis groups plus precedent sweep exceed available slots, use additional bounded waves. Without collaboration agents, use the bounded sequential inline carrier defined above. These are capacity adapters, not permission to synthesize early: wait for every question report and the precedent report before proceeding. Never use detached background work that cannot resume this workflow.
 
+Immediately before executing the first analysis role, send concise commentary:
+
+```text
+Starting {N} analysis roles{ plus one precedent sweep} via {collaboration agents|bounded inline execution}; waiting for every result before synthesis.
+```
+
+After every analysis and precedent role has returned, send concise commentary:
+
+```text
+Analysis complete: {N}/{N} role results returned.
+```
+
 ### 3. Synthesize and checkpoint
 
 #### Compile the findings
+
+Before compiling the role reports, send concise commentary:
+
+```text
+Synthesizing {N} role reports into the developer checkpoint.
+```
 
 - Match each response to the question or questions it answered.
 - Cross-reference patterns, conflicts, and connections across reports.
@@ -297,6 +327,7 @@ If the question changes the feature surface or research target materially, do no
 
 - Scope tracer is always the first executed role on a fresh run, whether delegated or inline.
 - Every analysis and precedent role task finishes before synthesis.
+- The four progress updates are commentary only. Never copy them into the research artifact, and never name the artifact path in commentary before the write completes. The completion report in step 5 is the first progress text that names the written path.
 - The developer checkpoint and explicit write gate happen before artifact creation.
 - No placeholder metadata or unverified line citation enters the document.
 - Research describes current behavior; design and implementation are successor stages.
