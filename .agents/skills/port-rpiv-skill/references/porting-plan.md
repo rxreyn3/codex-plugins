@@ -31,9 +31,9 @@ Ordinary mode uses this source revision:
 - Repository: sibling Git repository `../rpiv-mono`
 - Package tree: `packages/rpiv-pi`
 - Upstream branch at pin time: `upstream/main`
-- Commit: `0fdf4f813980d380e826b84d1280a4960e5d088e`
-- Commit date: `2026-09-13`
-- Commit subject: `Add [Unreleased] section for next cycle`
+- Commit: `d74b1c99830a565f3df3f37e0a36616d17ffc574`
+- Commit date: `2026-09-21`
+- Commit subject: `feat(rpiv-site): v2.11 release-notes post - the judge was the wall clock`
 
 Resolve the `rpiv-codex` root and its sibling `rpiv-mono` repository through `git rev-parse --show-toplevel`; do not rely on the caller's current directory or accept an arbitrary lookalike directory. Treat the source working tree and its `HEAD` as irrelevant. Read committed source only with revision-qualified Git object operations such as `git cat-file`, `git show`, `git ls-tree`, `git log`, and `git diff` against the resolved source repository. Never pull, switch, checkout, reset, merge, clean, or write files in the `rpiv-mono` working tree.
 
