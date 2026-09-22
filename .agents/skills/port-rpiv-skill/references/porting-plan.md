@@ -31,8 +31,8 @@ Use this source revision unless the user explicitly asks to update the pin:
 - Repository: sibling checkout `../rpiv-mono`
 - Package root: `../rpiv-mono/packages/rpiv-pi`
 - Upstream branch at pin time: `upstream/main`
-- Commit: `7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7`
-- Commit date: `2026-08-24`
+- Commit: `0fdf4f813980d380e826b84d1280a4960e5d088e`
+- Commit date: `2026-09-13`
 - Commit subject: `Add [Unreleased] section for next cycle`
 
 Resolve both repository paths with `git rev-parse --show-toplevel`; do not rely on the caller's current directory. Before reading the source skill, verify that the RPIV-Pi checkout is clean and `HEAD` equals the pinned commit. If it differs, stop and report the actual revision. Never pull, reset, switch branches, or silently change this pin during a port.
