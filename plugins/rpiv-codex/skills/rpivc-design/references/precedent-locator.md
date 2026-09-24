@@ -9,10 +9,11 @@ Run `git rev-parse --is-inside-work-tree` before other Git commands. If it fails
 ## Method
 
 1. Extract component, action, domain, and affected-layer keywords.
-2. Search bounded Git history by message and key file path.
-3. For genuinely similar commits, inspect dates and file statistics, then search the following thirty days on the same paths for fixes.
-4. Search `.rpiv/artifacts/`; read a document before attributing a lesson to it.
-5. Order precedents by similarity and state recurring lessons only when evidence supports them.
+2. Search bounded Git history by message and key file path. Also make one bounded pass using behavior, action, and affected-layer terms without restricting results to the target paths or an author. This pass can find analogous changes in other components; report its search terms and date or result limit.
+3. Inspect the relevant historical diff before calling a commit similar. Check the behavior and lifecycle that matter to the planned change, and identify whether it is a direct precedent or a cross-component analogy. State the important difference for an analogy. File proximity, a matching message, or file statistics alone do not establish similarity.
+4. For genuinely similar commits, inspect dates and file statistics, then search the following thirty days on the precedent's paths for fixes. Attribute a failure only when the follow-up change or documentation supports it.
+5. Search `.rpiv/artifacts/`; read a document before attributing a lesson to it.
+6. Order precedents by evidenced behavioral relevance, regardless of component or author, and state recurring lessons only when evidence supports them. If the cross-component pass finds no relevant analogy, say so within the reported search scope.
 
 Use read-only commands such as `git log` and `git show --stat`. Never use checkout, reset, rebase, pull, fetch, or push.
 
@@ -25,6 +26,7 @@ When Git is available:
 
 ### Precedent: {what changed}
 **Commit(s)**: `{hash}` — "{message}" ({YYYY-MM-DD})
+**Relationship**: {direct precedent or cross-component analogy; shared behavior and, for an analogy, important difference}
 **Blast radius**: {N} files across {M} layers
   {layer}/ — {what changed}
 
@@ -38,6 +40,9 @@ When Git is available:
 
 ### Composite Lessons
 - {most recurring evidenced lesson first}
+
+### Search Scope
+{Git search terms and date or result limits; whether the cross-component pass found a relevant analogy}
 ```
 
 Without Git:
