@@ -1,6 +1,6 @@
 # Codex Advisor
 
-The standalone plugin lives at `plugins/codex-advisor/`. Its manifest packages one skill, `$codex-advisor`; it does not alter the RPIV workflow plugin. The skill uses native Codex subagents and their normal tools. Its default advisor is `gpt-6-astra` at `high` reasoning, with the explicit automatic eligibility policy in `SKILL.md`.
+The standalone plugin lives at `plugins/codex-advisor/`. Its manifest packages one skill, `$codex-advisor`; it does not alter the RPIV workflow plugin. The skill uses native Codex subagents and their normal tools. Its default advisor is `gpt-6-astra` at `high` reasoning. Automatic consultation is eligible for a known current `gpt-6-sol` or `gpt-6-luna` working model at any effort; a current `gpt-6-astra` working model is skipped.
 
 The idea was inspired by [RPIV Advisor](https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-advisor), which uses a Pi tool. This Codex implementation uses original instructions and native subagent dispatch.
 
@@ -19,6 +19,6 @@ The scaffold creates `~/.agents/plugins/marketplace.json` with a `personal` entr
 
 For general proactive use, add this paragraph to the user's global Codex instructions after installation:
 
-> When a consequential decision remains ambiguous after inspection, repeated approaches fail, or credible evidence conflicts, consider `$codex-advisor`. Follow the skill's explicit automatic model and effort eligibility policy. A manual request for an advisor bypasses that policy. Give the advice serious evidence-based consideration, share the useful conclusion briefly, and continue the original task.
+> When a consequential decision remains ambiguous after inspection, repeated approaches fail, or credible evidence conflicts, consider `$codex-advisor`. Follow the skill's automatic policy using only a verified current working-model identity or my explicit declaration of it for this task. A manual request for an advisor bypasses that policy. Give the advice serious evidence-based consideration, share the useful conclusion briefly, and continue the original task.
 
-To choose a different advisor, update the model and effort in the source skill and reinstall, or give higher-priority instructions. A changed advisor configuration disables automatic consultation until an explicit eligible main-model/effort list is also set. A fresh task is needed to pick up installed skill changes.
+To choose a different advisor, update the model and effort in the source skill and reinstall, or give higher-priority instructions. A changed advisor configuration disables automatic consultation until an explicit eligible working-model list is also set. A fresh task is needed to pick up installed skill changes. If Codex does not expose the current working model to the agent, a user can declare it for the current task; the skill cannot independently detect later model changes. A request to use Astra as the advisor does not declare the working model.
