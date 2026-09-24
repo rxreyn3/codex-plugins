@@ -1,0 +1,20 @@
+{
+  "name": "codex-advisor",
+  "version": "0.1.0",
+  "description": "A second opinion from a configured native Codex subagent for consequential decisions and stalled work.",
+  "author": {
+    "name": "Ryan Reynolds"
+  },
+  "license": "MIT",
+  "keywords": ["advisor", "second-opinion", "reasoning"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Advisor",
+    "shortDescription": "A focused second opinion during difficult work",
+    "longDescription": "Consult a configured Codex subagent when a consequential choice is ambiguous, approaches repeatedly fail, or evidence conflicts. The main agent evaluates the advice and continues the original task.",
+    "developerName": "Ryan Reynolds",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": ["Use $codex-advisor for a second opinion on this decision."]
+  }
+}
