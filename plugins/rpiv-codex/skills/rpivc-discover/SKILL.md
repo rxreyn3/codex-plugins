@@ -59,11 +59,13 @@ Normalize raw locator or analyzer `file:line` evidence separately at the chat bo
 
 ## Choice response format
 
-When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+When a required decision or approval remains unanswered, present the complete question in the final chat response and stop before dependent work. State the relevant evidence, why the choice matters, each option's consequence, and how to answer. Do not use asynchronous structured input as the sole carrier of the checkpoint. Synchronous structured input may be used only when the active host permits its mode, purpose, and question shape and it actually returns an answer. If it does not return an answer, the complete final-response question is still required. Never force a mode change, use an optional-only or permission-forbidden input tool for approval, or wait in a loop for an answer.
 
-In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
+When the active host permits multiple-choice prose, render two to four finite authored options in their existing order as `A.` through `D.`; preserve the recommended option first so it becomes `A` when a recommendation exists. Put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label. Omit the dash and consequence only when the label itself makes the consequence clear. Checkpoint-specific option bullets below define content, not the final response format. When the active host forbids textual multiple-choice lists, ask one concise plain-text question that states the alternatives and their consequences without a lettered or bulleted list.
 
-After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+After a lettered list, write `Reply with A, B, ...` using only the letters shown. Add `, or write another answer` only when that checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset letters for each new question; do not letter open-ended requests for a feature description, path, correction, or other required free text. A recommendation or preselection does not choose itself.
+
+Keep an unanswered checkpoint pending across completed turns. Resume the same step only after an unambiguous answer; tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval. Preserve existing authorization for unchanged scope rather than adding another gate. A pending checkpoint does not create an extra artifact, mark work ready, or advance a successor stage. If a handoff is requested later, carry the unresolved question and blocked next action in its existing sections.
 
 ## Recommended action format
 
@@ -88,8 +90,7 @@ Follow these steps in order. Never skip the developer-facing interview; it is th
 Before any repository probe, ask one open-ended question tailored to the proposed feature: what problem is being solved, who experiences it, and what success looks like for that person today.
 
 - This is an `intent` question. Do not recommend an answer and do not cite source code.
-- When structured user input is available without forcing a recommendation, use one question with open routing choices such as `End user`, `Maintainer`, or `Operator`; rely on its custom-response field for the developer's actual framing.
-- If the structured control requires a `(Recommended)` label, do not use it for intent. Ask one concise direct question and stop for the answer.
+- Use the Choice response format. A synchronous structured question with open routing choices such as `End user`, `Maintainer`, or `Operator` is suitable only when the active host permits it without forcing a recommendation and returns the developer's answer. Otherwise ask one concise direct question in the final response and stop for the answer.
 - Capture the answer in the developer's own words. Preserve it verbatim where possible for `Problem & Intent`.
 - If the answer does not identify a narrow probe slice, ask one more intent question. Cap intent at three questions, then proceed with the narrowest honest scope available.
 
@@ -135,11 +136,11 @@ Mark evidence-based pre-resolutions with navigable repository links, but do not 
 From the probe I inferred: <observed behavior> ([descriptive label — line N](path/to/file.ext#LN)). Keep this for the feature, or change it as part of the work?
 ```
 
-Use one structured call when its capacity fits. Otherwise ask one concise consolidated question and stop for the answer. Confirmation becomes a decision with rationale `evidence: [descriptive label — line N](path/to/file.ext#LN) + confirmed`. A correction changes the decision direction and schedules one narrow correction probe.
+Use the Choice response format for this confirmation. A synchronous structured call may carry it only when the active host permits its mode and question shape and returns the answer; otherwise ask one concise consolidated question in the final response and stop for the answer. Confirmation becomes a decision with rationale `evidence: [descriptive label — line N](path/to/file.ext#LN) + confirmed`. A correction changes the decision direction and schedules one narrow correction probe.
 
 ### 4. Walk the interview lazily
 
-Walk depth-first, parent before child. Ask one unresolved question, wait for its answer, classify it, and only then continue. Two to four independent sibling detail leaves may share one structured-input call; never batch scope or architectural-shape questions.
+Walk depth-first, parent before child. Ask one unresolved question, wait for its answer, classify it, and only then continue. Two to four independent sibling detail leaves may share a synchronous structured-input call only when the active host permits it and all answers are returned. Otherwise ask each unanswered question separately in the final response. Never batch scope or architectural-shape questions.
 
 #### Question tiers
 
@@ -148,7 +149,7 @@ Walk depth-first, parent before child. Ask one unresolved question, wait for its
 - **Shape** covers the architectural seam, pattern, or integration point. Name the tradeoff axis. Generate at least two real options. Every option must state what it optimizes and what it sacrifices or costs. Put the recommended option first with a one-line rationale. Cite every option that relies on existing code; otherwise label the options as conventions with `no codebase precedent`.
 - **Detail** covers acceptance criteria and routine child decisions. It may be batched only when sibling answers are independent.
 
-For every non-intent question, use structured user input when available, put the recommended authored option first, and label it `(Recommended)`. Do not author an `Other` option when the control already supplies a custom-response field. When structured input is unavailable, use the lettered prose choice format, permit another written answer, and stop for the answer.
+For every non-intent question, use the Choice response format with the recommended authored option first and labelled `(Recommended)`. Permit another written answer and stop for the answer; do not author an `Other` option.
 
 If the probe finds an existing feature that might replace the requested work, do not silently rescope. Ask an intent question with citations and offer both “use what exists” and “build as requested.”
 

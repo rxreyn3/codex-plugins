@@ -50,11 +50,13 @@ Retain the listing for no-argument selection. The helper resolves relative direc
 
 ## Choice response format
 
-When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+When a required decision or approval remains unanswered, present the complete question in the final chat response and stop before dependent work. State the relevant evidence, why the choice matters, each option's consequence, and how to answer. Do not use asynchronous structured input as the sole carrier of the checkpoint. Synchronous structured input may be used only when the active host permits its mode, purpose, and question shape and it actually returns an answer. If it does not return an answer, the complete final-response question is still required. Never force a mode change, use an optional-only or permission-forbidden input tool for approval, or wait in a loop for an answer.
 
-In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
+When the active host permits multiple-choice prose, render two to four finite authored options in their existing order as `A.` through `D.`; preserve the recommended option first so it becomes `A` when a recommendation exists. Put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label. Omit the dash and consequence only when the label itself makes the consequence clear. Checkpoint-specific option bullets below define content, not the final response format. When the active host forbids textual multiple-choice lists, ask one concise plain-text question that states the alternatives and their consequences without a lettered or bulleted list.
 
-After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests.
+After a lettered list, write `Reply with A, B, ...` using only the letters shown. Add `, or write another answer` only when that checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset letters for each new question; do not letter open-ended requests for a feature description, path, correction, or other required free text. A recommendation or preselection does not choose itself.
+
+Keep an unanswered checkpoint pending across completed turns. Resume the same step only after an unambiguous answer; tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval. Preserve existing authorization for unchanged scope rather than adding another gate. A pending checkpoint does not create an extra artifact, mark work ready, or advance a successor stage. If a handoff is requested later, carry the unresolved question and blocked next action in its existing sections.
 
 ## Recommended action format
 
@@ -88,7 +90,7 @@ If no path was supplied, use the retained recent listing:
 - **Exactly one entry:** ask `Resume this handoff?` with `Resume <filename> (Recommended)` and `Pick a different path`.
 - **Two or more entries:** ask the developer to choose among the four newest filenames. Preserve newest-first order and permit a different written path.
 
-Use native structured input when available. Keep its header at sixteen characters or fewer and rely on its custom-response field rather than adding an authored `Other` option. If structured input is unavailable or fails to display, use the lettered prose choice format and stop.
+Use the Choice response format and stop while unanswered. If synchronous structured input is permitted, keep its header at sixteen characters or fewer; do not author an `Other` option.
 
 Reject directories, paths outside `.rpiv/artifacts/handoffs/`, and multiple paths. Ask for one valid handoff path and stop rather than guessing.
 
@@ -181,7 +183,7 @@ Present the analysis and concise continuation plan together. Identify the first 
 - `Adjust plan` — change the task list before editing.
 - `Stop here` — leave the verified analysis and plan without implementation.
 
-Use native structured input when available. If unavailable or unsuccessful, use the lettered prose choice format without a custom-answer suffix and stop. Do not start the first task until the developer approves it. Accept an unambiguous approval such as `proceed please` or `continue` and start that task immediately; do not ask a second Begin question for the same scope. After Adjust plan, ask one focused question and repeat this gate with the revised task list. After Stop here, report that no implementation was performed and stop.
+Use the Choice response format without a custom-answer suffix and stop while unanswered. Do not start the first task until the developer approves it. Accept an unambiguous approval such as `proceed please` or `continue` and start that task immediately; do not ask a second Begin question for the same scope. After Adjust plan, ask one focused question and repeat this gate with the revised task list. After Stop here, report that no implementation was performed and stop.
 
 ### 5. Continue the approved work
 
@@ -202,7 +204,7 @@ Within the approved task, ask again only if findings materially change its scope
 
 Keep the selected handoff by default. Reading it or approving the first task does not authorize deletion. Do not offer cleanup while the first resumed task is incomplete, blocked, or awaiting the developer's input.
 
-After the first resumed task completes, include a one-time cleanup choice in its completion checkpoint before starting another task: `Keep this handoff (Recommended)` or `Delete this handoff`. Show the exact selected path and explain that keeping it preserves a recovery point and any context not recorded elsewhere. Use native structured input when available; otherwise ask a concise prose question and wait. No answer means keep the file. Cleanup approval is separate from approval to continue work.
+After the first resumed task completes, include a one-time cleanup choice in its completion checkpoint before starting another task: `Keep this handoff (Recommended)` or `Delete this handoff`. Show the exact selected path and explain that keeping it preserves a recovery point and any context not recorded elsewhere. Use the Choice response format and wait for an answer. Until answered, keep the file and leave the cleanup choice pending. Cleanup approval is separate from approval to continue work.
 
 Only after an explicit Delete choice, recheck that the selected path is still the same regular file under `.rpiv/artifacts/handoffs/` and that its contents have not changed since it was read. If it changed, show the difference and obtain renewed deletion approval. Delete only that file; never delete linked artifacts, other handoffs, or the containing directory. Prefer recoverable deletion when available, and state whether recovery is available before deletion. Report the exact file removed and its recovery status, then return to the continuation checkpoint. After Keep, do not ask again in this invocation.
 

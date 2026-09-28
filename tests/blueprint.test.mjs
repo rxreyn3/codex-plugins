@@ -126,13 +126,13 @@ test("blueprint checkpoint options explain their consequences in plain language"
   assert.match(skill, /two to four finite authored options/);
   assert.match(skill, /Offer both options with concrete consequences/);
   assert.match(skill, /offer up to four newest entries/);
-  assert.match(skill, /lettered prose choice format, permit another written answer/);
-  assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
-  assert.match(skill, /Never render a finite prose fallback as unlettered bullets/);
+  assert.match(skill, /Use the Choice response format for this checkpoint, permit another written answer/);
+  assert.match(skill, /Use the Choice response format without a custom-answer suffix/);
+  assert.match(skill, /When the active host forbids textual multiple-choice lists/);
   assert.match(skill, /`Follow \{pattern\}` first and `Moving off \{pattern\}` second/);
   assert.match(skill, /Keep `\(Recommended\)` inside the bold label/);
-  assert.match(skill, /Omit the dash and consequence when the label is already self-explanatory/);
-  assert.match(skill, /preserve that order as `A\.` through `D\.`/);
+  assert.match(skill, /Omit the dash and consequence only when the label itself makes the consequence clear/);
+  assert.match(skill, /When lettered options are permitted, render `A\.` through `D\.`/);
   assert.match(skill, /with `Apply`, `Defer`, and `Dismiss` in that order/);
 });
 

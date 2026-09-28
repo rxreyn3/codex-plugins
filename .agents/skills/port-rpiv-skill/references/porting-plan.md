@@ -121,6 +121,8 @@ Review all three comparisons:
 
 Classify each relevant upstream change as `adopt`, `adapt`, `retain-local`, or `defer`, with a reason. These upstream-change dispositions are separate from the dependency table's copy, conversion, adapter, defer, or block dispositions. `retain-local` is valid when current Codex behavior remains intentionally better suited to Codex or preserves an accepted contract. `defer` requires a documented consequence, must remain in the complete outstanding list, and must be reconsidered on every later update.
 
+Treat the durable, answer-blocking Codex decision-checkpoint mapping below as a `retain-local` adaptation during later selective ports unless the developer explicitly changes that contract. Do not restore an upstream `ask_user_question` call merely because a structured-input tool exists.
+
 Before editing, require one focused user decision when a conflict would consequentially change user-visible behavior, artifact compatibility, or a stage boundary. Do not bundle unrelated choices or convert a deliberate local difference into an automatic upstream overwrite.
 
 Before editing, summarize:
@@ -173,7 +175,7 @@ Use the capability available in the current Codex environment, not a guessed too
 | RPIV-Pi dependency | Codex mapping |
 |---|---|
 | Read, search, list, and shell operations | Native repository inspection and terminal tools; prefer `rg` and `rg --files` for search |
-| `ask_user_question` | Native structured user-input tool when available; otherwise ask one concise question in the response and stop |
+| `ask_user_question` | Preserve the source question's answer-blocking meaning. For a required decision or approval, put the complete question in the final chat response and stop before dependent work; keep it pending across turns until an unambiguous answer. Use synchronous structured input only when the active mode, tool purpose, and question shape permit it and it returns an answer. An asynchronous control, tool acceptance, preselection, silence, timeout, or dismissal is not an answer. Follow active host restrictions on option lists and approval tools; tool availability alone does not make a mapping valid. |
 | Pi `Agent` dispatch | Native Codex collaboration agent when available; otherwise bounded inline execution when role separation is organizational rather than semantic |
 | Pi agent definition | Convert to a portable Markdown role prompt shipped inside the target skill; do not depend on target-project `.codex/agents` files |
 | Todo or workflow progress | Native plan/progress mechanism when available; otherwise concise commentary checkpoints |

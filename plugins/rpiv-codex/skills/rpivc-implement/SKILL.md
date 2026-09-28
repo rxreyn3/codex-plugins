@@ -39,11 +39,13 @@ A checkpoint or mismatch may span multiple turns. Resume the current phase after
 
 ## Choice response format
 
-When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+When a required decision or approval remains unanswered, present the complete question in the final chat response and stop before dependent work. State the relevant evidence, why the choice matters, each option's consequence, and how to answer. Do not use asynchronous structured input as the sole carrier of the checkpoint. Synchronous structured input may be used only when the active host permits its mode, purpose, and question shape and it actually returns an answer. If it does not return an answer, the complete final-response question is still required. Never force a mode change, use an optional-only or permission-forbidden input tool for approval, or wait in a loop for an answer.
 
-In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
+When the active host permits multiple-choice prose, render two to four finite authored options in their existing order as `A.` through `D.`; preserve the recommended option first so it becomes `A` when a recommendation exists. Put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label. Omit the dash and consequence only when the label itself makes the consequence clear. Checkpoint-specific option bullets below define content, not the final response format. When the active host forbids textual multiple-choice lists, ask one concise plain-text question that states the alternatives and their consequences without a lettered or bulleted list.
 
-After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+After a lettered list, write `Reply with A, B, ...` using only the letters shown. Add `, or write another answer` only when that checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset letters for each new question; do not letter open-ended requests for a feature description, path, correction, or other required free text. A recommendation or preselection does not choose itself.
+
+Keep an unanswered checkpoint pending across completed turns. Resume the same step only after an unambiguous answer; tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval. Preserve existing authorization for unchanged scope rather than adding another gate. A pending checkpoint does not create an extra artifact, mark work ready, or advance a successor stage. If a handoff is requested later, carry the unresolved question and blocked next action in its existing sections.
 
 ## Recommended action format
 
@@ -185,21 +187,17 @@ Ask exactly one focused question with header `Mismatch` and these options:
 - `Skip this change` — omit this planned change, accepting that the phase may remain incomplete.
 - `Revise the plan` — stop implementation and show a Revise handoff in the recommended-action format before continuing.
 
-Use native structured input when available and keep its header at sixteen characters or fewer. If the structured-input call succeeds, wait for that answer.
+Use the Choice response format and keep any permitted synchronous structured-input header at sixteen characters or fewer. If it does not return an answer, state the observed mismatch, cite the affected code, explain why the choice matters, then end the final response with this complete question and stop. When the active host forbids textual multiple-choice lists, use one concise plain-text question with all three consequences instead:
 
-When structured input is unavailable, fails, or does not actually display an input surface, end the response with this direct fallback and stop:
-
-```text
 What should I do about this mismatch?
 
-A. Follow the plan — adapt the planned approach to the current code state while preserving its intended behavior.
-B. Skip this change — omit this planned change, accepting that the phase may remain incomplete.
-C. Revise the plan — stop implementation and show a Revise handoff in the recommended-action format before continuing.
+A. **Follow the plan** — adapt the planned approach to the current code state while preserving its intended behavior.
+B. **Skip this change** — omit this planned change, accepting that the phase may remain incomplete.
+C. **Revise the plan** — stop implementation and show a Revise handoff in the recommended-action format before continuing.
 
 Reply with A, B, or C.
-```
 
-A mismatch response is incomplete unless the developer receives either the successful structured-input surface or the direct question with all three options. Never refer to a "displayed prompt", dialog, panel, or input surface unless that surface was successfully created in the current response. After the answer, state the selected consequence plainly before continuing. If the developer selects `Revise the plan`, stop and render `Recommended next step: **Revise**` followed by an arguments-only `text` fence containing `<plan-path> "<specific feedback>"`.
+A mismatch response is incomplete while unanswered unless the final response carries the complete question and all three consequences. Tool acceptance or a displayed input surface is not an answer. After the answer, state the selected consequence plainly before continuing. If the developer selects `Revise the plan`, stop and render `Recommended next step: **Revise**` followed by an arguments-only `text` fence containing `<plan-path> "<specific feedback>"`.
 
 Do not use this mismatch flow for a missing earlier-phase prerequisite in single-phase mode; that case always uses the exact hard-error message above.
 

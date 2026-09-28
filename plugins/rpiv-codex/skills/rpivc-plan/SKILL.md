@@ -57,11 +57,13 @@ The first helper returns `<iso>\t<slug>` without a trailing newline. Copy the ti
 
 ## Choice response format
 
-When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+When a required decision or approval remains unanswered, present the complete question in the final chat response and stop before dependent work. State the relevant evidence, why the choice matters, each option's consequence, and how to answer. Do not use asynchronous structured input as the sole carrier of the checkpoint. Synchronous structured input may be used only when the active host permits its mode, purpose, and question shape and it actually returns an answer. If it does not return an answer, the complete final-response question is still required. Never force a mode change, use an optional-only or permission-forbidden input tool for approval, or wait in a loop for an answer.
 
-In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
+When the active host permits multiple-choice prose, render two to four finite authored options in their existing order as `A.` through `D.`; preserve the recommended option first so it becomes `A` when a recommendation exists. Put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label. Omit the dash and consequence only when the label itself makes the consequence clear. Checkpoint-specific option bullets below define content, not the final response format. When the active host forbids textual multiple-choice lists, ask one concise plain-text question that states the alternatives and their consequences without a lettered or bulleted list.
 
-After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a path, correction, reason, or other required free text.
+After a lettered list, write `Reply with A, B, ...` using only the letters shown. Add `, or write another answer` only when that checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset letters for each new question; do not letter open-ended requests for a feature description, path, correction, or other required free text. A recommendation or preselection does not choose itself.
+
+Keep an unanswered checkpoint pending across completed turns. Resume the same step only after an unambiguous answer; tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval. Preserve existing authorization for unchanged scope rather than adding another gate. A pending checkpoint does not create an extra artifact, mark work ready, or advance a successor stage. If a handoff is requested later, carry the unresolved question and blocked next action in its existing sections.
 
 ## Recommended action format
 
@@ -228,7 +230,7 @@ Do not auto-apply any finding. Count blockers, concerns, and suggestions, then p
 - `Defer` — leave plan content unchanged and record `deferred: {developer reason}`;
 - `Dismiss` — leave plan content unchanged and record `dismissed: {developer reason}`.
 
-Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense only in stored resolutions. Prefer native structured input. Otherwise use the choice response format with those labels in that order and their consequences, then write `Reply with A, B, or C.` Ask only one triage question per response.
+Use present-tense `Apply / Defer / Dismiss` for pending decisions and past tense only in stored resolutions. Use the Choice response format with those labels in that order and their consequences. When lettered options are permitted, write `Reply with A, B, or C.` Ask only one triage question per response.
 
 When a finding changes intended behavior, Architecture, interfaces, slice boundaries, or acceptance outcomes, keep the plan `in-review` and recommend **Revise** with `<this-plan-path> <specific finding and evidence>`. Apply means pursue that coordinated proposal; it does not authorize a tactical plan-only divergence. Leave the finding unresolved until the pair is reviewed and reconciled. Do not annotate the plan as overriding a stale design. Execution-only findings can use the plan-local Apply path above.
 

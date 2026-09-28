@@ -68,7 +68,8 @@ test("commit is standalone and preserves the direct approval fallback", () => {
   assert.match(skill, /Commit \(Recommended\)/);
   assert.match(skill, /Adjust/);
   assert.match(skill, /Review files/);
-  assert.match(skill, /If structured input is unavailable or fails to display, use the lettered prose choice format/);
+  assert.match(skill, /Use the Choice response format with the recommended option first/);
+  assert.match(skill, /stop while unanswered/);
   assert.match(skill, /permit another written answer/);
   assert.match(skill, /Do not stage or commit anything until the developer chooses `Commit`/);
 });

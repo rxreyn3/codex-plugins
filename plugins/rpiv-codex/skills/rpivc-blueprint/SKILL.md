@@ -60,13 +60,13 @@ Normalize role output separately at the chat boundary and the artifact-writing b
 
 ## Choice response format
 
-When a checkpoint offers two to four finite authored options, prefer native structured input without letter prefixes. If structured input is unavailable, fails, or does not display, render the same options in prose as `A.` through `D.` in their existing order. Preserve the recommended option first so it becomes `A` when a recommendation exists.
+When a required decision or approval remains unanswered, present the complete question in the final chat response and stop before dependent work. State the relevant evidence, why the choice matters, each option's consequence, and how to answer. Do not use asynchronous structured input as the sole carrier of the checkpoint. Synchronous structured input may be used only when the active host permits its mode, purpose, and question shape and it actually returns an answer. If it does not return an answer, the complete final-response question is still required. Never force a mode change, use an optional-only or permission-forbidden input tool for approval, or wait in a loop for an answer.
 
-In a prose fallback, put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label and never detach it after the explanation. Omit the dash and consequence when the label is already self-explanatory.
+When the active host permits multiple-choice prose, render two to four finite authored options in their existing order as `A.` through `D.`; preserve the recommended option first so it becomes `A` when a recommendation exists. Put one option on each line as `A. **Label (Recommended)** — consequence.` and `B. **Label** — consequence.` Keep `(Recommended)` inside the bold label. Omit the dash and consequence only when the label itself makes the consequence clear. Checkpoint-specific option bullets below define content, not the final response format. When the active host forbids textual multiple-choice lists, ask one concise plain-text question that states the alternatives and their consequences without a lettered or bulleted list.
 
-After the prose list, write `Reply with A, B, ...` using only the letters actually shown. Add `, or write another answer` only when the checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset the letters for every new question; they have no meaning outside the currently displayed choice. Do not letter open-ended requests for a feature description, path, correction, or other required free text.
+After a lettered list, write `Reply with A, B, ...` using only the letters shown. Add `, or write another answer` only when that checkpoint already permits a custom response. Accept an uppercase or lowercase letter, the full option label, or an unambiguous natural-language answer. Reset letters for each new question; do not letter open-ended requests for a feature description, path, correction, or other required free text. A recommendation or preselection does not choose itself.
 
-Never render a finite prose fallback as unlettered bullets. Checkpoint-specific option bullets later in this skill describe option content, not the final prose format; convert them to `A.` through `D.` when structured input is unavailable.
+Keep an unanswered checkpoint pending across completed turns. Resume the same step only after an unambiguous answer; tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval. Preserve existing authorization for unchanged scope rather than adding another gate. A pending checkpoint does not create an extra artifact, mark work ready, or advance a successor stage. If a handoff is requested later, carry the unresolved question and blocked next action in its existing sections.
 
 ## Recommended action format
 
@@ -112,7 +112,7 @@ Use the retained recent listings:
 - If exactly one file exists across both listings, ask `Blueprint from this artifact?` with `Blueprint from [research|solutions] <filename> (Recommended)` and `Pick a different path`.
 - If two or more files exist, offer up to four newest entries across both lists, each visibly labeled `[research]` or `[solutions]`.
 
-Use native structured input when available. Otherwise use the lettered prose choice format, permit another written answer, and stop. The custom-response field supplies unlisted choices; never author an `Other` option.
+Use the Choice response format for this checkpoint, permit another written answer, and stop while unanswered. Never author an `Other` option.
 
 #### Free text or another input form
 
@@ -166,7 +166,7 @@ Prefix each visible decision question with `❓ Question:`. Every question must 
 
 Ask exactly one developer question per response and stop for its answer. This applies to directional confirmations, genuine ambiguities, decomposition, slice approval, and review triage. Never batch multiple questions or multiple review findings into one structured-input call or prose response, even when they are independent.
 
-Use native structured input when available. For every finite prose fallback in this checkpoint, use the lettered prose choice format. Permit another written answer only for a checkpoint whose structured control already exposes a custom-response field.
+Use the Choice response format for every finite checkpoint here. Permit another written answer only where this checkpoint already allows a custom response.
 
 For every checkpoint in this workflow, render each option as both a short label and a plain-language description. The description must explain:
 
@@ -189,7 +189,7 @@ Offer both options with concrete consequences:
 - `Follow {pattern}` — explain which existing components keep their current responsibility and what narrow surface the plan adds or extends.
 - `Moving off {pattern}` — explain which responsibility or abstraction would be consolidated, replaced, or newly shared, and why that makes the plan materially larger or different.
 
-For the prose fallback, use the choice response format with `Follow {pattern}` first and `Moving off {pattern}` second, then write `Reply with A or B, or write another answer.` Do not emit the two options as unlettered bullets.
+In the final response, use the Choice response format with `Follow {pattern}` first and `Moving off {pattern}` second. When lettered options are permitted, write `Reply with A or B, or write another answer.`
 
 Do not mark Follow as recommended. A move-off answer becomes a genuine ambiguity.
 
@@ -216,7 +216,7 @@ Scope: {included} | Not building: {excluded}
 Files: {N} new, {M} modified
 ```
 
-Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Use the lettered prose choice format when necessary and wait for explicit Proceed.
+Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Use the Choice response format and wait for explicit Proceed.
 
 ### 5. Decompose the feature and create the skeleton
 
@@ -232,7 +232,7 @@ Slice 1: {name} — {end-to-end outcome}
   Depends on: nothing
 ```
 
-Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Use the lettered prose choice format when necessary and wait for approval.
+Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Use the Choice response format and wait for approval.
 
 Immediately after approval, create exactly one skeleton artifact at:
 
@@ -366,7 +366,7 @@ Ask `Slice N/M: {name} — {files}. Approve?` with:
 - `Rethink remaining slices` or, on the final slice, `Reopen earlier phase`;
 - `Revisit a decision`.
 
-For the prose fallback, preserve that order as `A.` through `D.` and write `Reply with A, B, C, or D, or write another answer.` Never emit the four options as unlettered bullets.
+In the final response, use the Choice response format and preserve that order. When lettered options are permitted, render `A.` through `D.` and write `Reply with A, B, C, or D, or write another answer.`
 
 On the final slice, prepend the verifier's Cross-slice result and state that approval automatically runs finalization and independent review, then pauses at triage.
 
@@ -423,9 +423,9 @@ Do not auto-apply reviewer findings. Present counts for blockers, concerns, and 
 - `Defer` — leave the plan unchanged and record the developer's scope or follow-up reason as `deferred: {reason}`;
 - `Dismiss` — leave the plan unchanged and record why the finding does not apply as `dismissed: {reason}`.
 
-Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use structured input when available; otherwise use the lettered prose choice format without a custom-answer suffix and stop. Every row must receive a resolution.
+Pending choices use `Apply / Defer / Dismiss`, never the past-tense status words. Past tense is reserved for the resolution recorded after the developer decides. Triage every severity sequentially, one row and one question per response. Use the Choice response format without a custom-answer suffix and stop while unanswered. Every row must receive a resolution.
 
-For the prose fallback, use the choice response format with `Apply`, `Defer`, and `Dismiss` in that order and their existing consequence descriptions, then write `Reply with A, B, or C.`
+In the final response, use the Choice response format with `Apply`, `Defer`, and `Dismiss` in that order and their existing consequence descriptions. When lettered options are permitted, write `Reply with A, B, or C.`
 
 After all rows are resolved, change `status: in-review` to `status: ready`. Report the artifact using the active chat-surface link format, followed by the fixed-decision count, phase count, new and modified file counts, generation revisions, and triage totals. Then present this handoff and stop:
 

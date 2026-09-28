@@ -97,26 +97,28 @@ test("public marketplace includes the standalone advisor plugin", () => {
   assert.ok(existsSync(join(advisorRoot, "skills/codex-advisor/SKILL.md")));
 });
 
-test("every skill uses the self-contained lettered prose choice contract", () => {
+test("every skill keeps required decisions durable and answer-blocking", () => {
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
   for (const skillName of skillNames) {
     const skill = read(join(skillsRoot, skillName, "SKILL.md"));
-    assert.match(skill, /^## Choice response format$/m, skillName);
-    assert.match(skill, /prefer native structured input without letter prefixes/, skillName);
-    assert.match(skill, /render the same options in prose as `A\.` through `D\.`/, skillName);
-    assert.match(skill, /Preserve the recommended option first so it becomes `A`/, skillName);
-    assert.match(skill, /`A\. \*\*Label \(Recommended\)\*\* — consequence\.`/, skillName);
-    assert.match(skill, /Keep `\(Recommended\)` inside the bold label/, skillName);
-    assert.match(skill, /Omit the dash and consequence when the label is already self-explanatory/, skillName);
-    assert.doesNotMatch(skill, /\*\*Recommended\.\*\*/, skillName);
-    assert.match(skill, /write `Reply with A, B, \.\.\.` using only the letters actually shown/, skillName);
-    assert.match(skill, /Add `, or write another answer` only when .* permits a custom response/, skillName);
-    assert.match(skill, /Accept an uppercase or lowercase letter, the full option label/, skillName);
-    assert.match(skill, /Reset the letters for every new question/, skillName);
-    assert.match(skill, /Do not letter open-ended requests/, skillName);
+    const contract = skill.split("## Choice response format\n")[1]?.split("\n## ")[0];
+    assert.ok(contract, skillName);
+    for (const rule of [
+      "complete question in the final chat response",
+      "stop before dependent work",
+      "asynchronous structured input as the sole carrier",
+      "mode, purpose, and question shape",
+      "one concise plain-text question",
+      "Keep an unanswered checkpoint pending across completed turns",
+      "tool acceptance, silence, timeout, dismissal, and unrelated messages are not answers or approval",
+      "Preserve existing authorization for unchanged scope",
+    ]) assert.ok(contract.includes(rule), `${skillName}: ${rule}`);
+    assert.match(contract, /`A\. \*\*Label \(Recommended\)\*\* — consequence\.`/, skillName);
+    assert.match(contract, /Add `, or write another answer` only when that checkpoint already permits a custom response/, skillName);
+    assert.doesNotMatch(skill, /Use native structured input when (?:it is )?available/, skillName);
   }
 });
 

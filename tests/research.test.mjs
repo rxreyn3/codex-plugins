@@ -145,8 +145,8 @@ test("research asks one developer question and separates chat from artifact link
   assert.match(skill, /\[descriptive label — lines 42–55\]\(\/absolute\/repository\/backend\/path\/to\/file\.py:42\)/);
   assert.match(skill, /\[descriptive label — lines 42–55\]\(backend\/path\/to\/file\.py#L42-L55\)/);
   assert.match(skill, /Never write an absolute machine path into the artifact/);
-  assert.match(skill, /lettered prose choice format, permit another written answer/);
-  assert.match(skill, /lettered prose choice format without a custom-answer suffix/);
+  assert.match(skill, /Use the Choice response format with the recommended evidence-based option first, permit another written answer/);
+  assert.match(skill, /Use the Choice response format without a custom-answer suffix/);
 });
 
 test("research keeps the bounded workflow when agents or live code are unavailable", () => {

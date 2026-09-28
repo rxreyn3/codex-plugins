@@ -66,7 +66,7 @@ test("implement keeps mismatch handling inline and stops before successor stages
     assert.ok(skill.includes(option), option);
   }
   assert.match(skill, /Ask exactly one focused question/);
-  const fallbackStart = skill.indexOf("When structured input is unavailable");
+  const fallbackStart = skill.indexOf("If it does not return an answer, state the observed mismatch");
   const fallbackEnd = skill.indexOf("Do not use this mismatch flow", fallbackStart);
   assert.ok(fallbackStart >= 0);
   assert.ok(fallbackEnd > fallbackStart);
@@ -77,11 +77,12 @@ test("implement keeps mismatch handling inline and stops before successor stages
     ["B", "Skip this change"],
     ["C", "Revise the plan"],
   ]) {
-    assert.ok(fallback.includes(`${letter}. ${option}`), `direct fallback missing ${letter}. ${option}`);
+    assert.ok(fallback.includes(`${letter}. **${option}**`), `direct fallback missing ${letter}. ${option}`);
   }
   assert.match(fallback, /Reply with A, B, or C\./);
   assert.doesNotMatch(fallback, /or write another answer/);
-  assert.match(fallback, /Never refer to a "displayed prompt"/);
+  assert.match(fallback, /final response carries the complete question and all three consequences/);
+  assert.match(fallback, /Tool acceptance or a displayed input surface is not an answer/);
   assert.match(skill, /Successor names are handoffs, not permission/);
   assert.match(skill, /Never invoke a successor skill, commit, push, publish/);
 });
