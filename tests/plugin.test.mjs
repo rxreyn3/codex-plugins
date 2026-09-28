@@ -85,6 +85,18 @@ test("plugin packaging is valid and every skill is self-contained", () => {
   }
 });
 
+test("public marketplace includes the standalone advisor plugin", () => {
+  const marketplace = json(marketplacePath);
+  const entry = marketplace.plugins.find((plugin) => plugin.name === "codex-advisor");
+  assert.ok(entry);
+  const advisorRoot = join(repositoryRoot, "plugins/codex-advisor");
+  assert.equal(resolve(repositoryRoot, entry.source.path), advisorRoot);
+  const manifest = json(join(advisorRoot, ".codex-plugin/plugin.json"));
+  assert.equal(manifest.name, "codex-advisor");
+  assert.equal(manifest.version, "0.1.0");
+  assert.ok(existsSync(join(advisorRoot, "skills/codex-advisor/SKILL.md")));
+});
+
 test("every skill uses the self-contained lettered prose choice contract", () => {
   const skillNames = readdirSync(skillsRoot, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())

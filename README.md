@@ -13,6 +13,7 @@ Add the GitHub repository as a Codex marketplace, then install the plugin:
 ```bash
 codex plugin marketplace add rxreyn3/rpiv-codex --ref main
 codex plugin add rpiv-codex@rpiv-codex
+codex plugin add codex-advisor@rpiv-codex
 ```
 
 Start a fresh Codex task after installation so the new skills are loaded.
@@ -24,6 +25,7 @@ Refresh the Git marketplace snapshot, then reinstall the plugin:
 ```bash
 codex plugin marketplace upgrade rpiv-codex
 codex plugin add rpiv-codex@rpiv-codex
+codex plugin add codex-advisor@rpiv-codex
 ```
 
 Start a fresh Codex task after updating.
@@ -34,10 +36,13 @@ Remove the installed plugin and its marketplace source:
 
 ```bash
 codex plugin remove rpiv-codex@rpiv-codex
+codex plugin remove codex-advisor@rpiv-codex
 codex plugin marketplace remove rpiv-codex
 ```
 
 ## Skills
+
+The repository also publishes the standalone [Codex Advisor](docs/CODEX-ADVISOR.md) plugin for focused second opinions outside RPIV workflows.
 
 - Discover
 - Research

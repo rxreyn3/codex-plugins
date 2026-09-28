@@ -4,7 +4,16 @@ The standalone plugin lives at `plugins/codex-advisor/`. Its manifest packages o
 
 The idea was inspired by [RPIV Advisor](https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-advisor), which uses a Pi tool. This Codex implementation uses original instructions and native subagent dispatch.
 
-## Local install
+## Install from the public marketplace
+
+```bash
+codex plugin marketplace add rxreyn3/rpiv-codex --ref main
+codex plugin add codex-advisor@rpiv-codex
+```
+
+After a new release, refresh and reinstall with `codex plugin marketplace upgrade rpiv-codex` followed by `codex plugin add codex-advisor@rpiv-codex`. Start a fresh Codex task to load the skill.
+
+## Local development install
 
 The repo's `scripts/install-dev.sh` installs only the RPIV workflow plugin. To install this independent plugin through Codex's personal marketplace, run from the repo root:
 
