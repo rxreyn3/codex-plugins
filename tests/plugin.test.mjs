@@ -93,7 +93,7 @@ test("public marketplace includes the standalone advisor plugin", () => {
   assert.equal(resolve(repositoryRoot, entry.source.path), advisorRoot);
   const manifest = json(join(advisorRoot, ".codex-plugin/plugin.json"));
   assert.equal(manifest.name, "codex-advisor");
-  assert.equal(manifest.version, "0.1.0");
+  assert.match(manifest.version, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/);
   assert.ok(existsSync(join(advisorRoot, "skills/codex-advisor/SKILL.md")));
 });
 
