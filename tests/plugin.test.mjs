@@ -20,8 +20,8 @@ const walkFiles = (root) =>
 
 test("plugin packaging is valid and every skill is self-contained", () => {
   const marketplace = json(marketplacePath);
-  assert.equal(marketplace.name, "rpiv-codex");
-  assert.equal(marketplace.interface.displayName, "RPIV Codex");
+  assert.equal(marketplace.name, "ryan-codex");
+  assert.equal(marketplace.interface.displayName, "Ryan’s Codex Plugins");
   const entry = marketplace.plugins.find((plugin) => plugin.name === "rpiv-codex");
   assert.ok(entry);
   assert.equal(resolve(repositoryRoot, entry.source.path), pluginRoot);

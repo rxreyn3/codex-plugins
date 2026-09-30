@@ -41,7 +41,7 @@ if [[ "$(git branch --show-current)" != "main" || -n "$(git status --porcelain)"
   printf 'Publishing requires a clean main branch containing the release commit.\n' >&2
   exit 1
 fi
-if [[ "$(git remote get-url origin)" != "https://github.com/rxreyn3/rpiv-codex.git" ]]; then
+if [[ "$(git remote get-url origin)" != "https://github.com/rxreyn3/codex-plugins.git" ]]; then
   printf 'Unexpected origin URL: %s\n' "$(git remote get-url origin)" >&2
   exit 1
 fi
@@ -105,4 +105,4 @@ if ! GH_TOKEN="$github_token" gh release create "v$version" --title "RPIV Codex 
   exit 1
 fi
 
-printf 'Published RPIV Codex %s. Users can now upgrade and reinstall from the rpiv-codex marketplace.\n' "$version"
+printf 'Published RPIV Codex %s. Users can now upgrade and reinstall from the ryan-codex marketplace.\n' "$version"

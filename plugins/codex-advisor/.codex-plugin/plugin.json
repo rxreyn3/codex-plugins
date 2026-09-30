@@ -1,6 +1,6 @@
 {
   "name": "codex-advisor",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A second opinion from a configured native Codex subagent for consequential decisions and stalled work.",
   "author": {
     "name": "Ryan Reynolds"

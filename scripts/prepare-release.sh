@@ -35,7 +35,7 @@ if [[ -n "$(git status --porcelain)" ]]; then
   printf 'Release preparation requires a clean worktree.\n' >&2
   exit 1
 fi
-if [[ "$(git remote get-url origin)" != "https://github.com/rxreyn3/rpiv-codex.git" ]]; then
+if [[ "$(git remote get-url origin)" != "https://github.com/rxreyn3/codex-plugins.git" ]]; then
   printf 'Unexpected origin URL: %s\n' "$(git remote get-url origin)" >&2
   exit 1
 fi

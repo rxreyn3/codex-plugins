@@ -49,7 +49,7 @@ Do not add repeated model evaluations or a new general test harness unless a con
 scripts/install-dev.sh
 ```
 
-The installer rebuilds `.local/rpiv-codex-dev`, adds a cache-buster only to that ignored copy, installs it from the `rpiv-codex-dev` marketplace, and byte-compares the installed cache with the candidate. It never edits the tracked public manifest.
+The installer copies only the RPIV workflow plugin into `.local/ryan-codex-dev`, adds a cache-buster only to that ignored copy, installs it from the `ryan-codex-dev` marketplace, and byte-compares the installed cache with the candidate. Its catalog contains only that copied plugin. It never edits the tracked public manifest.
 
 Start a fresh Codex task in an unrelated project and run the realistic and boundary prompts supplied by the port task. Record either `Pass` with the required observations or `Repair` with the exact failing prompt, observed result, expected result, candidate commit, and development version.
 
@@ -58,10 +58,16 @@ The public and development plugins can both be installed, but they expose the sa
 ## Restore the public plugin after testing
 
 ```bash
-codex plugin remove rpiv-codex@rpiv-codex-dev
-codex plugin marketplace remove rpiv-codex-dev
-codex plugin marketplace upgrade rpiv-codex
-codex plugin add rpiv-codex@rpiv-codex
+codex plugin marketplace upgrade ryan-codex
+codex plugin add rpiv-codex@ryan-codex
+codex plugin list --json
 ```
 
-The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch.
+Confirm the public replacement is installed and enabled, then remove the development copy:
+
+```bash
+codex plugin remove rpiv-codex@ryan-codex-dev
+codex plugin marketplace remove ryan-codex-dev
+```
+
+If replacement installation or verification fails, preserve the development installation. The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch. See the [marketplace migration instructions](../README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.

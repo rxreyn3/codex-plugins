@@ -29,14 +29,14 @@ configured_root="$(codex plugin marketplace list --json | node -e '
 let input = "";
 process.stdin.on("data", chunk => input += chunk);
 process.stdin.on("end", () => {
-  const match = JSON.parse(input).marketplaces.find(item => item.name === "rpiv-codex-dev");
+  const match = JSON.parse(input).marketplaces.find(item => item.name === "ryan-codex-dev");
   if (match) process.stdout.write(match.root);
 });
 ')"
 
 if [[ -n "$configured_root" && "$configured_root" != "$development_root" ]]; then
-  printf 'The rpiv-codex-dev marketplace already points somewhere else:\n%s\n' "$configured_root" >&2
-  printf 'Remove it explicitly before retrying: codex plugin marketplace remove rpiv-codex-dev\n' >&2
+  printf 'The ryan-codex-dev marketplace already points somewhere else:\n%s\n' "$configured_root" >&2
+  printf 'Remove it explicitly before retrying: codex plugin marketplace remove ryan-codex-dev\n' >&2
   exit 1
 fi
 
@@ -44,7 +44,7 @@ if [[ -z "$configured_root" ]]; then
   codex plugin marketplace add "$development_root"
 fi
 
-install_json="$(codex plugin add rpiv-codex@rpiv-codex-dev --json)"
+install_json="$(codex plugin add rpiv-codex@ryan-codex-dev --json)"
 installed_root="$(printf '%s' "$install_json" | node -e '
 let input = "";
 process.stdin.on("data", chunk => input += chunk);

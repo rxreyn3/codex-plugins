@@ -28,3 +28,12 @@ test("publisher scopes remote writes to the verified GitHub credential", () => {
   assert.match(publisher, /git_with_github_identity push --atomic origin main/);
   assert.match(publisher, /GH_TOKEN="\$github_token" gh release create/);
 });
+
+
+test("release helpers accept only the renamed repository origin", () => {
+  for (const helper of ["prepare-release.sh", "publish-release.sh"]) {
+    const source = readFileSync(join(repositoryRoot, "scripts", helper), "utf8");
+    assert.ok(source.includes('"$(git remote get-url origin)" != "https://github.com/rxreyn3/codex-plugins.git"'));
+    assert.equal(source.includes("https://github.com/rxreyn3/rpiv-codex.git"), false);
+  }
+});

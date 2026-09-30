@@ -1,29 +1,61 @@
-# RPIV Codex
+# Ryan’s Codex Plugins
 
-![RPIV Codex workflow from intent to verified change, with Blueprint and Design-to-Plan routes, revision, and handoffs](docs/assets/rpiv-codex-workflow.png)
+This repository publishes two independent plugins through the `ryan-codex` marketplace, displayed as “Ryan’s Codex Plugins”:
 
-RPIV Codex is an independent Codex-native port of the RPIV feature-development workflow. It helps developers take an unclear request through discovery, grounded research, design, planning, implementation, validation, local commits, and verified code review.
+- **RPIV Codex** (`rpiv-codex`) is an independent Codex-native port of the RPIV feature-development workflow. It takes an unclear request through discovery, grounded research, design, planning, implementation, validation, local commits, and verified code review.
+- **Codex Advisor** (`codex-advisor`) provides focused second opinions through native Codex subagents. See the [Advisor guide](docs/CODEX-ADVISOR.md) for its consultation policy and configuration.
 
-The workflow is deliberately controlled rather than autonomous. Each skill owns one stage, writes or updates a durable artifact when appropriate, and stops at an explicit boundary. A recommended next stage is a handoff—not permission to continue changing code, committing, pushing, or publishing.
+The RPIV workflow is deliberately controlled rather than autonomous. Each skill owns one stage, writes or updates a durable artifact when appropriate, and stops at an explicit boundary. A recommended next stage is a handoff—not permission to continue changing code, committing, pushing, or publishing.
 
 ## Install
 
 Add this repository as a Codex marketplace and install the RPIV workflow plugin:
 
 ```bash
-codex plugin marketplace add rxreyn3/rpiv-codex --ref main
-codex plugin add rpiv-codex@rpiv-codex
+codex plugin marketplace add rxreyn3/codex-plugins --ref main
+codex plugin add rpiv-codex@ryan-codex
 ```
 
 Start a fresh Codex task after installation so the skills are loaded.
 
-The repository also publishes [Codex Advisor](docs/CODEX-ADVISOR.md), an optional separate plugin for focused second opinions:
+Install Codex Advisor independently, or alongside the workflow plugin:
 
 ```bash
-codex plugin add codex-advisor@rpiv-codex
+codex plugin add codex-advisor@ryan-codex
 ```
 
+## Migrate from the previous marketplace names
+
+The repository was renamed from `rxreyn3/rpiv-codex` to `rxreyn3/codex-plugins`. The public marketplace is now `ryan-codex`; plugin and skill names remain unchanged. Existing installations under the old catalog names need to be replaced explicitly.
+
+Install both replacements before removing existing copies:
+
+```bash
+codex plugin marketplace add rxreyn3/codex-plugins --ref main
+codex plugin add rpiv-codex@ryan-codex
+codex plugin add codex-advisor@ryan-codex
+codex plugin list --json
+```
+
+Confirm both replacements are installed and enabled at the expected published versions. Start a fresh task and verify the new plugins before cleanup; both sources expose the same skill names. If either installation or verification fails, preserve the old installations.
+
+After verification, remove only the old copies and registrations present in your configuration:
+
+```bash
+codex plugin remove rpiv-codex@rpiv-codex
+codex plugin remove codex-advisor@rpiv-codex
+codex plugin remove rpiv-codex@rpiv-codex-dev
+codex plugin marketplace remove rpiv-codex
+codex plugin marketplace remove rpiv-codex-dev
+codex plugin list --json
+codex plugin marketplace list --json
+```
+
+The renamed local development marketplace is `ryan-codex-dev`. Its helper still installs only the RPIV workflow plugin; using it is optional and separate from these public installations.
+
 ## Choose a workflow
+
+![RPIV Codex workflow from intent to verified change, with Blueprint and Design-to-Plan routes, revision, and handoffs](docs/assets/rpiv-codex-workflow.png)
 
 Start with the stage that matches what you already know. You do not need to run every stage.
 
@@ -116,9 +148,9 @@ Commands above are prompts to enter in Codex, not shell commands. Artifact paths
 Refresh the marketplace snapshot and reinstall whichever plugins you use:
 
 ```bash
-codex plugin marketplace upgrade rpiv-codex
-codex plugin add rpiv-codex@rpiv-codex
-codex plugin add codex-advisor@rpiv-codex  # optional
+codex plugin marketplace upgrade ryan-codex
+codex plugin add rpiv-codex@ryan-codex
+codex plugin add codex-advisor@ryan-codex  # optional
 ```
 
 Start a fresh Codex task after updating.
@@ -126,9 +158,9 @@ Start a fresh Codex task after updating.
 ## Remove
 
 ```bash
-codex plugin remove rpiv-codex@rpiv-codex
-codex plugin remove codex-advisor@rpiv-codex  # if installed
-codex plugin marketplace remove rpiv-codex
+codex plugin remove rpiv-codex@ryan-codex
+codex plugin remove codex-advisor@ryan-codex  # if installed
+codex plugin marketplace remove ryan-codex
 ```
 
 ## Maintainer workflow

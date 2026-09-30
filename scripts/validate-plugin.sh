@@ -14,4 +14,6 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
-uv run --no-project --with pyyaml python "$validator" "$repository_root/plugins/rpiv-codex"
+for plugin in rpiv-codex codex-advisor; do
+  uv run --no-project --with pyyaml python "$validator" "$repository_root/plugins/$plugin"
+done

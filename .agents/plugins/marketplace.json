@@ -1,7 +1,7 @@
 {
-  "name": "rpiv-codex",
+  "name": "ryan-codex",
   "interface": {
-    "displayName": "RPIV Codex"
+    "displayName": "Ryan’s Codex Plugins"
   },
   "plugins": [
     {

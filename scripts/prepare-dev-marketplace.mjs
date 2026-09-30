@@ -2,10 +2,11 @@
 
 import { cpSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const developmentRoot = join(repositoryRoot, ".local", "rpiv-codex-dev");
+const developmentRoot = join(repositoryRoot, ".local", "ryan-codex-dev");
 const sourcePlugin = join(repositoryRoot, "plugins", "rpiv-codex");
 const sourceMarketplace = join(repositoryRoot, ".agents", "plugins", "marketplace.json");
 
@@ -19,8 +20,9 @@ mkdirSync(join(developmentRoot, "plugins"), { recursive: true });
 cpSync(sourcePlugin, join(developmentRoot, "plugins", "rpiv-codex"), { recursive: true });
 
 const marketplace = JSON.parse(readFileSync(sourceMarketplace, "utf8"));
-marketplace.name = "rpiv-codex-dev";
-marketplace.interface.displayName = "RPIV Codex Development";
+marketplace.plugins = marketplace.plugins.filter((plugin) => plugin.name === "rpiv-codex");
+marketplace.name = "ryan-codex-dev";
+marketplace.interface.displayName = "Ryan’s Codex Plugins Development";
 writeFileSync(
   join(developmentRoot, ".agents", "plugins", "marketplace.json"),
   `${JSON.stringify(marketplace, null, 2)}\n`,
@@ -29,8 +31,8 @@ writeFileSync(
 const manifestPath = join(developmentRoot, "plugins", "rpiv-codex", ".codex-plugin", "plugin.json");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const baseVersion = manifest.version.split("+")[0];
-const timestamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-manifest.version = `${baseVersion}+codex.local-${timestamp}`;
+const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
+manifest.version = `${baseVersion}+codex.local-${timestamp}-${randomUUID()}`;
 writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 process.stdout.write(`${JSON.stringify({
