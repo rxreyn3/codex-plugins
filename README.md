@@ -16,6 +16,16 @@ Each skill owns one stage and stops at an explicit boundary. A recommended next 
 
 **A focused second opinion.** `codex-advisor` consults a native Codex subagent when a consequential decision remains ambiguous, repeated attempts fail, or evidence conflicts. The main agent checks the advice and continues the task. [Consultation policy and configuration](docs/CODEX-ADVISOR.md).
 
+### Encourage proactive use
+
+My global Codex instructions encourage agents to consider Advisor without waiting for an explicit request when a consequential decision remains ambiguous, repeated approaches fail, evidence conflicts, or an independent challenge would materially improve the result. Routine work and questions a quick direct check can settle do not need a consultation.
+
+After installing the plugin, you can add the same guidance to `~/.codex/AGENTS.md`:
+
+> When those conditions apply, actively consider the advisor instead of waiting for me to request it. Follow the skill's automatic policy using only a verified current working-model identity or my explicit declaration of it for this task. A manual request for an advisor bypasses that policy. Give the advice serious evidence-based consideration, verify material claims, share the useful conclusion briefly, and continue the original task.
+
+This encourages consultation; it does not override the skill's eligibility rules or transfer task ownership to the advisor.
+
 ## Install
 
 Add this repository as a Codex marketplace and install the RPIV workflow plugin:
