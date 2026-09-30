@@ -1,11 +1,20 @@
 # Ryan’s Codex Plugins
 
-This repository publishes two independent plugins through the `ryan-codex` marketplace, displayed as “Ryan’s Codex Plugins”:
+Two independent plugins, available through the `ryan-codex` marketplace.
 
-- **RPIV Codex** (`rpiv-codex`) is an independent Codex-native port of the RPIV feature-development workflow. It takes an unclear request through discovery, grounded research, design, planning, implementation, validation, local commits, and verified code review.
-- **Codex Advisor** (`codex-advisor`) provides focused second opinions through native Codex subagents. See the [Advisor guide](docs/CODEX-ADVISOR.md) for its consultation policy and configuration.
+## RPIV Codex
 
-The RPIV workflow is deliberately controlled rather than autonomous. Each skill owns one stage, writes or updates a durable artifact when appropriate, and stops at an explicit boundary. A recommended next stage is a handoff—not permission to continue changing code, committing, pushing, or publishing.
+![RPIV Codex workflow from intent to verified change, with Blueprint and Design-to-Plan routes, revision, and handoffs](docs/assets/rpiv-codex-workflow.png)
+
+**Intent to verified change.** `rpiv-codex` is an independent Codex-native port of the RPIV feature-development workflow. It takes an unclear request through discovery, grounded research, design, planning, implementation, validation, local commits, and verified code review.
+
+Each skill owns one stage and stops at an explicit boundary. A recommended next stage is a handoff, not permission to continue changing code, committing, pushing, or publishing. [Choose a workflow](#choose-a-workflow).
+
+## Codex Advisor
+
+![Codex Advisor: inspect, consult, verify, and continue; the main agent owns the task](docs/assets/codex-advisor-banner.png)
+
+**A focused second opinion.** `codex-advisor` consults a native Codex subagent when a consequential decision remains ambiguous, repeated attempts fail, or evidence conflicts. The main agent checks the advice and continues the task. [Consultation policy and configuration](docs/CODEX-ADVISOR.md).
 
 ## Install
 
@@ -25,8 +34,6 @@ codex plugin add codex-advisor@ryan-codex
 ```
 
 ## Choose a workflow
-
-![RPIV Codex workflow from intent to verified change, with Blueprint and Design-to-Plan routes, revision, and handoffs](docs/assets/rpiv-codex-workflow.png)
 
 Start with the stage that matches what you already know. You do not need to run every stage.
 
