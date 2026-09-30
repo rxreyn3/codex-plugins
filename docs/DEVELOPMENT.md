@@ -70,4 +70,4 @@ codex plugin remove rpiv-codex@ryan-codex-dev
 codex plugin marketplace remove ryan-codex-dev
 ```
 
-If replacement installation or verification fails, preserve the development installation. The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch. See the [marketplace migration instructions](../README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.
+If replacement installation or verification fails, preserve the development installation. The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch. See the [marketplace migration instructions](https://github.com/rxreyn3/codex-plugins/blob/2a13fcc2e758f273f74dcf2cc4ca44b46a160b7b/README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.

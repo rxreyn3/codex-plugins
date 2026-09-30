@@ -24,35 +24,6 @@ Install Codex Advisor independently, or alongside the workflow plugin:
 codex plugin add codex-advisor@ryan-codex
 ```
 
-## Migrate from the previous marketplace names
-
-The repository was renamed from `rxreyn3/rpiv-codex` to `rxreyn3/codex-plugins`. The public marketplace is now `ryan-codex`; plugin and skill names remain unchanged. Existing installations under the old catalog names need to be replaced explicitly.
-
-Install both replacements before removing existing copies:
-
-```bash
-codex plugin marketplace add rxreyn3/codex-plugins --ref main
-codex plugin add rpiv-codex@ryan-codex
-codex plugin add codex-advisor@ryan-codex
-codex plugin list --json
-```
-
-Confirm both replacements are installed and enabled at the expected published versions. Start a fresh task and verify the new plugins before cleanup; both sources expose the same skill names. If either installation or verification fails, preserve the old installations.
-
-After verification, remove only the old copies and registrations present in your configuration:
-
-```bash
-codex plugin remove rpiv-codex@rpiv-codex
-codex plugin remove codex-advisor@rpiv-codex
-codex plugin remove rpiv-codex@rpiv-codex-dev
-codex plugin marketplace remove rpiv-codex
-codex plugin marketplace remove rpiv-codex-dev
-codex plugin list --json
-codex plugin marketplace list --json
-```
-
-The renamed local development marketplace is `ryan-codex-dev`. Its helper still installs only the RPIV workflow plugin; using it is optional and separate from these public installations.
-
 ## Choose a workflow
 
 ![RPIV Codex workflow from intent to verified change, with Blueprint and Design-to-Plan routes, revision, and handoffs](docs/assets/rpiv-codex-workflow.png)
