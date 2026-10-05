@@ -8,7 +8,7 @@ description: Answer structured repository or external-contract questions with bo
 Answer structured questions by first tracing the investigation scope, then executing targeted analysis roles, checkpointing material ambiguities with the developer, and writing a downstream-compatible research document.
 
 Original upstream baseline: 7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7.
-Reviewed through RPIV-Pi commit d74b1c99830a565f3df3f37e0a36616d17ffc574; selected Codex differences remain.
+Review ledger: docs/RPIV-PI-REVIEW.md.
 
 This port preserves the upstream `research` workflow:
 

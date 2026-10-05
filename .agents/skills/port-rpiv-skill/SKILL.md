@@ -28,5 +28,5 @@ Follow every checkpoint and completion rule in the porting plan. In particular:
 - do not turn prompt wording into a test interface or create a general evaluation harness without a concrete failure that needs one;
 - keep the global source pin separate from each skill's original and reviewed-through upstream baselines;
 - commit only the completed result for the named skill, following the plan's behavioral, record-only, and no-change outcomes;
-- never push, publish, or start the next skill;
+- never push or publish unless the user explicitly authorizes it in the current task; never start the next skill;
 - call a behavioral port or update accepted only after a fresh task tests the installed plugin and the user accepts the result.

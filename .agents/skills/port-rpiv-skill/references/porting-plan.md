@@ -31,9 +31,11 @@ Ordinary mode uses this source revision:
 - Repository: sibling Git repository `../rpiv-mono`
 - Package tree: `packages/rpiv-pi`
 - Upstream branch at pin time: `upstream/main`
-- Commit: `d74b1c99830a565f3df3f37e0a36616d17ffc574`
-- Commit date: `2026-09-21`
-- Commit subject: `feat(rpiv-site): v2.11 release-notes post - the judge was the wall clock`
+- Commit: `68d9a0014b70006d7b04b57933752338a2716db7`
+- Commit date: `2026-09-30`
+- Commit subject: `feat(rpiv-site): v2.12 release-notes post - a challenger for build`
+
+The shared review ledger at `docs/RPIV-PI-REVIEW.md` records the skills reviewed through this pin and their dispositions. Read it before a later source review. The pin selects the maximum source snapshot; a skill's reviewed-through entry determines the lower bound for that skill's next diff. Do not reopen a closed disposition unless a listed reopen condition applies.
 
 Resolve the `rpiv-codex` root and its sibling `rpiv-mono` repository through `git rev-parse --show-toplevel`; do not rely on the caller's current directory or accept an arbitrary lookalike directory. Treat the source working tree and its `HEAD` as irrelevant. Read committed source only with revision-qualified Git object operations such as `git cat-file`, `git show`, `git ls-tree`, `git log`, and `git diff` against the resolved source repository. Never pull, switch, checkout, reset, merge, clean, or write files in the `rpiv-mono` working tree.
 
@@ -107,9 +109,11 @@ For an existing target, establish these distinct baselines before proposing edit
 - **Original upstream baseline:** the upstream commit represented by the implementation that survives at `HEAD`. Find the Codex commit that introduced that surviving implementation, following verified renames or moves. Inspect deletion and recreation as a possible origin reset. Stop when the origin is absent or remains ambiguous.
 - **Per-skill review baseline:** the upstream commit through which all reachable changes for this named skill were last assessed. `Reviewed through` means assessed, not necessarily adopted, installed, tested, or accepted. It is not the global source pin.
 
-Find the newest commit reachable from `HEAD` whose subject exactly equals `Update <source-name> from RPIV-Pi`. Validate its required `Upstream review` and `Codex lineage` body fields and the tracked provenance before using its new review endpoint. Repair commits do not replace this record. No prior exact-subject update commit is valid only for the first selective update, whose review baseline is the original upstream baseline.
+The current per-skill review baseline and settled decisions live in `docs/RPIV-PI-REVIEW.md`. Treat that ledger as authoritative and do not require a duplicate `Reviewed through` line in each installed skill. Existing update commits remain historical evidence; their dispositions are not open decisions unless the ledger says they remain outstanding.
 
-The old review baseline in the next update commit is that validated per-skill baseline, and the new review baseline is the selected pin frozen for this invocation.
+Find the newest commit reachable from `HEAD` whose subject exactly equals `Update <source-name> from RPIV-Pi`, when one exists. Validate its required `Upstream review` and `Codex lineage` body fields and retain it as historical lineage evidence; repair commits do not replace it. The review baseline comes from that skill's ledger entry. Use a prior update commit's endpoint only when no ledger entry exists. If neither a ledger entry nor an update commit exists, this is the first selective update and the original upstream baseline is the review baseline. Stop if records conflict in a way that prevents identifying the surviving Codex origin; do not silently override the ledger.
+
+The old review baseline recorded in the next update commit is the per-skill ledger baseline, and the new review baseline is the selected pin frozen for this invocation. Update the ledger entry in that same completed change.
 
 Require the original baseline, review baseline, and selected pin to be full available commits in the source repository. Require the review baseline to be an ancestor of the selected pin. Stop for absent, ambiguous, unavailable, or non-ancestor baselines; do not guess from dates, source `HEAD`, global pin history, or similar-looking commit subjects.
 
@@ -119,7 +123,7 @@ Review all three comparisons:
 2. review-baseline upstream to the implementation and history surviving in Codex, for local intent and prior adaptations;
 3. every outstanding deferral recorded by the prior update, even when the selected pin equals the review baseline.
 
-Classify each relevant upstream change as `adopt`, `adapt`, `retain-local`, or `defer`, with a reason. These upstream-change dispositions are separate from the dependency table's copy, conversion, adapter, defer, or block dispositions. `retain-local` is valid when current Codex behavior remains intentionally better suited to Codex or preserves an accepted contract. `defer` requires a documented consequence, must remain in the complete outstanding list, and must be reconsidered on every later update.
+Classify each relevant upstream change as `adopt`, `adapt`, `retain-local`, or `defer`, with a reason. These upstream-change dispositions are separate from the dependency table's copy, conversion, adapter, defer, or block dispositions. `retain-local` is valid when current Codex behavior remains intentionally better suited to Codex or preserves an accepted contract. `defer` requires a documented consequence, must remain in the complete outstanding list, and must be reconsidered on every later update. Read the shared review ledger first; its closed decisions are settled unless a listed reopen condition applies. Add new review endpoints and dispositions there as part of the same completed update.
 
 Treat the durable, answer-blocking Codex decision-checkpoint mapping below as a `retain-local` adaptation during later selective ports unless the developer explicitly changes that contract. Do not restore an upstream `ask_user_question` call merely because a structured-input tool exists.
 
@@ -218,11 +222,11 @@ Follow the official Codex plugin manifest and local-marketplace formats. Use the
 
 ## Phase 3: Record provenance and classify the outcome
 
-On the first selective update, add durable tracked provenance for the original baseline and review status. Preserve it on later updates:
+On the first selective update, add durable tracked provenance for the original baseline and review status. Preserve the original lineage in the skill and store the authoritative review endpoint and dispositions in `docs/RPIV-PI-REVIEW.md`:
 
 ```text
 Original upstream baseline: <hash>.
-Reviewed through RPIV-Pi commit <hash>; selected Codex differences remain.
+Review ledger: docs/RPIV-PI-REVIEW.md.
 ```
 
 If that wording or its placement might affect execution or user-visible behavior, treat the edit as behavioral rather than provenance-only.

@@ -90,15 +90,17 @@ test("research narrates progress at the four upstream workflow boundaries", () =
   }
 });
 
-test("research records its upstream review and retains strict citation verification", () => {
+test("research points to its review ledger and retains strict citation verification", () => {
   const skill = read(skillPath);
+  const reviewLedger = read(join(repositoryRoot, "docs/RPIV-PI-REVIEW.md"));
   assert.match(
     skill,
     /Original upstream baseline: 7bf83f7a15c6611bdc114e2da85c32bfc8feb7b7\./,
   );
+  assert.match(skill, /Review ledger: docs\/RPIV-PI-REVIEW\.md\./);
   assert.match(
-    skill,
-    /Reviewed through RPIV-Pi commit d74b1c99830a565f3df3f37e0a36616d17ffc574; selected Codex differences remain\./,
+    reviewLedger,
+    /\| `research` \| `rpivc-research` \| `68d9a0014b70006d7b04b57933752338a2716db7` \|/,
   );
   assert.match(skill, /Verify every emitted `file:line` or `file:start-end`/);
   assert.doesNotMatch(skill, /No separate verification pass/i);
