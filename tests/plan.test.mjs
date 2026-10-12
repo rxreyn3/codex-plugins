@@ -210,3 +210,12 @@ test("plan metadata helpers report the caller repository", (t) => {
   assert.ok(context.includes(`root: ${realDirectory}\n`));
   assert.match(context, /^author: Test User$/m);
 });
+
+test("plan rejects early or contradictory modern designs while keeping legacy ready inputs", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /Reject early in-progress designs/);
+  assert.match(skill, /For designs with `workflow_step`, require `complete`/);
+  assert.match(skill, /coherent recorded architecture-summary and decomposition approvals, all slice approvals/);
+  assert.match(skill, /no pending checkpoint or revision/);
+  assert.match(skill, /Legacy ready designs without `workflow_step` remain valid/);
+});

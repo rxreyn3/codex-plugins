@@ -27,7 +27,7 @@ To change an existing plan, use **Revise** with `<plan-path> <feedback>`. Before
 
 Treat all text following `$rpivc-plan` as one design artifact path under `.rpiv/artifacts/designs/`.
 
-- Require a readable Markdown file with frontmatter `status: ready`.
+- Require a readable Markdown file with frontmatter `status: ready`. Reject early in-progress designs. For designs with `workflow_step`, require `complete`, coherent recorded architecture-summary and decomposition approvals, all slice approvals, and no pending checkpoint or revision. Legacy ready designs without `workflow_step` remain valid when their completed slice contract is coherent.
 - Read it completely, including Architecture, Slices, File Map, Ordering Constraints, Verification Notes, Performance Considerations, Migration Notes, Scope, Developer Context, and References.
 - Read every additional research document, ticket, or other contextual artifact named in References completely.
 - If the design contains unresolved questions or its `## Slices` section is missing or empty, stop and tell the developer to return to Design. Do not create a partial plan.

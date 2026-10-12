@@ -177,3 +177,12 @@ test("list-recent keeps source ordering, count, and recoverable empty behavior",
   t.after(() => rmSync(empty, { recursive: true, force: true }));
   assert.equal(runNode(listRecentPath, empty, empty), "");
 });
+
+test("revise retains Design ownership of pre-decomposition reconsideration", () => {
+  const lifecycle = read(join(skillRoot, "references/design-revisions.md"));
+  assert.match(lifecycle, /Before decomposition approval.*remains Design work/s);
+  assert.match(lifecycle, /--resume <design-path>/);
+  assert.match(lifecycle, /Saving a decision does not itself trigger Revise/);
+  assert.match(lifecycle, /approved slice material or completed designs/);
+  assert.match(lifecycle, /Workflow Progress and `workflow_step` when present/);
+});

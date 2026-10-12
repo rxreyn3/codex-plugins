@@ -21,7 +21,7 @@ The stage writes only its design artifact. It must not edit product source, invo
 
 The design owns intended behavior, architecture, interfaces, slice boundaries, and acceptance outcomes until its initial implementation plan first reaches `status: ready`. At that transition, the reviewed plan materializes the design and becomes the sole current specification; the design becomes immutable provenance for original rationale and rejected alternatives. Current source establishes what is implemented.
 
-For revisions to an existing design, use **Revise** with `<design-path> <feedback>`. Before editing, discover child plans whose `parent` names this design. With no child plan, Revise may update the design. With an initial `in-progress` or `in-review` plan that has never reached ready, Revise coordinates the candidate pair. Once a child plan has reached ready, route the feedback to that plan and leave the design byte-identical. Start and Resume below remain the creation workflow.
+During creation before decomposition approval, explicit reconsideration of a saved answer stays in Design; use the persistence and reconsideration rules below. Saving a decision does not itself trigger Revise. For changes to approved slice material or completed designs, use **Revise** with `<design-path> <feedback>`. Before editing, discover child plans whose `parent` names this design. With no child plan, Revise may update the design. With an initial `in-progress` or `in-review` plan that has never reached ready, Revise coordinates the candidate pair. Once a child plan has reached ready, route the feedback to that plan and leave the design byte-identical. Start and Resume below remain the creation workflow.
 
 ## Input
 
@@ -85,9 +85,15 @@ Recommended next step: **{Action}**
 
 Never put `$`, a skill identifier, or explanatory prose inside the arguments fence. Put the reason after the fence. A recommendation is a handoff, never permission to invoke the action automatically.
 
+## Durable creation progress
+
+Use one design document throughout creation. After validating and fully reading the upstream artifact in Step 1, create the in-progress document before targeted research. Read [Creation progress](references/creation-progress.md) completely before creating, updating, or resuming it. That reference defines the saved step, evidence baseline, question records, consistency checks, and reconsideration rules; apply it at every checkpoint.
+
+Save verified evidence summaries and references, decisions and their rationale, dimension coverage, and exact pending questions. Do not copy raw tool output or invent findings to fill unfinished sections. Save a question and its unapproved proposal before presenting it. After an answer, update its record, resulting decisions, affected approvals, pending checkpoint, next action, and modification metadata in one coherent edit. Read back and verify the affected content before advancing or reporting it saved. If persistence or readback fails, report the failure and stop dependent work.
+
 ## Workflow
 
-Follow every numbered step in order.
+Follow every numbered step in order on Start. On Resume, validate recorded completion and approvals, then continue the first unfinished step.
 
 ### 1. Handle input
 
@@ -98,11 +104,11 @@ Run the Metadata helpers, then check resume mode before start mode.
 When the input contains `--resume`:
 
 1. Parse exactly one design artifact path after the flag. If it is missing, has extra arguments, is outside `.rpiv/artifacts/designs/`, is unreadable, or is not `status: in-progress`, report the specific error and stop.
-2. Read the design artifact completely. Extract Decisions, Architecture, Slices, Verification Notes, Developer Context, and Design History.
-   If its latest Follow-up records an unfinished Revise update or pending revision review, hand off to **Revise** with this design path and the unfinished revision description, then stop. Do not treat historic slice approvals as clearance to finalize a pending pre-transfer revision.
-3. Find the first Design History entry still marked `pending`. Treat every earlier `approved` entry and its persisted Architecture code and Success Criteria as locked. The artifact, not conversation memory or a task summary, is authoritative.
-4. Read the current source files for the pending slice completely, plus Architecture entries for files shared with locked predecessors.
-5. Skip Steps 2–5 and enter Step 6 at that pending slice. If no slice is pending, go directly to Step 7.
+2. Read the design artifact completely, including Workflow Progress, evidence summaries, dimension coverage, Decisions, Developer Context, Architecture, Slices, Verification Notes, and Design History. The artifact, not conversation memory or a task summary, is authoritative.
+   If its latest Follow-up records an unfinished Revise update or pending revision review, hand off to **Revise** with this design path and the unfinished revision description, then stop. Pending revision work takes precedence over creation routing and historic slice approvals.
+3. Read the parent upstream artifact completely and check relevant current source against the saved evidence baseline. Read relevant source files completely; unrelated branch or timestamp changes alone do not invalidate completed research. Apply the consistency and drift checks in Creation progress before any edit or advancement.
+4. For documents with `workflow_step`, validate that hint against recorded completed work, pending questions, decisions, approvals, and slice history. Continue the first unfinished step, not the most advanced field. Reuse completed evidence and settled decisions; repeat only unfinished or invalidated work. Present an unanswered checkpoint directly, without a separate permission-to-ask gate. An interrupted unapproved slice must be regenerated and independently verified before approval is requested again.
+5. For legacy documents without `workflow_step`, retain slice-based resume only when recorded decomposition approval, Architecture, Slices, and Design History establish a coherent existing skeleton. Find the first Design History entry still marked `pending`; treat every earlier `approved` entry and its persisted Architecture code and Success Criteria as locked. Read current source for the pending slice and files shared with locked predecessors, then enter Step 6. With no pending slice, enter Step 7 only after its full readiness checks pass. Missing or contradictory legacy state, including an empty design, requires clarification; never infer approval or automatically finalize it.
 
 #### Start mode
 
@@ -113,6 +119,7 @@ When one artifact path is supplied:
 3. Read every key source file named by Code References completely, especially hooks, shared utilities, types, and integration points the design will depend on.
 4. Treat existing Developer Context answers as inherited decisions and never re-ask them. Filter Open Questions by architectural relevance in Step 3.
 5. Read any additional ticket, related design, or implementation file named by the input completely.
+6. Create exactly one design document at `.rpiv/artifacts/designs/<slug>_<brief-kebab-topic>.md` using the metadata and sections specified in Step 5. Never overwrite an existing path. Set `status: in-progress` and `workflow_step: input`; initialize inherited requirements, decisions, provenance, and Workflow Progress. Mark unfinished content explicitly as not yet established. Architecture and Slices remain empty until decomposition approval. Read back the initialized document, then record input completion and `workflow_step: research` before dispatching research. A resume reuses this same path.
 
 #### No argument
 
@@ -130,7 +137,7 @@ This is depth-oriented design research, not a broad discovery sweep.
 
 Before dispatch, read each required bundled role prompt completely and include its full operational instructions and output contract in the native collaboration-agent task. Every role is read-only and returns findings inline; none writes files.
 
-Always run these four independent roles:
+On Start, run these four independent roles. On Resume, run only roles whose saved findings are unfinished or invalidated:
 
 - [Codebase Pattern Finder](references/codebase-pattern-finder.md) — find the current implementation pattern to model for the feature type.
 - [Codebase Analyzer](references/codebase-analyzer.md) — trace how the relevant integration point works in detail.
@@ -148,7 +155,10 @@ After every role returns:
 1. read all key files it identifies completely;
 2. cross-check its findings against files read in Step 1;
 3. record discrepancies and assumptions;
-4. determine the actual change surface from current code.
+4. determine the actual change surface from current code;
+5. persist that verified role's concise findings, reasoning, source references and baseline, discrepancies, assumptions, and remaining gaps immediately. Mark the role complete only after readback; a dispatched or returned but unverified role is unfinished.
+
+When every required role is verified (or explicitly skipped under the Git rule), record research completion and `workflow_step: dimensions`. Do not repeat completed roles merely because the conversation changed.
 
 ### 3. Sweep architectural dimensions
 
@@ -169,6 +179,8 @@ Classify every finding:
 - **genuine ambiguity** — multiple valid options, conflicting patterns, scope uncertainty, or a novel choice. Queue it for the developer checkpoint.
 
 Inherited research answers are simple unless directional. Keep architectural Open Questions and defer implementation-detail questions. Pre-validate every option against upstream constraints and current runtime behavior; remove or clearly caveat invalid choices.
+
+Persist the coverage record for each applicable dimension, including simple decisions, queued choices, references, and unchecked or inapplicable dimensions. When coverage is complete, record `workflow_step: decisions`.
 
 Coverage is complete only when every Step 2 file read appears in a decision, directional confirmation, or ambiguity and every applicable dimension is addressed. A silently resolved dimension is valid; an unchecked one is not.
 
@@ -203,7 +215,7 @@ Ask exactly one dependent ambiguity at a time, highest architectural impact firs
 
 Every option description must explain what Design will do, what current ownership remains unchanged, and the material scope or trade-off. Each answer becomes a fixed decision unless the developer explicitly revisits it.
 
-Record each checkpoint question exactly as asked in Developer Context, including its evidence links. Classify responses as:
+Before asking, record each checkpoint question exactly as it will be asked in Developer Context and the pending checkpoint, including ordered options, consequences, evidence links, and any proposal explicitly marked unapproved. Preserve each original answer; append corrections or superseding decisions and their dependencies rather than overwriting history. Apply the coherent save and readback rule after every answer. Classify responses as:
 
 - **decision** — record the chosen option in Developer Context and Decisions;
 - **correction** — read the Codebase Analyzer role again, run at most two targeted rescans on the newly named area, and update the evidence;
@@ -222,9 +234,9 @@ Scope: {included} | Not building: {excluded}
 Files: {N} new, {M} modified
 ```
 
-Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Use the Choice response format and wait for explicit Proceed.
+Ask `Ready to proceed to decomposition?` with `Proceed (Recommended)`, `Adjust decisions`, and `Change scope`. Save the exact summary and architecture-summary checkpoint as unapproved before presenting it. Use the Choice response format and wait for explicit Proceed. Only that answer approves this summary and permits `workflow_step: decomposition`; Adjust decisions or Change scope keeps affected approvals open.
 
-### 5. Decompose the feature and create the skeleton
+### 5. Decompose the feature and enrich the skeleton
 
 Define all vertical slices, dependencies, ordering, and files before generating any code. Each slice must be a complete concern across types, implementation, wiring, and tests; remain independently verifiable before later slices; and contain roughly 512–1024 generated-code tokens. Put foundational types or interfaces first and keep dependencies sequential.
 
@@ -238,9 +250,9 @@ Slice 1: {name} — {end-to-end outcome}
   Depends on: nothing
 ```
 
-Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Use the Choice response format and wait for approval.
+Ask `{N} slices for {feature}. Approve decomposition?` with `Approve (Recommended)`, `Adjust slices`, and `Change scope`. Save the exact breakdown and decomposition checkpoint as unapproved before presenting it. Use the Choice response format and wait for approval.
 
-Immediately after approval, create exactly one skeleton artifact at:
+Immediately after approval, enrich the existing document with the approved slice structure and record `workflow_step: slices`. Do not create a second artifact. The single document was created in Step 1 at:
 
 ```text
 .rpiv/artifacts/designs/<slug>_<brief-kebab-topic>.md
@@ -260,15 +272,17 @@ repository: <repo>
 topic: <topic>
 tags: [design, <relevant tags>]
 status: in-progress
+workflow_step: input
 parent: <upstream artifact path>
 last_updated: <iso>
 last_updated_by: <author>
 ---
 ```
 
-Fill every prose section from Steps 1–5 before generating a slice:
+Initialize all sections in Step 1, leaving unfinished work explicitly unestablished. Enrich them with verified evidence and approved decisions during Steps 2–5; complete the applicable prose before generating a slice:
 
 - `# Design: {Feature}`
+- `## Workflow Progress`
 - `## Summary`
 - `## Requirements`
 - `## Current State Analysis`, including `### Key Discoveries` with evidence
@@ -289,11 +303,11 @@ Fill every prose section from Steps 1–5 before generating a slice:
 
 Write the sections with the source contract's content, not merely the headings:
 
-- Summary states the settled architecture in two or three sentences; Requirements come from the upstream artifact and developer input.
+- Workflow Progress follows Creation progress. During early creation, Summary states only the verified goal and marks the architecture unsettled; after the summary approval it states the settled architecture in two or three sentences; Requirements come from the upstream artifact and developer input.
 - Current State Analysis records what exists, what is missing, and Key Discoveries with patterns and constraints.
 - Scope separates concrete Building deliverables from developer exclusions and likely scope-creep paths under Not Building.
 - Decisions records evidence, explored options with consequences for genuine ambiguities, and the fixed choice.
-- Desired End State contains concrete consumer-facing usage code. File Map lists each literal path, NEW or MODIFY status, and purpose.
+- Desired End State describes consumer-facing behavior; add concrete usage code only after the corresponding slice payload is approved. File Map lists each literal path, NEW or MODIFY status, and purpose.
 - Ordering Constraints records dependencies and safe parallelism. Verification Notes converts inherited risks and precedent lessons into verifiable commands, searches, or inspections.
 - Performance Considerations records hot-path consequences. Migration Notes records data, rollback, and compatibility requirements when applicable and remains present but empty otherwise.
 - Pattern References records the implementation template and why it fits, with navigable evidence. Developer Context contains every checkpoint question and answer. References links the upstream artifact, tickets, and comparable implementations.
@@ -316,7 +330,7 @@ Design History starts every slice as `pending`. The empty Architecture fences an
 
 ### 6. Generate, verify, and checkpoint one slice
 
-Process slices sequentially. Locked earlier slices in the artifact are the source of truth.
+Process slices sequentially. Locked earlier slices in the artifact are the source of truth. Save the slice checkpoint question and condensed proposal before presenting it, but keep proposed implementation code and verification criteria out of the artifact until approval. If interrupted, regenerate and independently verify the unapproved payload; a saved question never substitutes for that verification.
 
 #### 6.1 Generate code and Success Criteria internally
 
@@ -369,7 +383,7 @@ Use the Choice response format and wait for one answer.
 
 #### 6.4 Apply the response
 
-- **Approve** — immediately replace this slice's empty Architecture fences and Success Criteria placeholders with the exact approved payload. If this slice extends a file already filled by an earlier slice, rewrite that file's one Architecture fence with the merged result; do not create a duplicate fence. Deduplicate imports and definitions, keep exports complete, record the question and answer in Developer Context, and mark Design History `approved as generated` or `approved revised: {summary}`.
+- **Approve** — immediately replace this slice's empty Architecture fences and Success Criteria placeholders with the exact approved payload. If this slice extends a file already filled by an earlier slice, rewrite that file's one Architecture fence with the merged result; do not create a duplicate fence. Deduplicate imports and definitions, keep exports complete, record the answer against the saved question in Developer Context, update Workflow Progress and modification metadata coherently, and mark Design History `approved as generated` or `approved revised: {summary}`.
 - **Revise this slice** — update the held payload, re-run Step 6.2, and re-present. Do not write unapproved code or criteria to the artifact.
 - **Rethink remaining slices** — update and reconfirm the remaining decomposition. If a locked slice is affected, flag the conflict and ask whether to reopen it before changing the artifact.
 - **Revisit a decision** — return to Step 4 for that decision, cascade through decomposition when necessary, and re-run the verifier before re-presenting.
@@ -392,13 +406,14 @@ Only when the approved slice was final may the current task continue to Step 7.
 
 ### 7. Finalize the design
 
-After every slice is approved:
+Before finalization, require explicit architecture-summary and decomposition approval, at least one valid slice, every slice approved, complete required sections, and no pending checkpoint or revision. Validate consistency again; zero slices never satisfy “every slice approved.” If any prerequisite is missing, stop at the specific unfinished step or discrepancy rather than inferring permission.
 
-1. Verify every Architecture heading has a non-empty code fence. If any is empty, return to Step 6; never fill it during finalization.
-2. Verify every Slice subsection has its `**Files**:` line and non-empty Automated and Manual Verification subsections. If any is empty, return to Step 6.
-3. For every file touched by multiple slices, verify its single Architecture fence contains the final merged code.
-4. Change frontmatter `status: in-progress` to `status: ready`. Design has no `in-review` state and owns no post-finalization review.
-5. Verify every required Step 5 section is present and complete. Preserve `last_updated` and `last_updated_by` unless a follow-up changes the artifact.
+1. Record `workflow_step: finalization` only after the prerequisites above hold.
+2. Verify every Architecture heading has a non-empty code fence. If any is empty, return to Step 6; never fill it during finalization.
+3. Verify every Slice subsection has its `**Files**:` line and non-empty Automated and Manual Verification subsections. If any is empty, return to Step 6.
+4. For every file touched by multiple slices, verify its single Architecture fence contains the final merged code.
+5. Verify every required Step 5 section is present and complete (Migration Notes may be empty when inapplicable).
+6. In one coherent edit, change frontmatter `status: in-progress` to `status: ready`, set `workflow_step: complete`, update Workflow Progress and modification metadata, then read back the complete document before reporting readiness. Design has no `in-review` state and owns no post-finalization review.
 
 ### 8. Present the design artifact
 
@@ -420,7 +435,7 @@ Plan consumes the ready design, preserves Slice-to-Phase boundaries one-to-one, 
 
 ### 9. Handle follow-ups
 
-For a change to already approved design material, hand off one **Revise** invocation and stop:
+For explicit reconsideration during pre-decomposition creation, stay in Design and apply Creation progress, preserving original answers and reopening only dependent work. For a change to already approved slice material or a completed design, hand off one **Revise** invocation and stop:
 
 ```text
 .rpiv/artifacts/designs/{filename}.md {specific feedback}
@@ -437,17 +452,17 @@ The ready Design artifact is load-bearing input for Plan:
 - Automated and Manual Verification bullets pass through unchanged;
 - Architecture code supplies the proposed implementation for those files;
 - Decisions are fixed and are not re-opened by Plan;
-- unresolved questions or missing/empty Slices make the artifact invalid for Plan.
+- unresolved questions, pending checkpoints, incomplete workflow progress, or missing/empty Slices make the artifact invalid for Plan. Legacy ready designs without `workflow_step` remain valid when their existing completed slice contract is coherent.
 
 ## Non-negotiable boundaries
 
 - Always read input artifacts and referenced source files completely before research.
 - Finish every required research role before the dimension sweep.
 - Resolve architectural ambiguity before decomposition.
-- Confirm the entire decomposition before creating the skeleton.
+- Create the single in-progress document after validated input; confirm the entire decomposition before adding the slice skeleton.
 - Generate, independently verify, and checkpoint exactly one slice at a time.
 - Approval is the only event that writes slice code and Success Criteria.
 - Stop after persisting and byte-checking any approved non-final slice; resume only in a fresh task from the artifact.
-- Finalize only when every slice is approved and every fence and criterion is filled.
+- Finalize only with approved architecture summary and decomposition, at least one valid slice, every slice approved, complete required sections, filled fences and criteria, and no pending checkpoint or revision.
 - Never edit product source. All proposed code lives in the design document.
 - Never invoke Plan, implementation, another successor skill, push, publish, or continue past a required developer decision.

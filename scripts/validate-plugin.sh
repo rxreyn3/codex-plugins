@@ -2,11 +2,10 @@
 set -euo pipefail
 
 repository_root="$(git rev-parse --show-toplevel)"
-codex_root="${CODEX_HOME:-${HOME}/.codex}"
-validator="$codex_root/skills/.system/plugin-creator/scripts/validate_plugin.py"
+validator="$repository_root/scripts/vendor/codex-plugin-validator/validate_plugin.py"
 
 if [[ ! -f "$validator" ]]; then
-  printf 'Codex plugin validator not found at %s\n' "$validator" >&2
+  printf 'Repository plugin validator not found at %s\n' "$validator" >&2
   exit 1
 fi
 if ! command -v uv >/dev/null 2>&1; then
@@ -15,5 +14,5 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 for plugin in rpiv-codex codex-advisor; do
-  uv run --no-project --with pyyaml python "$validator" "$repository_root/plugins/$plugin"
+  uv run --no-project --with pyyaml python -B "$validator" "$repository_root/plugins/$plugin"
 done

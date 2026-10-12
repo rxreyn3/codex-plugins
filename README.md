@@ -104,7 +104,7 @@ Or start the resumable Design route:
 $rpivc-design .rpiv/artifacts/research/2026-09-29_10-00-00_checkout-retry.md
 ```
 
-If another design slice remains, resume it in a fresh task:
+Design saves one in-progress document after reading the upstream artifact, including verified research, decisions, and exact pending questions. Resume from that document at the first unfinished step, including before decomposition. Earlier checkpoints may continue in the same task; after each approved non-final slice, resume in a fresh task:
 
 ```text
 $rpivc-design --resume .rpiv/artifacts/designs/2026-09-29_11-00-00_checkout-retry.md

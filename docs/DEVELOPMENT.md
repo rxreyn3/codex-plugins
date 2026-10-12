@@ -41,6 +41,8 @@ scripts/test.sh
 scripts/validate-plugin.sh
 ```
 
+Plugin validation uses the repository’s [pinned official validator](../scripts/vendor/codex-plugin-validator/README.md), with its identifier helper and license, rather than a removed Codex system skill. It requires Python 3.9 or newer and `uv` for PyYAML. It checks the current legacy manifests, skill metadata and assets; behavioral and installed-plugin acceptance remain separate. When updating this validation tooling, also run `uv run --no-project --with pyyaml python -B tests/test_plugin_validator.py` for the disposable-package positive and negative cases.
+
 Do not add repeated model evaluations or a new general test harness unless a concrete failure requires one. Manual verification remains the later fresh-task acceptance step.
 
 ## Install the development candidate
@@ -71,3 +73,9 @@ codex plugin marketplace remove ryan-codex-dev
 ```
 
 If replacement installation or verification fails, preserve the development installation. The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch. See the [marketplace migration instructions](https://github.com/rxreyn3/codex-plugins/blob/2a13fcc2e758f273f74dcf2cc4ca44b46a160b7b/README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.
+
+## Local workflow changes
+
+A scoped local workflow change can extend the current mechanism without an upstream re-port. Keep upstream pins and per-skill review baselines unchanged. Run focused and affected consumer tests, the full suite, and plugin validation before acceptance. Do not install a candidate, commit, push, or replace the public plugin unless separately authorized.
+
+Design persists an in-progress document before research and resumes from verified progress and approvals. Use [Design recovery scenarios](../tests/design-acceptance.md) for fresh-context behavioral checks. A native collaboration agent with no inherited conversation can load the exact candidate skill and a disposable project's design and upstream artifact to exercise recovery without installing or creating user-owned chats. Record the candidate source fingerprint, inputs, actions, output, and before/after artifacts. This establishes candidate-source behavior only; installed-plugin acceptance and user acceptance remain separate. Static wording assertions alone do not establish recovery.

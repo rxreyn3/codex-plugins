@@ -40,6 +40,7 @@ test("design includes exactly its reachable helper and role dependencies", () =>
     "references/precedent-locator.md",
     "references/web-search-researcher.md",
     "references/slice-verifier.md",
+    "references/creation-progress.md",
     "scripts/now.mjs",
     "scripts/git-context.mjs",
     "scripts/list-recent.mjs",
@@ -55,7 +56,7 @@ test("design keeps the source workflow order and product-code boundary", () => {
     "### 2. Run targeted research",
     "### 3. Sweep architectural dimensions",
     "### 4. Run the developer checkpoint",
-    "### 5. Decompose the feature and create the skeleton",
+    "### 5. Decompose the feature and enrich the skeleton",
     "### 6. Generate, verify, and checkpoint one slice",
     "### 7. Finalize the design",
     "### 8. Present the design artifact",
@@ -213,4 +214,110 @@ test("design list-recent keeps source ordering, cap, and empty fallback", (t) =>
     "mid.md",
   ]);
   assert.equal(runNode(listRecentPath, directory, join(directory, "missing")), "");
+});
+
+// These assertions protect prompt contracts. Behavioral recovery is exercised
+// separately in design-acceptance.md with fresh native agent context.
+const progressPath = join(skillRoot, "references/creation-progress.md");
+const section = (text, start, end) => text.slice(text.indexOf(start), text.indexOf(end));
+
+test("design creates one early document and enriches it only after decomposition approval", () => {
+  const skill = read(skillPath);
+  const start = section(skill, "#### Start mode", "#### No argument");
+  const decomposition = section(skill, "### 5.", "### 6.");
+  assert.match(start, /Read the artifact completely/);
+  assert.match(start, /Create exactly one design document/);
+  assert.match(start, /Architecture and Slices remain empty until decomposition approval/);
+  assert.match(start, /readback|Read back/);
+  assert.match(decomposition, /enrich the existing document/);
+  assert.match(decomposition, /Do not create a second artifact/);
+  assert.doesNotMatch(decomposition, /after approval, create exactly one/);
+  assert.match(skill, /Read \[Creation progress\].*completely/);
+});
+
+test("design resumes verified roles, settled choices and exact pending questions", () => {
+  const skill = read(skillPath);
+  const progress = read(progressPath);
+  const resume = section(skill, "#### Resume mode", "#### Start mode");
+  assert.match(resume, /Read the design artifact completely/);
+  assert.match(resume, /Read the parent upstream artifact completely/);
+  assert.match(resume, /repeat only unfinished or invalidated work/);
+  assert.match(resume, /Present an unanswered checkpoint directly/);
+  assert.match(skill, /run only roles whose saved findings are unfinished or invalidated/);
+  assert.match(progress, /exact question, ordered option labels and consequences/);
+  assert.match(progress, /original answer, interpretation and resulting decision identifiers/);
+  assert.match(progress, /Repeated resume without an answer or relevant drift/);
+  assert.match(progress, /must not manufacture another approval, duplicate question history/);
+});
+
+test("saved progress never supplies summary or decomposition approval", () => {
+  const skill = read(skillPath);
+  const progress = read(progressPath);
+  for (const step of ["input", "research", "dimensions", "decisions", "decomposition", "slices", "finalization", "complete"]) {
+    assert.ok(progress.includes(`\`${step}\``), step);
+  }
+  assert.match(progress, /not an approval/);
+  assert.match(progress, /Architecture-summary approval precedes decomposition approval/);
+  assert.match(progress, /preserve the document, report the specific discrepancy/);
+  assert.match(progress, /Do not guess from timestamps or the most advanced field/);
+  assert.match(skill, /summary and architecture-summary checkpoint as unapproved/);
+  assert.match(skill, /breakdown and decomposition checkpoint as unapproved/);
+});
+
+test("design saves coherently, reads back and stops on persistence failure", () => {
+  const progress = read(progressPath);
+  assert.match(progress, /Before presenting a checkpoint, write its exact question/);
+  assert.match(progress, /one coherent edit updating the question record, current decisions, affected approval state/);
+  assert.match(progress, /update `last_updated`.*exact timestamp/s);
+  assert.match(progress, /Read back the written affected sections and metadata/);
+  assert.match(progress, /If writing or readback fails, report the specific failure and stop dependent work/);
+  assert.match(progress, /reconcile any partial write against the approved answer/);
+});
+
+test("early reconsideration preserves history and reopens only affected work in Design", () => {
+  const skill = read(skillPath);
+  const progress = read(progressPath);
+  assert.match(progress, /Before decomposition approval.*stays in Design/s);
+  assert.match(progress, /preserve the original answer/);
+  assert.match(progress, /Reopen only affected work/);
+  assert.match(progress, /A saved decision is not a revision boundary/);
+  assert.match(skill, /Saving a decision does not itself trigger Revise/);
+  assert.match(progress, /Changes to approved slice material or completed designs use Revise/);
+});
+
+test("source drift invalidates evidence without silently replacing developer intent", () => {
+  const progress = read(progressPath);
+  assert.match(progress, /Fingerprint content even when files are uncommitted/);
+  assert.match(progress, /Identify which verified claims and dependent work each change invalidates/);
+  assert.match(progress, /rerun only unfinished or invalidated roles/);
+  assert.match(progress, /cannot silently replace a developer decision/);
+  assert.match(progress, /no longer ready.*stop and resolve/s);
+});
+
+test("legacy resume requires a coherent skeleton and cannot finalize empty designs", () => {
+  const skill = read(skillPath);
+  const resume = section(skill, "#### Resume mode", "#### Start mode");
+  const finalize = section(skill, "### 7.", "### 8.");
+  assert.match(resume, /legacy documents without `workflow_step`/);
+  assert.match(resume, /decomposition approval, Architecture, Slices, and Design History/);
+  assert.match(resume, /Missing or contradictory legacy state, including an empty design, requires clarification/);
+  assert.match(finalize, /at least one valid slice/);
+  assert.match(finalize, /no pending checkpoint or revision/);
+  assert.ok(finalize.indexOf("Verify every required Step 5 section") < finalize.indexOf("status: ready"));
+  assert.match(finalize, /set `workflow_step: complete`/);
+  const progress = read(progressPath);
+  assert.match(progress, /enrich that same document with Workflow Progress before the next save/);
+  assert.match(progress, /not recorded in legacy artifact/);
+  assert.match(progress, /historical unknowns are not unfinished modern research roles for routing/);
+  assert.match(progress, /without inventing historical findings/);
+});
+
+test("interrupted slice recovery preserves verification and revision precedence", () => {
+  const skill = read(skillPath);
+  const resume = section(skill, "#### Resume mode", "#### Start mode");
+  assert.match(resume, /Pending revision work takes precedence/);
+  assert.match(resume, /unapproved slice must be regenerated and independently verified/);
+  assert.match(skill, /keep proposed implementation code and verification criteria out of the artifact until approval/);
+  assert.match(read(progressPath), /excluding code blocks, diffs, and criteria/);
+  assert.match(skill, /Stop after persisting and byte-checking any approved non-final slice/);
 });

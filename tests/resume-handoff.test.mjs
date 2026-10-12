@@ -127,3 +127,14 @@ test("list-recent keeps source ordering, cap, file-only, and empty behavior", (t
   t.after(() => rmSync(empty, { recursive: true, force: true }));
   assert.equal(runNode(listRecentPath, empty, empty), "");
 });
+
+test("resume-handoff preserves governing Design checkpoint authority", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /validate its saved step, progress, approvals, and exact question/);
+  assert.match(skill, /present the exact pending Design question and options directly/);
+  assert.match(skill, /Exclude interrupted slice checkpoints from direct replay/);
+  assert.match(skill, /Do not present the saved slice approval question again until that gate completes/);
+  assert.match(skill, /without a separate permission-to-ask gate/);
+  assert.match(skill, /ordinary first-task approval below still applies/);
+  assert.match(skill, /generic continuation approval cannot answer/);
+});

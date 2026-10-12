@@ -130,3 +130,13 @@ test("git-context reports the caller repository and falls back outside Git", (t)
     assert.ok(fallback.split("\n").includes(line), line);
   }
 });
+
+test("create-handoff preserves governing Design checkpoint authority", () => {
+  const skill = read(skillPath);
+  assert.match(skill, /governing design document.*Required input/s);
+  assert.match(skill, /saved `workflow_step`/);
+  assert.match(skill, /exact `--resume <design-path>` arguments/);
+  assert.match(skill, /exact pending question, ordered options, supporting references/);
+  assert.match(skill, /does not become a second checkpoint store/);
+  assert.match(skill, /generic continuation approval cannot answer/);
+});

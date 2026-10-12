@@ -83,6 +83,8 @@ Inspect the current conversation and available evidence before writing:
 
 Do not perform new implementation merely to improve the handoff. Do not commit, push, publish, contact external systems, or change unrelated state.
 
+For an in-progress Design task, read the governing design document and name it as a Required input with its saved `workflow_step`, next action, and exact `--resume <design-path>` arguments. Carry the exact pending question, ordered options, supporting references, and unapproved proposal in the existing handoff sections. The design document governs continuation; the handoff summarizes it and does not become a second checkpoint store. If chat state has not been saved in the design, disclose that gap rather than claiming cold recovery is possible. A generic continuation approval cannot answer a Design question or approve its architecture summary, decomposition, or slice.
+
 ### 2. Choose the artifact path
 
 Use the metadata timestamp slug and description slug:

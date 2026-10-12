@@ -168,6 +168,8 @@ Normalize all local file evidence to the active chat surface before presenting i
 
 ### 4. Present the analysis and approve the continuation plan
 
+For an unanswered checkpoint in a governing in-progress Design document, validate its saved step, progress, approvals, and exact question against the document first. If inconsistent, preserve it and report the discrepancy before advancement. For pre-slice checkpoints, present the exact pending Design question and options directly, without a separate permission-to-ask gate; a generic continuation approval cannot answer it. Include the governing path, saved `workflow_step`, and `--resume <design-path>` arguments. Do not invoke Design automatically, resolve its choices, or use handoff prose to override the governing document. Exclude interrupted slice checkpoints from direct replay: report the recovered state and recommend **Design** with `--resume <design-path>` for regeneration and independent verification. Do not present the saved slice approval question again until that gate completes. This exception only recovers the pending checkpoint; the ordinary first-task approval below still applies to other continuation work.
+
 Before requesting approval:
 
 1. convert the handoff's remaining action items into a concise ordered task list;
@@ -220,7 +222,7 @@ Only after an explicit Delete choice, recheck that the selected path is still th
 - Resume from exactly one handoff artifact.
 - Read the complete handoff and target artifact when one governs the next action; expand background reading only to resolve a specific question needed for continuation.
 - Verify current repository, branch, commit, files, and material learnings before acting.
-- Present the analysis and continuation plan together and obtain one approval before starting the first task.
+- Present the analysis and continuation plan together and obtain one approval before starting the first task, except that an unanswered governing Design checkpoint is presented directly and retains its own answer gate.
 - Treat delegated artifact output as context, not independent proof.
 - Continue one approved task at a time and preserve every explicit approval gate.
 - Never invoke another RPIV stage, commit, push, publish, or change external state without separate explicit authorization.

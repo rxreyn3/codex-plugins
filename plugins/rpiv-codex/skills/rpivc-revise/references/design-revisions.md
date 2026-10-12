@@ -16,7 +16,7 @@ Record exact paths, statuses, transfer evidence, and content fingerprints before
 
 ### Design only
 
-Before a child plan exists, revise the design alone. Preserve its creation and slice-approval workflow. A pending, unapproved slice remains Design work rather than a revision shortcut.
+Before decomposition approval, explicit reconsideration of a saved creation answer remains Design work. Hand off **Design** with `--resume <design-path>` and the specific reconsideration context; do not invoke it automatically or edit through Revise. Preserve the original answer, record its replacement, and reopen only dependent work under Design’s creation-progress rules. Saving a decision does not itself trigger Revise. For changes to approved slice material or completed designs before a child plan exists, revise the design alone. Preserve its creation and slice-approval workflow, Workflow Progress and `workflow_step` when present; reconcile reopened approvals and pending checkpoints rather than retaining a misleading `complete`. A pending, unapproved slice remains Design work rather than a revision shortcut.
 
 ### Pre-transfer candidate pair
 
