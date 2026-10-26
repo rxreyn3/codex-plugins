@@ -11,7 +11,7 @@ usage() {
     'With no argument, run the complete repository suite.' \
     'With a skill, run its focused test plus the plugin packaging test.' \
     '' \
-    'Skills: blueprint, code-review, commit, create-handoff, design, discover, implement, plan, research, resume-handoff, revise, validate'
+    'Skills: blueprint, code-review, commit, create-handoff, design, discover, implement, map, plan, research, resume-handoff, revise, validate'
 }
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
@@ -27,6 +27,9 @@ fi
 case "${1:-all}" in
   all)
     node --test tests/*.test.mjs
+    ;;
+  map)
+    node --test tests/map.test.mjs tests/map-examples.test.mjs tests/plugin.test.mjs
     ;;
   blueprint|code-review|commit|create-handoff|design|discover|implement|plan|research|resume-handoff|revise|validate)
     node --test "tests/${1}.test.mjs" tests/plugin.test.mjs

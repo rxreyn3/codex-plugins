@@ -1,0 +1,6 @@
+interface:
+  display_name: "RPIV Map"
+  short_description: "Find remaining decisions and work in a system map"
+
+policy:
+  allow_implicit_invocation: false

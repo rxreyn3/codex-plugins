@@ -43,6 +43,7 @@ test("plugin packaging is valid and every skill is self-contained", () => {
     .sort();
   assert.ok(skillNames.includes("rpivc-discover"));
   assert.ok(skillNames.includes("rpivc-research"));
+  assert.ok(skillNames.includes("rpivc-map"));
   assert.ok(skillNames.includes("rpivc-blueprint"));
   assert.ok(skillNames.includes("rpivc-design"));
   assert.ok(skillNames.includes("rpivc-plan"));
