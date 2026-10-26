@@ -108,6 +108,92 @@ test('refresh cannot hide material dimension, question, work, dependency or scop
   const plan = structuredClone(baseline);plan.owner.authority = 'plan';const model = structuredClone(plan);model.revision = 'next';model.refresh = {baselineRevision:plan.revision,changes:[{dimension:'ownership',componentIds:[]}]};model.owner.authority = 'design';assert.ok(checkBaseline(model,plan).some((message) => message.includes('back from Plan')));
 });
 
+const candidateOf = (baseline) => {
+  const model = structuredClone(baseline);model.revision = 'next';model.refresh = {baselineRevision:baseline.revision,changes:[]};return model;
+};
+const refreshRecord = (componentIds,sourceIds = ['research'],dimension = 'evidence') => ({id:'explained',text:'Synthetic source-backed explanation of this refresh.',dimension,componentIds,sourceIds});
+
+test('source provenance changes need an explanation covering every affected component',() => {
+  const baseline = fixture();const parts = baseline.components.map((part) => part.id);
+  for (const [field,value] of [['path','sources/replaced.md'],['revision','different-revision'],['url','https://example.com/replaced'],['kind','different-kind'],['title','Different source'],['note','The source now qualifies this finding.']]) {
+    const candidate = candidateOf(baseline);candidate.sources[0][field] = value;
+    assert.ok(checkBaseline(candidate,baseline).some((message) => message.includes('provenance')),field);
+    candidate.refresh.changes = [refreshRecord(['editor'])];
+    assert.ok(checkBaseline(candidate,baseline).some((message) => message.includes('provenance')),`${field}: partial coverage`);
+    candidate.refresh.changes = [refreshRecord(parts)];
+    assert.deepEqual(checkBaseline(candidate,baseline),[],`${field}: explained change`);
+  }
+  const checked = candidateOf(baseline);checked.sources[0].checkedAt = '2026-10-27T12:00:00+01:00';
+  assert.deepEqual(checkBaseline(checked,baseline),[],'a check timestamp alone does not manufacture progress');
+});
+
+const sourceReferenceCases = [
+  ['component claim',(m) => m.components[0].claims.evidence[0].sourceIds.push('probe'),['editor']],
+  ['connection claim',(m) => m.connections[0].claims.implementation[0].sourceIds.push('probe'),['editor','exporter']],
+  ['question candidate',(m) => m.questions.find((q) => q.action === 'user').candidates[0].sourceIds.push('probe'),['editor']],
+  ['question recommendation',(m) => {m.questions.find((q) => q.action === 'user').recommendation = {candidateId:'retry',reason:'Synthetic investigated preference.',sourceIds:['probe']};},['editor']],
+  ['decision record',(m) => {m.questions[0].status = 'resolved';m.questions[0].decisionRecordId = 'probe';},['exporter']],
+  ['work',(m) => m.work[0].sourceIds.push('probe'),['exporter','download']],
+  ['ticket scope',(m) => m.tickets[0].scope[0].sourceIds.push('probe'),['exporter']],
+  ['ticket dependency',(m) => m.tickets[0].dependencies[0].sourceIds.push('probe'),['document']],
+  ['constraint',(m) => {m.constraints = [{id:'constraint',text:'Synthetic constraint.',componentIds:['document'],sourceIds:['probe']}];},['document']],
+  ['suggestion',(m) => {m.suggestion = {title:'Synthetic suggestion.',questionId:'revision',enables:'A consistent exported revision.',rationale:'Synthetic dependency explanation.',sourceIds:['probe'],dependencies:[{componentId:'document',relationship:'hard',reason:'Needs a saved revision.',sourceIds:['research']}]};},['exporter','document']],
+  ['suggestion dependency',(m) => {m.suggestion = {title:'Synthetic suggestion.',questionId:'revision',enables:'A consistent exported revision.',rationale:'Synthetic dependency explanation.',sourceIds:['research'],dependencies:[{componentId:'document',relationship:'hard',reason:'Needs a saved revision.',sourceIds:['probe']}]};},['document']],
+];
+for (const [label,attach,parts] of sourceReferenceCases) test(`source impact traces ${label} references without borrowing unrelated refresh records`,() => {
+  const baseline = fixture();baseline.sources.push({id:'probe',title:'Synthetic scoped source',kind:'artifact',availability:'available',revision:'probe-1',path:'sources/probe.md'});attach(baseline);assertValid(baseline);
+  const candidate = candidateOf(baseline);candidate.sources.find((source) => source.id === 'probe').revision = 'probe-2';assertValid(candidate);
+  assert.ok(checkBaseline(candidate,baseline).length);
+  const unrelated = baseline.components.find((part) => !parts.includes(part.id)).id;
+  candidate.refresh.changes = [refreshRecord([unrelated],['probe'])];assert.ok(checkBaseline(candidate,baseline).length);
+  candidate.refresh.changes = [refreshRecord(parts,['probe'])];assert.deepEqual(checkBaseline(candidate,baseline),[]);
+});
+
+test('source impact covers both old and new associations and explicit availability gaps',() => {
+  const baseline = fixture();baseline.sources.push({id:'probe',title:'Scoped source',kind:'artifact',availability:'available',revision:'probe-1',path:'sources/probe.md'});baseline.components[0].sourceIds.push('probe');
+  const candidate = candidateOf(baseline);candidate.components[0].sourceIds = ['research'];candidate.components[1].sourceIds.push('probe');candidate.sources.find((source) => source.id === 'probe').revision = 'probe-2';
+  candidate.refresh.changes = [refreshRecord(['exporter'],['probe'])];assert.ok(checkBaseline(candidate,baseline).some((message) => message.includes('provenance')));
+  candidate.refresh.changes = [refreshRecord(['editor','exporter'],['probe'])];assert.deepEqual(checkBaseline(candidate,baseline),[]);
+  const missing = candidateOf(baseline);const source = missing.sources.find((item) => item.id === 'probe');source.availability = 'unavailable';source.note = 'The scoped source could not be read during this refresh.';
+  assert.ok(checkBaseline(missing,baseline).length);
+  missing.refresh.changes = [refreshRecord(['editor'],['probe','research'])];assertValid(missing);assert.deepEqual(checkBaseline(missing,baseline),[]);
+  missing.refresh.changes = [{...refreshRecord(['editor'],['probe']),gap:'The prior scoped source is inaccessible; this records the coverage gap, not a new behavior claim.'}];assertValid(missing);assert.deepEqual(checkBaseline(missing,baseline),[]);
+  const extra = candidateOf(baseline);extra.sources.push({id:'unread',title:'Uninspected runtime',kind:'runtime',availability:'unavailable',checkedAt:'2026-10-26T12:00:00+01:00',note:'No running app is available.'});assertValid(extra);assert.deepEqual(checkBaseline(extra,baseline),[]);
+});
+
+test('component source-only reassociation needs evidence tied to that component',() => {
+  const baseline = fixture();const candidate = candidateOf(baseline);candidate.components[0].sourceIds = [];
+  assert.ok(checkBaseline(candidate,baseline).some((message) => message.includes('source references')));
+  candidate.refresh.changes = [refreshRecord(['exporter'])];assert.ok(checkBaseline(candidate,baseline).length);
+  candidate.refresh.changes = [refreshRecord(['editor'])];assert.deepEqual(checkBaseline(candidate,baseline),[]);
+});
+
+test('layer and boundary changes require sourced explanations for the actual responsibility groups',() => {
+  const baseline = fixture();baseline.boundaries = [{id:'provider',title:'External provider',external:true}];baseline.components.find((part) => part.id === 'document').boundaryId = 'provider';
+  const cases = [
+    [(m) => {m.boundaries[0].external = false;},['document']],
+    [(m) => {m.boundaries[0].title = 'Different provider';},['document']],
+    [(m) => {m.boundaries = [];delete m.components.find((part) => part.id === 'document').boundaryId;},['document']],
+    [(m) => {m.boundaries.push({id:'new-provider',title:'New provider',external:true});m.components[0].boundaryId = 'new-provider';},['editor']],
+    [(m) => {m.layers[0].title = 'Different responsibility';},['editor']],
+    [(m) => {[m.layers[0],m.layers[1]] = [m.layers[1],m.layers[0]];},['editor','exporter']],
+    [(m) => {m.layers = m.layers.filter((layer) => layer.id !== 'data');m.components.filter((part) => part.layerId === 'data').forEach((part) => {part.layerId = 'service';});},['document','download']],
+  ];
+  for (const [mutate,parts] of cases) {
+    const candidate = candidateOf(baseline);mutate(candidate);assertValid(candidate);assert.ok(checkBaseline(candidate,baseline).length);
+    const unrelated = baseline.components.find((part) => !parts.includes(part.id)).id;
+    candidate.refresh.changes = [refreshRecord([unrelated],['research'],'dependency')];assert.ok(checkBaseline(candidate,baseline).length);
+    candidate.refresh.changes = [refreshRecord(parts,[],'dependency')];assert.ok(checkBaseline(candidate,baseline).length,'an unsourced grouping record cannot cover a change');
+    candidate.refresh.changes = [refreshRecord(parts,['research'],'dependency')];assertValid(candidate);assert.deepEqual(checkBaseline(candidate,baseline),[]);
+  }
+  for (const name of ['layers','boundaries']) {
+    const candidate = candidateOf(baseline);candidate[name].push(name === 'layers' ? {id:'unused',title:'Unused responsibility'} : {id:'unused',title:'Unused boundary',external:true});assertValid(candidate);
+    assert.ok(checkBaseline(candidate,baseline).length);
+    candidate.refresh.changes = [refreshRecord(['editor'],['research'],'dependency')];assert.ok(checkBaseline(candidate,baseline).length,'an unrelated part cannot explain an unused group');
+    candidate.refresh.changes = [refreshRecord([],['research'],'dependency')];assert.deepEqual(checkBaseline(candidate,baseline),[]);
+  }
+});
+
 test('review records bind exact companion/render digests without a self hash',() => temporary((folder) => {
   const files = createReviewed(folder);const review = JSON.parse(readFileSync(files.review,'utf8'));
   assert.equal(review.companionSha256,digest(readFileSync(files.companion)));assert.equal(review.renderedSha256,digest(readFileSync(files.html)));assert.ok(!('reviewSha256' in review));

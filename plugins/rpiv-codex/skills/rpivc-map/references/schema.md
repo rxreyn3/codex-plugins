@@ -117,6 +117,28 @@ Initial maps use `baselineRevision: null`. Later candidates must name the last
 approved revision, preserve map identity, origin, established component identities
 and settled scope claims unless an evidenced change explicitly explains the
 revision. A changed owning artifact or stage needs an ownership change record.
+Changing source provenance or availability also needs a refresh record that
+names that source and covers every affected component in the previous and
+candidate models. This includes references inside claims, connection endpoints,
+question candidates, recommendations and decision records, work, ticket scope
+and dependency rows, constraints, and suggestions. A changed source can support
+an implementation, question or other appropriate change; an evidence-only
+record is not required. Records about unrelated parts cannot cover its impact.
+An unavailable source must have an available supporting record or an explicit
+gap on the refresh entry; that gap establishes missing coverage, not behavior.
+Changing only `checkedAt` does not require manufactured progress. A newly added,
+unavailable source with no affected component may likewise remain a coverage
+gap without a meaningful-change entry.
+
+Layer or boundary additions, removals, titles, external-provider flags, changed
+layer order and component group assignments need a sourced `dependency` or
+`implementation` refresh entry covering the affected components. An unused
+group needs a sourced map-level entry with empty `componentIds`. These checks
+preserve responsibility meaning and positions; they do not establish that code
+was built. Changing only a component's `sourceIds` needs a sourced `evidence`
+entry for that component. A source or grouping record may cover several actual
+changes when its explanation and evidence support all of them.
+
 Unavailable evidence and unchanged refreshes stay explicit. The helper can catch
 missing records and altered identifiers; human review must check whether each
 source really supports the claimed change. A failed render, check or review

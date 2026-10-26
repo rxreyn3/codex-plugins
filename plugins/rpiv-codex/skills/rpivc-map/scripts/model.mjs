@@ -208,6 +208,60 @@ export function checkBaseline(candidate, baseline) {
   const changes = candidate.refresh.changes;
   const same = (left,right) => JSON.stringify(left) === JSON.stringify(right);
   const coverage = (dimensions,componentIds = [],field,id) => changes.some((entry) => dimensions.includes(entry.dimension) && (field ? (entry[field] || []).includes(id) : !componentIds.length || componentIds.some((value) => entry.componentIds.includes(value))));
+  const candidateSources = new Map(candidate.sources.map((entry) => [entry.id,entry]));
+  const availableSupport = (entry) => entry.sourceIds?.some((id) => candidateSources.get(id)?.availability === 'available');
+  const coversParts = (entries,parts) => parts.length
+    ? parts.every((id) => entries.some((entry) => entry.componentIds.includes(id)))
+    : entries.length > 0;
+  const connectionParts = (model,ids = []) => model.connections.filter((edge) => ids.includes(edge.id)).flatMap((edge) => [edge.from,edge.to]);
+  // Source references are scoped by their record. In particular, a source on
+  // one ticket dependency must not be attributed to all of the ticket's parts.
+  const usesSource = (value,id) => {
+    if (!value || typeof value !== 'object') return false;
+    if (Array.isArray(value)) return value.some((entry) => usesSource(entry,id));
+    return value.sourceIds?.includes(id) || value.decisionRecordId === id || Object.values(value).some((entry) => usesSource(entry,id));
+  };
+  const questionParts = (model,question) => question ? [question.componentId,...(question.componentIds || []),...connectionParts(model,question.connectionIds)] : [];
+  const sourceParts = (model,id) => {
+    const parts = new Set();const add = (ids) => ids.forEach((part) => parts.add(part));
+    for (const part of model.components) if (usesSource(part,id)) add([part.id]);
+    for (const edge of model.connections) if (usesSource(edge,id)) add([edge.from,edge.to]);
+    for (const question of model.questions) if (usesSource(question,id)) add(questionParts(model,question));
+    for (const item of model.work) if (usesSource(item,id)) add([...item.componentIds,...connectionParts(model,item.connectionIds)]);
+    for (const item of model.constraints || []) if (usesSource(item,id)) add(item.componentIds);
+    for (const ticket of model.tickets) {
+      if (ticket.sourceIds.includes(id)) add([...ticket.scope.map((row) => row.componentId),...ticket.dependencies.map((row) => row.componentId),...connectionParts(model,ticket.connectionIds)]);
+      for (const row of [...ticket.scope,...ticket.dependencies]) if (usesSource(row,id)) add([row.componentId]);
+    }
+    if (model.suggestion) {
+      const suggestion = model.suggestion;
+      if (suggestion.sourceIds.includes(id)) add([...questionParts(model,model.questions.find((question) => question.id === suggestion.questionId)),...suggestion.dependencies.map((row) => row.componentId)]);
+      for (const row of suggestion.dependencies) if (usesSource(row,id)) add([row.componentId]);
+    }
+    return [...parts];
+  };
+  const priorSources = new Map(baseline.sources.map((entry) => [entry.id,entry]));
+  const provenance = (source) => ['title','kind','availability','revision','url','path','note'].map((key) => source?.[key] ?? null);
+  for (const source of candidate.sources) {
+    const old = priorSources.get(source.id);
+    if (old && same(provenance(old),provenance(source))) continue; // checkedAt alone is a refresh, not progress.
+    const parts = [...new Set([...sourceParts(baseline,source.id),...sourceParts(candidate,source.id)])];
+    if (!old && source.availability === 'unavailable' && !parts.length) continue;
+    const records = changes.filter((entry) => entry.sourceIds?.includes(source.id) && (availableSupport(entry) || (source.availability === 'unavailable' && entry.gap)));
+    if (!coversParts(records,parts)) errors.push(`source ${source.id} provenance or availability changed without a sourced refresh record covering its affected components`);
+  }
+  const groupingRecords = changes.filter((entry) => ['dependency','implementation'].includes(entry.dimension) && availableSupport(entry));
+  for (const [name,field] of [['layers','layerId'],['boundaries','boundaryId']]) {
+    const prior = baseline[name] || [],next = candidate[name] || [];
+    const ids = new Set([...prior,...next].map((entry) => entry.id));
+    for (const id of ids) {
+      const oldIndex = prior.findIndex((entry) => entry.id === id),newIndex = next.findIndex((entry) => entry.id === id);
+      if (same(prior[oldIndex],next[newIndex]) && (name !== 'layers' || oldIndex === newIndex)) continue;
+      const parts = [...new Set([...baseline.components,...candidate.components].filter((part) => part[field] === id).map((part) => part.id))];
+      const records = parts.length ? groupingRecords : groupingRecords.filter((entry) => !entry.componentIds.length);
+      if (!coversParts(records,parts)) errors.push(`${name} ${id} changed without a sourced responsibility-grouping record covering its affected components`);
+    }
+  }
   if ((candidate.currentStage !== baseline.currentStage || JSON.stringify(candidate.owner) !== JSON.stringify(baseline.owner)) && !changes.some((entry) => entry.dimension === 'ownership')) errors.push('stage or owner changed without an ownership change record');
   if (baseline.owner.authority === 'plan' && candidate.owner.authority !== 'plan') errors.push('intended-behavior authority cannot silently move back from Plan; retain the current Plan owner');
   for (const source of baseline.sources) if (!candidate.sources.some((entry) => entry.id === source.id)) errors.push(`historical source ${source.id} was removed; retain provenance and mark unavailable evidence explicitly`);
@@ -221,8 +275,12 @@ export function checkBaseline(candidate, baseline) {
       const old = prior.get(item.id);const parts = name === 'components' ? [item.id] : [item.from,item.to];
       if (!old) {if (!coverage(['implementation','dependency'],parts)) errors.push(`new ${name} ${item.id} needs a recorded implementation or dependency change`);continue;}
       for (const dimension of ['scope','implementation','evidence']) if (!same(old.claims[dimension],item.claims[dimension]) && !coverage([dimension],parts)) errors.push(`${name} ${item.id} ${dimension} claims changed without a matching refresh record`);
+      if (name === 'components') {
+        if ((old.layerId !== item.layerId || old.boundaryId !== item.boundaryId) && !coversParts(groupingRecords,[item.id])) errors.push(`component ${item.id} responsibility grouping changed without a sourced refresh record`);
+        if (!same([...old.sourceIds].sort(),[...item.sourceIds].sort()) && !coversParts(changes.filter((entry) => entry.dimension === 'evidence' && availableSupport(entry)),[item.id])) errors.push(`component ${item.id} source references changed without a sourced evidence refresh record`);
+      }
       const omit = (value,keys) => Object.fromEntries(Object.entries(value).filter(([key]) => !keys.includes(key)));
-      const keys = name === 'components' ? ['claims','sourceIds'] : ['claims'];
+      const keys = name === 'components' ? ['claims','sourceIds','layerId','boundaryId'] : ['claims'];
       if (!same(omit(old,keys),omit(item,keys)) && !coverage(name === 'components' ? ['implementation'] : ['implementation','dependency','evidence'],parts)) errors.push(`${name} ${item.id} behavior or relationships changed without a matching refresh record`);
     }
     for (const item of baseline[name]) if (!candidate[name].some((entry) => entry.id === item.id) && name === 'connections' && !coverage(['dependency','implementation'],[item.from,item.to])) errors.push(`removed connection ${item.id} needs a recorded change`);
