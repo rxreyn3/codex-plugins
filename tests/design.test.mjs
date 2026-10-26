@@ -14,6 +14,7 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { createFixture } from "./fixtures/design-context/create-fixture.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const skillRoot = join(repositoryRoot, "plugins/rpiv-codex/skills/rpivc-design");
@@ -219,7 +220,12 @@ test("design list-recent keeps source ordering, cap, and empty fallback", (t) =>
 // These assertions protect prompt contracts. Behavioral recovery is exercised
 // separately in design-acceptance.md with fresh native agent context.
 const progressPath = join(skillRoot, "references/creation-progress.md");
-const section = (text, start, end) => text.slice(text.indexOf(start), text.indexOf(end));
+const section = (text, start, end) => {
+  const from = text.indexOf(start);
+  const to = text.indexOf(end, from + start.length);
+  assert.ok(from >= 0 && to > from, `Missing or out-of-order section: ${start} -> ${end}`);
+  return text.slice(from, to);
+};
 
 test("design creates one early document and enriches it only after decomposition approval", () => {
   const skill = read(skillPath);
@@ -320,4 +326,93 @@ test("interrupted slice recovery preserves verification and revision precedence"
   assert.match(skill, /keep proposed implementation code and verification criteria out of the artifact until approval/);
   assert.match(read(progressPath), /excluding code blocks, diffs, and criteria/);
   assert.match(skill, /Stop after persisting and byte-checking any approved non-final slice/);
+});
+
+test("context fixture exposes late constraints and materially different tool representations", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "rpivc-design-context-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  createFixture(directory);
+  const source = read(join(directory, "src/inspection.js")).trimEnd().split("\n");
+  assert.ok(source.length > 700);
+  assert.match(source.at(-1), /requestBody.*transportCredentials/);
+  const upstream = read(join(directory, ".rpiv/artifacts/research/input.md"));
+  assert.match(upstream, /status: ready/);
+  assert.match(upstream, /## Code References[\s\S]*src\/inspection\.js/);
+  assert.match(upstream, /## Developer Context[\s\S]*inherited decision/);
+  assert.match(upstream, /cancellable by the caller/);
+  assert.match(upstream.trimEnd().split("\n").at(-1), /do not log request bodies/);
+  const envelope = (name) => JSON.parse(read(join(directory, `synthetic-tool-results/${name}.json`)));
+  const duplicate = envelope("duplicate");
+  assert.deepEqual(JSON.parse(duplicate.content[0].text), duplicate.structuredContent);
+  assert.match(duplicate.content[1].text, /text-only warning/);
+  assert.ok(duplicate.structuredContent.nextCursor);
+  assert.ok(duplicate._meta.provenance);
+  const distinct = envelope("distinct");
+  assert.match(distinct.content[0].text, /ownership remains unresolved/);
+  assert.equal(distinct.structuredContent.configuration, "config/retry.json");
+  assert.equal(distinct.structuredContent.hasMore, true);
+  assert.ok(distinct.structuredContent.nextCursor);
+  assert.ok(distinct._meta.provenance);
+  const error = envelope("error");
+  assert.equal(error.isError, true);
+  assert.equal(error.structuredContent.error.code, "SOURCE_UNAVAILABLE");
+  assert.ok(error.structuredContent.nextCursor);
+  const truncated = envelope("truncated");
+  assert.equal(truncated.structuredContent.truncated, true);
+  assert.deepEqual(truncated.structuredContent.coveredLines, [1, 80]);
+  assert.equal(truncated.structuredContent.nextLine, 81);
+});
+
+test("input creates durable progress before source reads and resumes before research", () => {
+  const skill = read(skillPath);
+  const start = section(skill, "#### Start mode", "#### No argument");
+  const resume = section(skill, "#### Resume mode", "#### Start mode");
+  assert.ok(start.indexOf("Read the artifact completely") < start.indexOf("Create exactly one design document"));
+  assert.ok(start.indexOf("Create exactly one design document") < start.indexOf("Read every key source file"));
+  assert.match(start, /workflow_step: input/);
+  assert.match(start, /before.*(?:source|full|complete).*read/i);
+  assert.match(resume, /(?:input queue|`input`)/);
+  assert.match(resume, /input.*before entering research/is);
+  // Existing role and approval tests remain in force: input handling is not an
+  // extra preliminary reader role or permission to skip complete source reads.
+  assert.match(skill, /(?:no|do not add|do not create).*preliminary.*(?:reader|role)/i);
+});
+
+test("input evidence persists coverage and verifies fingerprints before reuse", () => {
+  const progress = read(progressPath);
+  const input = section(progress, "## Input evidence and complete reads", "## Save protocol");
+  const queueRecord = progress.split("\n").find((line) => line.startsWith("- **Input evidence:**"));
+  assert.ok(queueRecord);
+  for (const field of [/(?:path|identifier)/i, /fingerprint/i, /revision/i, /(?:line ranges|ranges)/i, /complete/, /partial/, /invalidated/, /findings/i, /gaps/i, /next action/i]) {
+    assert.match(queueRecord, field);
+  }
+  assert.match(input, /(?:chunk|bounded).*save|save.*(?:chunk|bounded)/is);
+  assert.match(input, /read.?back/i);
+  assert.match(input, /(?:verify|verified|matching).*fingerprint/is);
+  assert.match(input, /(?:unchanged|matching).*partial/is);
+  assert.match(input, /(?:changed|mismatch).*invalidat/is);
+  assert.match(input, /(?:missing|ambiguous).*(?:redo|reread|read again|repeat)/is);
+  assert.match(input, /temporary execution storage.*never a baseline/is);
+  assert.match(input, /cold resume/i);
+  assert.match(input, /complete only when all ranges or sections.*inspected/is);
+});
+
+test("bounded tool output preserves evidence and recovers truncation", () => {
+  const skill = read(skillPath);
+  const bounded = section(skill, "## Bounded evidence handling", "## Workflow");
+  for (const concept of [/outer/i, /inner/i, /4[,.]?000/, /error/i, /nested errors/i, /provenance/i, /pagination|cursor/i, /distinct text and structured evidence/i, /truncat/i, /incomplete/i, /recover the missing range/i]) {
+    assert.match(bounded, concept);
+  }
+  assert.match(bounded, /Budget each inner command.*combined outer orchestration output/is);
+  assert.match(bounded, /Never assume `structuredContent` alone is complete/);
+  assert.match(bounded, /field names and bounded sections/);
+  assert.match(bounded, /(?:store|persist|save).*(?:finding|evidence|result)/is);
+});
+
+test("resume searches for relevant additions beyond the saved fingerprint list", () => {
+  const drift = section(read(progressPath), "## Relevant source drift", "## Reconsideration during creation");
+  assert.match(drift, /(?:new|added).*caller/is);
+  assert.match(drift, /config/i);
+  assert.match(drift, /(?:bounded|targeted).*search|search.*(?:bounded|targeted)/is);
+  assert.match(drift, /(?:known|saved|previous).*(?:path|file).*(?:not|insufficient)|(?:not|insufficient).*(?:known|saved|previous).*(?:path|file)/is);
 });

@@ -1,0 +1,147 @@
+{
+  "kind": "synthetic-source-acceptance-boundary-trials",
+  "runtime_claims": false,
+  "loaded_once": [
+    "candidate-skill/SKILL.md (truncated middle recovered with contiguous range)",
+    "candidate-skill/references/creation-progress.md"
+  ],
+  "scope": "Four prepared projects only; no production edits, external questions, provider writes, installs, commits or oracle/sibling inspection",
+  "policy_contradictions": [],
+  "cases": [
+    {
+      "project": "ordinary-project",
+      "pass": true,
+      "stop": "Q2 unanswered",
+      "response": "D1 remains fixed: one automatic retry. The unchanged send entry point delegates to injected transport ([send delegation](<trial-root>/ordinary-project/src/send.js:1)); logging ownership determines whether send gains a logger dependency. The older modern artifact remains compatible without inventing a historical input queue.\n\n❓ Question: Where should retry failures be logged?\n\nA. **Caller owns logging (Recommended)** — preserve transport-layer responsibilities and avoid duplicate logs.\nB. **send owns logging** — add local diagnostic responsibility and a logger dependency.\n\nReply with A, B.",
+      "reads": [
+        "entire design.md",
+        "entire parent input.md",
+        "entire src/send.js"
+      ],
+      "searches": [
+        "metadata helpers once",
+        "git status --short",
+        "rg --files --hidden -g !.git",
+        "project connection search: send|transport|retry|log|config|import|require|register|route|event|job",
+        "git hash-object upstream and target"
+      ],
+      "failures": [],
+      "preserved": "Q1 original answer A and D1 one retry; Q2 unanswered; no approvals inferred",
+      "edit": "none",
+      "before_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "3f99e922fe61600ccb5f1e22bc01fc232aff0213ca78c4ec7707e473ea40999b"
+      },
+      "after_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "3f99e922fe61600ccb5f1e22bc01fc232aff0213ca78c4ec7707e473ea40999b"
+      }
+    },
+    {
+      "project": "drift-project",
+      "pass": true,
+      "stop": "Q2 unanswered after affected integration reconciliation",
+      "response": "The prior scanner claim is stale: [queuedSend](<trial-root>/drift-project/src/new-caller.js:1) now imports and calls send. [retry.json](<trial-root>/drift-project/config/retry.json:1) contains attempts: 99, but the project search found no consumer or loader. Those bytes do not establish a wired retry policy and do not replace D1's one retry. I saved and read back the affected integration evidence, current coverage and configuration gap; unrelated research remains complete.\n\n[send](<trial-root>/drift-project/src/send.js:1) still delegates transport responsibility. Logging ownership decides whether that layer gains a logger dependency.\n\n❓ Question: Where should retry failures be logged?\n\nA. **Caller owns logging (Recommended)** — preserve transport-layer responsibilities and avoid duplicate logs.\nB. **send owns logging** — add local diagnostic responsibility and a logger dependency.\n\nReply with A, B.",
+      "reads": [
+        "entire design.md",
+        "entire parent input.md",
+        "entire src/send.js",
+        "entire src/new-caller.js",
+        "entire config/retry.json",
+        "Integration Scanner role prompt"
+      ],
+      "searches": [
+        "metadata helpers once; now helper again for edit",
+        "git status --short; no-commit current path inventory",
+        "project-wide connections and config: send|transport|retry|log|config|import|require|register|route|event|job",
+        "targeted config references: retry.json|retries|queuedSend|send|transport|import|require|register|route|event|job|log",
+        "git hash-object all source/config inputs"
+      ],
+      "failures": [],
+      "preserved": "Q1 original answer A and D1 one retry; Q2 unanswered; configuration not treated as wired; summary/decomposition unapproved",
+      "edit": "only design artifact; complete readback verified",
+      "role": "Only affected Integration Scanner work run inline under test override; no unrelated roles/dimensions or child agents.",
+      "before_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "3f99e922fe61600ccb5f1e22bc01fc232aff0213ca78c4ec7707e473ea40999b",
+        "src/new-caller.js": "8a0e969a5cd19ffac1cc9af9c122f24f685a5ab3ea05c7489d62d4e263fe1f77",
+        "config/retry.json": "6b5c8c9024ddcc18b2ef24a14959ca36844564c01949ee9e9e2193b31af0712a"
+      },
+      "after_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "6550219320c480e16367df99d24e70f8ce5a966a7b9efb5277e7d63207567a45",
+        "src/new-caller.js": "8a0e969a5cd19ffac1cc9af9c122f24f685a5ab3ea05c7489d62d4e263fe1f77",
+        "config/retry.json": "6b5c8c9024ddcc18b2ef24a14959ca36844564c01949ee9e9e2193b31af0712a"
+      }
+    },
+    {
+      "project": "legacy-invalid-project",
+      "pass": true,
+      "stop": "contradictory legacy state",
+      "response": "Resume stopped: this artifact has no workflow_step, but its Architecture and Slices are unestablished, Design History records no slices, and both architecture summary and decomposition are explicitly unapproved. The legacy bridge requires a coherent approved skeleton; an empty design cannot use slice-based continuation or finalization. I preserved the document byte-for-byte and retained D1 and the unanswered Q2.\n\nClarification required before continuation: should this artifact be restored to its recorded pre-decomposition decisions step, or is a different approved legacy design intended?",
+      "reads": [
+        "entire design.md",
+        "entire parent input.md"
+      ],
+      "searches": [
+        "metadata helpers once",
+        "current path inventory; connection search; git status --short",
+        "upstream and target fingerprints"
+      ],
+      "failures": [],
+      "preserved": "all artifact bytes, D1 original answer and unanswered Q2; no workflow metadata invented",
+      "edit": "none",
+      "before_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "648cee43919f0efc3372a398a9b3a59ff4a1621aab24ecb9f04df0a2b5475f78"
+      },
+      "after_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "648cee43919f0efc3372a398a9b3a59ff4a1621aab24ecb9f04df0a2b5475f78"
+      }
+    },
+    {
+      "project": "write-failure-project",
+      "pass": true,
+      "stop": "save failed; dependent work stopped",
+      "response": "The normal save of Q2 = A, caller owns logging failed with PermissionError [Errno 13]: Permission denied: '.rpiv/artifacts/designs/design.md'. The file is 0444 and its directory is 0555. I did not change permissions or use another save route.\n\nThe artifact remains unchanged: Q2 is still unanswered on disk, D1 remains one retry, and summary/decomposition remain unapproved. The supplied answer exists only in memory; I stopped before preparing or advancing dependent work.",
+      "reads": [
+        "entire design.md",
+        "entire parent input.md",
+        "entire src/send.js",
+        "file and directory modes"
+      ],
+      "searches": [
+        "metadata helpers once; now helper again for attempted save",
+        "git status --short; path inventory; project connection search",
+        "upstream and target fingerprints"
+      ],
+      "failures": [
+        {
+          "operation": "Path.write_text coherent Q2 answer update",
+          "type": "PermissionError",
+          "errno": 13,
+          "message": "[Errno 13] Permission denied: '.rpiv/artifacts/designs/design.md'"
+        }
+      ],
+      "preserved": "artifact byte-identical; D1 one retry; on-disk Q2 unanswered; no in-memory answer interpreted as saved approval",
+      "edit": "normal save attempted once, failed; no workaround",
+      "before_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "3f99e922fe61600ccb5f1e22bc01fc232aff0213ca78c4ec7707e473ea40999b"
+      },
+      "after_sha256": {
+        "src/send.js": "9233af8dd482139f520914fb85b3a48c2e0d0b593fc722d382fdae6553cdb48a",
+        ".rpiv/artifacts/research/input.md": "3f2d06b5eaf1e4de6c25e6411233642bd82ecbc9377d554498625eee08c8134e",
+        ".rpiv/artifacts/designs/design.md": "3f99e922fe61600ccb5f1e22bc01fc232aff0213ca78c4ec7707e473ea40999b"
+      }
+    }
+  ]
+}
