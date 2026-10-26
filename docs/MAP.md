@@ -6,19 +6,21 @@ One map can evolve through discovery/Explore, Research, Design and either Plan o
 
 ## Try the skill
 
-In a fresh Codex chat with the development plugin loaded, select **RPIV Map** and supply an artifact:
+In a fresh Codex chat, select **RPIV Map** with no arguments. It uses the current discussion or relevant project artifacts to identify the subject, then offers two or three useful views with a grounded recommendation. Reply with A, B or C, or describe another view. If several subjects are plausible, it asks which one first; if there is no context, it asks what system area to explore.
+
+You can also request a specific outcome directly and skip the menu:
 
 ```text
-$rpivc-map Map .rpiv/artifacts/research/<your-research>.md so I can find what still needs deciding or building. Keep this local.
+$rpivc-map Show the remaining decisions and work in the export research we just discussed.
 ```
 
-Or start earlier:
+No artifact is required for a bounded exploration:
 
 ```text
-$rpivc-map Explore how this repository exports a saved document. Inspect only the export entry point, file writer and caller. Show assumptions and unanswered questions; no product changes.
+$rpivc-map Explore how this repository exports a saved document. Inspect only the export entry point, file writer and caller.
 ```
 
-Refresh by providing the existing companion, its approval record and changed source artifact. The helper checks the baseline; the agent checks that sources support the actual changes. Decisions discussed using the map must be recorded through the owning RPIV workflow before refreshing.
+Maps stay local by default. A different view of an existing map reuses its dated evidence; asking what changed triggers a comparison against the last approved map and checks affected current sources. You do not need to remember companion paths or repeat source and review rules. Decisions discussed using the map still belong in the owning workflow before a refresh can treat them as agreed.
 
 Final map completion requires companion validation, actual browser interaction and visual inspection, and Codex Advisor approval of the exact final result. If a tool or advisor is unavailable, the result remains a draft. Hosting is optional and requires authorization.
 

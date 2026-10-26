@@ -1,6 +1,6 @@
 ---
 name: rpivc-map
-description: Create or refresh an interactive, source-linked system map from RPIV artifacts or a bounded exploration question to find unresolved decisions and agreed work remaining. An optional companion to discovery, research, design, Plan or Blueprint; does not approve decisions or implement the mapped system.
+description: Choose a useful view of the current investigation, then create or refresh an interactive, source-linked system map showing remaining decisions and work. Accepts a bare invocation, an RPIV artifact or a bounded exploration question; does not approve decisions or implement the mapped system.
 ---
 
 # RPIV Map for Codex
@@ -9,9 +9,21 @@ Help the reader find what still needs deciding or building. Show how parts conne
 
 This is a Codex-native companion, not an upstream port or a mandatory RPIV stage. Invocation authorizes map artifacts and bounded read-only inspection, not product changes, ticket updates, provider actions or publication. A beautiful diagram does not advance an unfinished upstream stage.
 
-## Choose the subject and owner
+## Start with a useful choice
 
-Use the supplied artifact or existing companion. Without either, accept an explicit exploration question and system area; record that no owning artifact exists. If neither the topic nor a relevant artifact is supplied or clear from the conversation, ask for that missing input. Do not start an unbounded repository survey.
+Resolve the subject from explicit input first, then the current conversation, then a bounded lookup of relevant `.rpiv` artifacts or known companion/approval metadata in the current project. Explicit input wins. Recency can locate candidates but cannot establish authority. Do not search unrelated repositories or launch broad research merely to prepare a menu.
+
+If several subjects remain plausible, ask which subject first, using short recognizable names and the Choice response format; do not mix subjects and views in one menu. Permit a custom answer. If there is no usable context or artifact, ask one concise open question about the topic or system area. Explore may start provisionally without an artifact or chosen pipeline stage.
+
+Once the subject is clear, if the requested visual outcome is also clear, proceed directly. Otherwise offer two or three useful outcomes, with an evidence-based recommendation first and one short sentence explaining why. Ground the options in the actual questions, dependencies, source state and existing map; stage is a clue, not a fixed menu. For example, Research may favor decisions and remaining work; Design may favor intended changes or unresolved boundaries; Plan or Blueprint may favor slices and dependencies; Explore may favor known parts and suspected links. Describe proposed boundaries as proposed, not agreed.
+
+Ask one concise question per response. Use the existing lettered Choice response format. For view menus, finish with `Reply with A, B, or C, or describe another view` (use only the letters offered); for subject menus, use the standard custom-answer ending in that format. Do not add a separate Other option. Accept letters or natural-language choices. Stop while unanswered without creating a menu artifact. After the choice, proceed without a setup wizard; do not ask the user to repeat paths, evidence policy, local-output defaults, existing authorization or review requirements. Ask again only for a consequential ambiguity that remains.
+
+Distinguish another view of a saved, dated snapshot from a request for what changed since the last map. Reuse the snapshot's stated evidence basis for the former; do not silently start live refresh because a map exists. For a change comparison, check affected current evidence against the genuine last approved baseline, never a newer failed candidate. State the evidence basis briefly; ask about it only when the distinction materially changes the requested result. A view selection neither approves scope nor starts another pipeline stage.
+
+## Establish the owner
+
+After resolving the subject and view, establish authority using the rules below. The user need not know the artifact path or select a stage. Without an owning artifact, record the provisional Explore basis.
 
 Read the primary artifact completely and follow relevant evidence links. Reuse an existing map of the same work. Preserve its identity, original stage and stable part identifiers; a stage change alone does not justify moving components or creating a competing map. Research is the normal starting point, but discovery/Explore may produce an explicitly provisional map.
 

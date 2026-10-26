@@ -2,6 +2,16 @@
 
 Record the companion digest, rendered digest, source revisions, browser/environment, review evidence and limitations. Use candidate output until all applicable checks pass. These checks establish map behavior, not product deployment or successful provider operations.
 
+## Entry behavior
+
+For entry-instruction changes, run a bounded scenario evaluation using the final skill text. Capture actual first responses and, where useful, a follow-up choice; inspect behavior rather than matching phrases. Keep evaluation output outside tracked skill files and distinguish simulated responses from a full fresh-chat mapping run.
+
+- Bare invocation with one clear subject: offer two or three grounded views, recommended first, with a custom-answer escape hatch; stop before creating output.
+- Multiple plausible subjects: ask subject first without mixing view choices. With no artifacts or context, ask for a bounded topic instead of surveying the repository.
+- Explicit subject and visual goal: proceed without a redundant menu. A letter or custom view selection should lead to work, not a setup wizard.
+- Saved approved map plus newer failed candidate: a different snapshot view preserves its evidence date; a change comparison uses the approved baseline and affected current evidence.
+- Conflicting ownership: preserve the conflict and ask only what is needed before claiming authoritative intent. A newer file or selected view cannot settle authority or approve proposed scope.
+
 ## Data and authority
 
 - Validate identifiers, endpoints, source references, independent claim dimensions and every generated section's parity with the companion.
