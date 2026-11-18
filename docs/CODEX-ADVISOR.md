@@ -1,6 +1,6 @@
 # Codex Advisor
 
-The standalone plugin lives at `plugins/codex-advisor/`. Its manifest packages one skill, `$codex-advisor`; it does not alter the RPIV workflow plugin. The skill uses native Codex subagents and their normal tools. Its default advisor is `gpt-6-astra` at `high` reasoning. After a consultation trigger is established, automatic consultation is permitted for a verified working model different from the configured advisor, including future model names. For the same model, it is permitted only at verified lower reasoning effort; equal or higher effort is excluded. Unknown model identity or an uncertain same-model effort comparison skips automatic consultation. Explicit user requests bypass those eligibility exclusions.
+The standalone plugin at `plugins/codex-advisor/` packages the `$codex-advisor` skill. It requests `gpt-6.2-astra` at `high` reasoning for a native Codex subagent. Consultation depends on the question. The main agent can request independent scrutiny even when it uses the same model.
 
 The idea was inspired by [RPIV Advisor](https://github.com/juicesharp/rpiv-mono/tree/main/packages/rpiv-advisor), which uses a Pi tool. This Codex implementation uses original instructions and native subagent dispatch.
 
@@ -28,4 +28,4 @@ The scaffold creates `~/.agents/plugins/marketplace.json` with a `personal` entr
 
 For general proactive use, add the [standing guidance from the README](../README.md#encourage-proactive-use) to your global Codex instructions after installation. It encourages consultation when useful while preserving the skill’s eligibility rules and the main agent’s ownership.
 
-To choose a different advisor, update the model and effort in the source skill and reinstall, or give higher-priority instructions. The same exclusion policy follows the configured advisor; there is no model allowlist to maintain. An invalid, unavailable, or unsupported advisor configuration produces a visible consultation error without a silent substitute. Independent work can continue, but actions requiring advisor approval remain pending. A fresh task is needed to pick up installed skill changes. If Codex does not expose the current working model to the agent, a user can declare it for the current task; the skill cannot independently detect later model changes. A request to use Astra as the advisor does not declare the working model.
+To choose a different advisor, update the model and effort in the source skill and reinstall, or give higher-priority instructions. If the configured settings are unavailable or the host reports a mismatch, the skill reports a dispatch error. Actions requiring advisor approval remain pending.

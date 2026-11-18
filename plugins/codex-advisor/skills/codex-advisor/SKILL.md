@@ -9,21 +9,25 @@ Use one native Codex subagent for focused advice, then continue the original tas
 
 ## When to consult
 
-Consult proactively when a choice could materially affect the result and the evidence does not settle it, when repeated attempts are not converging, or when credible sources conflict. First do enough ordinary inspection to state the actual uncertainty. Do not consult for routine work, every task opening, every completion, or a question that a quick direct check will resolve. Avoid a second consultation on the same issue unless new evidence changes the question.
+Consult proactively under standing authorization; do not wait for the user to invoke the skill when the following conditions apply.
 
-An explicit `$codex-advisor` invocation or user request for an advisor bypasses the automatic skip policy below. A user may request a same-tier second opinion; describe it as such rather than as a stronger-model review.
+After enough ordinary inspection to state the unresolved question, consult the advisor when independent scrutiny could change a consequential next step:
+- Material assumptions or competing explanations remain unresolved.
+- Attempts have stopped producing useful evidence and the next step would require a substantial workaround or scope expansion.
+- Credible evidence conflicts.
+- A named consequential failure mode remains inadequately addressed by available checks or prior independent review.
 
-## Advisor configuration and automatic skip policy
+Consult before taking the step that depends on that uncertainty, while continuing useful independent work. Skip routine questions a quick direct check can settle and questions already covered by adequate independent review unless new evidence or a material revision changes the question. Do not consult merely because a task is large or complex, or because hypothetical risks can be imagined. Use one focused consultation per unresolved question, not repeated approval rounds.
 
-Default advisor: `gpt-6-astra` at `high` reasoning. These are settings for the native subagent call, not a promise about the model selected by the host. Configure a different advisor model or effort through a higher-priority instruction or by changing this skill before installation. If the configured model or effort is invalid, unavailable, or unsupported by the dispatch tool, report an advisor configuration or dispatch error. Do not silently change the model, effort, or use inherited defaults. Use an alternative only when the user explicitly authorizes it. Continue independent work with the available evidence; if advisor approval is a required prerequisite, leave the dependent decision or action pending.
+An explicit `$codex-advisor` invocation or user request for an advisor takes precedence over routine skip guidance. If progress requires the user's preference, authorization, unavailable access, or missing facts, ask the user; an advisor cannot supply those.
 
-For automatic consultation, establish the **current working model** from a field in current-task system or developer metadata that explicitly identifies the active model, a native runtime result that explicitly identifies it, or the user's declaration of the working model for this task. Use only sources actually exposed in the task; do not invent a model-inspection tool. A list of available models, saved default, earlier task, or request for a particular **advisor** model does not identify the working model. If sources conflict, the working model changes, or a declaration is no longer reliable, treat the model as unknown until clarified. When an automatic trigger arises but the working model is unknown, briefly explain that eligibility cannot be established and continue; the user can declare the working model for this task or request an advisor manually. Do not interrupt routine work to ask for model identity.
+## Advisor configuration
 
-After ordinary inspection establishes a consultation trigger, permit automatic consultation when the verified working model differs from the configured advisor model, including future model names. This is an independent second opinion, not evidence that the advisor is stronger. Working reasoning effort is not needed for different-model eligibility.
+Default advisor: `gpt-6.2-astra` at `high` reasoning. These are settings for the native subagent call, not a promise about the model selected by the host. Configure a different advisor model or effort through a higher-priority instruction or by changing this skill before installation. If the configured model or effort is invalid, unavailable, or unsupported by the dispatch tool, report an advisor configuration or dispatch error. Do not silently change the model, effort, or use inherited defaults. Use an alternative only when the user explicitly authorizes it. Continue independent work with the available evidence; if advisor approval is a required prerequisite, leave the dependent decision or action pending.
 
-For the same model, permit automatic consultation only at a verified lower working reasoning effort. Exclude equal or higher effort. Compare recognized values using this policy order: `none < minimal < low < medium < high < xhigh < max < ultra`. Establish working effort from the same current-task sources allowed for model identity; do not infer it from a saved default. If either effort is unknown, conflicting, or unrecognized, skip automatic consultation and continue independently. Do not guess where a new effort value belongs. These rules follow the configured advisor if its model or effort changes; no model allowlist is required. Explicit user requests bypass eligibility exclusions.
+Consultation eligibility depends on the question, not the main agent's model or reasoning settings. Establishing the working model or reasoning effort is not required. Independent scrutiny from the same model is permitted. Do not describe it as a stronger-model review without evidence.
 
-Do not consult an advisor from inside an advisor consultation. Include that instruction in the advisor assignment. If no native subagent tool is available, continue independently and mention the limitation when the user requested the consultation explicitly.
+Do not consult an advisor from inside an advisor consultation. Include that instruction in the advisor assignment. If no native subagent tool is available, report the limitation briefly and continue independent work where possible. Preserve any explicit requirement for advisor approval before the dependent action.
 
 ## Dispatch
 
