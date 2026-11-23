@@ -55,7 +55,7 @@ The installer copies only the RPIV workflow plugin into `.local/ryan-codex-dev`,
 
 Start a fresh Codex task in an unrelated project and run the realistic and boundary prompts supplied by the port task. Record either `Pass` with the required observations or `Repair` with the exact failing prompt, observed result, expected result, candidate commit, and development version.
 
-The public and development plugins can both be installed, but they expose the same skill names. Use a fresh task and confirm the loaded plugin version before treating the result as acceptance evidence.
+The GitHub and development copies expose the same skill names. Before opening the acceptance task, disable the GitHub copy and confirm that the intended development version is the only enabled RPIV copy. Keep the GitHub copy installed so you can switch back if the candidate fails.
 
 ## Restore the public plugin after testing
 
@@ -65,14 +65,7 @@ codex plugin add rpiv-codex@ryan-codex
 codex plugin list --json
 ```
 
-Confirm the public replacement is installed and enabled, then remove the development copy:
-
-```bash
-codex plugin remove rpiv-codex@ryan-codex-dev
-codex plugin marketplace remove ryan-codex-dev
-```
-
-If replacement installation or verification fails, preserve the development installation. The ignored `.local/` copy may remain for the next iteration; the installer rebuilds it from scratch. See the [marketplace migration instructions](https://github.com/rxreyn3/codex-plugins/blob/2a13fcc2e758f273f74dcf2cc4ca44b46a160b7b/README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.
+Confirm the GitHub copy matches the intended release. Disable the development copy and confirm the GitHub copy is the only enabled RPIV copy before opening a fresh task. Try a representative request for the behavior you use. If installation or verification fails, disable the GitHub copy and re-enable the development copy. Keep the disabled development install available for the next iteration or rollback. See the [marketplace migration instructions](https://github.com/rxreyn3/codex-plugins/blob/2a13fcc2e758f273f74dcf2cc4ca44b46a160b7b/README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.
 
 ## Local workflow changes
 
