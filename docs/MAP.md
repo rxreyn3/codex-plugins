@@ -50,6 +50,6 @@ scripts/validate-plugin.sh
 
 The [companion contract](../plugins/rpiv-codex/skills/rpivc-map/references/schema.md) documents rendering, exact-data verification and review/approval commands. Recording a review is only bookkeeping after an actual review. Do not manufacture one to make a command pass. The approval helper retains immutable snapshots and updates the approved pointer only after validating the review and baseline.
 
-Follow the [development workflow](DEVELOPMENT.md) to install a candidate. The local installer copies this checkout into an ignored local marketplace and byte-verifies the installed copy. Subsequent source edits need another install; it is not a live filesystem link. To avoid duplicate RPIV skills during local-only testing, verify the development installation before removing `rpiv-codex@ryan-codex`. Leave the shared GitHub marketplace and Codex Advisor installed.
+Follow the [development workflow](DEVELOPMENT.md#install-the-development-candidate) to install and verify a candidate. Reinstall after source edits. Enable only the development copy of RPIV when testing Map.
 
 Start a fresh chat after installation. A successful command/configuration check establishes installation; it does not prove the fresh chat discovered the skill or completed a real mapping request. Report those checks separately.
