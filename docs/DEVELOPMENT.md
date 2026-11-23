@@ -48,24 +48,22 @@ Do not add repeated model evaluations or a new general test harness unless a con
 ## Install the development candidate
 
 ```bash
-scripts/install-dev.sh
+./scripts/install-dev.sh
+codex
 ```
 
-The installer copies only the RPIV workflow plugin into `.local/ryan-codex-dev`, adds a cache-buster only to that ignored copy, installs it from the `ryan-codex-dev` marketplace, and byte-compares the installed cache with the candidate. Its catalog contains only that copied plugin. It never edits the tracked public manifest.
+The installer copies RPIV from the current checkout or worktree into the primary checkout’s ignored `.local/ryan-codex-dev` directory. It gives the copy a unique version and compares it with the installed files before selecting it. Run it again after editing.
 
 Start a fresh Codex task in an unrelated project and run the realistic and boundary prompts supplied by the port task. Record either `Pass` with the required observations or `Repair` with the exact failing prompt, observed result, expected result, candidate commit, and development version.
 
-The GitHub and development copies expose the same skill names. Before opening the acceptance task, disable the GitHub copy and confirm that the intended development version is the only enabled RPIV copy. Keep the GitHub copy installed so you can switch back if the candidate fails.
-
-## Restore the public plugin after testing
+## Return to the installed GitHub copy
 
 ```bash
-codex plugin marketplace upgrade ryan-codex
-codex plugin add rpiv-codex@ryan-codex
-codex plugin list --json
+./scripts/install-dev.sh --release
+codex
 ```
 
-Confirm the GitHub copy matches the intended release. Disable the development copy and confirm the GitHub copy is the only enabled RPIV copy before opening a fresh task. Try a representative request for the behavior you use. If installation or verification fails, disable the GitHub copy and re-enable the development copy. Keep the disabled development install available for the next iteration or rollback. See the [marketplace migration instructions](https://github.com/rxreyn3/codex-plugins/blob/2a13fcc2e758f273f74dcf2cc4ca44b46a160b7b/README.md#migrate-from-the-previous-marketplace-names) for installations using the older names.
+This selects the GitHub version already installed. To fetch a newer version, follow the [update commands](../README.md#update).
 
 ## Local workflow changes
 
