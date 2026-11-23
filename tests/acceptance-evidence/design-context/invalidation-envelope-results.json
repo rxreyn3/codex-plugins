@@ -1,0 +1,348 @@
+{
+  "candidate": "<trial-root>/candidate-skill/SKILL.md",
+  "scope": "Synthetic Stage 1 Resume and envelope evidence only; stopped before every role.",
+  "cases": {
+    "changed-partial-project": {
+      "artifact": "<trial-root>/changed-partial-project/.rpiv/artifacts/designs/2026-10-26_13-18-42_bounded-retry.md",
+      "local_source_coverage": [
+        1,
+        703
+      ],
+      "source_extent": 703,
+      "source_fingerprint": "0de15b582f0b1d6d1c80421b15d54b32b4ffe53e",
+      "workflow_step": "research",
+      "status": "in-progress",
+      "send_reused": [
+        1,
+        3
+      ],
+      "upstream_fresh_read": [
+        1,
+        17
+      ],
+      "roles_started": false,
+      "final_readback_verified": true,
+      "inherited_decisions_preserved": [
+        "D1 one retry",
+        "D2 caller logging"
+      ],
+      "inspection_invalidated": true,
+      "reason": "saved fingerprint differs while branch main unchanged",
+      "actual_reads": [
+        [
+          1,
+          175
+        ],
+        [
+          81,
+          95
+        ],
+        [
+          176,
+          275
+        ],
+        [
+          276,
+          350
+        ],
+        [
+          351,
+          430
+        ],
+        [
+          431,
+          530
+        ],
+        [
+          531,
+          630
+        ],
+        [
+          631,
+          703
+        ]
+      ],
+      "reused_inspection": [],
+      "verified_mutation": "observation100 = 999 at source line 101"
+    },
+    "ambiguous-partial-project": {
+      "artifact": "<trial-root>/ambiguous-partial-project/.rpiv/artifacts/designs/2026-10-26_13-18-42_bounded-retry.md",
+      "local_source_coverage": [
+        1,
+        703
+      ],
+      "source_extent": 703,
+      "source_fingerprint": "5c66a97198aaaaffebc047568a24de4383ddeee6",
+      "workflow_step": "research",
+      "status": "in-progress",
+      "send_reused": [
+        1,
+        3
+      ],
+      "upstream_fresh_read": [
+        1,
+        17
+      ],
+      "roles_started": false,
+      "final_readback_verified": true,
+      "inherited_decisions_preserved": [
+        "D1 one retry",
+        "D2 caller logging"
+      ],
+      "inspection_invalidated": false,
+      "reused_inspection": [
+        [
+          1,
+          350
+        ]
+      ],
+      "actual_reads": [
+        [
+          351,
+          430
+        ],
+        [
+          431,
+          530
+        ],
+        [
+          531,
+          630
+        ],
+        [
+          631,
+          703
+        ]
+      ],
+      "true_missing_coverage_case": false,
+      "reconciliation": "surviving Completed work explicitly verified through line 350; findings lines 2\u2013350, explicit history 176\u2013350, matching fingerprint",
+      "conclusion": "corrupted queue resolved safely; does not test absence of all valid coverage evidence"
+    },
+    "missing-baseline-project": {
+      "artifact": "<trial-root>/missing-baseline-project/.rpiv/artifacts/designs/2026-10-26_13-18-42_bounded-retry.md",
+      "local_source_coverage": [
+        1,
+        703
+      ],
+      "source_extent": 703,
+      "source_fingerprint": "5c66a97198aaaaffebc047568a24de4383ddeee6",
+      "workflow_step": "research",
+      "status": "in-progress",
+      "send_reused": [
+        1,
+        3
+      ],
+      "upstream_fresh_read": [
+        1,
+        17
+      ],
+      "roles_started": false,
+      "final_readback_verified": true,
+      "inherited_decisions_preserved": [
+        "D1 one retry",
+        "D2 caller logging"
+      ],
+      "inspection_invalidated": true,
+      "reason": "saved comparable fingerprint unavailable, no retained exact excerpts",
+      "actual_reads": [
+        [
+          1,
+          100
+        ],
+        [
+          101,
+          200
+        ],
+        [
+          201,
+          300
+        ],
+        [
+          301,
+          350
+        ],
+        [
+          351,
+          430
+        ],
+        [
+          431,
+          530
+        ],
+        [
+          531,
+          630
+        ],
+        [
+          631,
+          703
+        ]
+      ],
+      "reused_inspection": [],
+      "historic_coverage_not_reused": [
+        1,
+        430
+      ]
+    },
+    "envelope-project": {
+      "artifact": "<trial-root>/envelope-project/.rpiv/artifacts/designs/2026-10-26_13-18-42_bounded-retry.md",
+      "local_source_coverage": [
+        1,
+        703
+      ],
+      "source_extent": 703,
+      "source_fingerprint": "5c66a97198aaaaffebc047568a24de4383ddeee6",
+      "workflow_step": "input",
+      "status": "in-progress",
+      "send_reused": [
+        1,
+        3
+      ],
+      "upstream_fresh_read": [
+        1,
+        17
+      ],
+      "roles_started": false,
+      "final_readback_verified": true,
+      "inherited_decisions_preserved": [
+        "D1 one retry",
+        "D2 caller logging"
+      ],
+      "inspection_invalidated": false,
+      "reused_inspection": [
+        [
+          1,
+          350
+        ]
+      ],
+      "actual_reads": [
+        [
+          350,
+          430
+        ],
+        [
+          431,
+          530
+        ],
+        [
+          531,
+          630
+        ],
+        [
+          631,
+          703
+        ]
+      ],
+      "fixture_files_loaded_through_tools": [
+        "distinct.json",
+        "error.json",
+        "truncated.json"
+      ],
+      "distinct_evidence_retained": [
+        "text-only retry-ownership warning",
+        "caller src/send.js",
+        "configuration config/retry.json",
+        "page-2 hasMore true",
+        "page-3 continuation",
+        "isError false/true",
+        "nested SOURCE_UNAVAILABLE message",
+        "all fixture provenance",
+        "truncated true nextLine81 coveredLines1\u201380 claim"
+      ],
+      "new_source_coverage_from_truncated_fixture": [],
+      "synthetic_claimed_range": [
+        1,
+        80
+      ],
+      "pagination_gap": [
+        "page-2",
+        "page-3"
+      ],
+      "configuration_gap": "config/retry.json unavailable",
+      "overall_input_complete": false,
+      "local_source_input_complete": true,
+      "provider_evidence": false
+    },
+    "duplicate-project": {
+      "artifact": null,
+      "fixture": "duplicate-project/synthetic-tool-results/duplicate.json",
+      "scope": "Synthetic duplicate normalization only; no source reads or design workflow advancement.",
+      "raw_retained_in_execution_store": true,
+      "execution_store_keys": [
+        "duplicate_fixture_tool_result",
+        "duplicate_fixture_raw_envelope"
+      ],
+      "exact_duplicate_representations_removed": 1,
+      "equality_verified": true,
+      "normalized": {
+        "structuredContent": {
+          "id": "synthetic-duplicate",
+          "text": "Delivery configuration is unresolved",
+          "nextCursor": "duplicate-page-2"
+        },
+        "content": [
+          {
+            "type": "text",
+            "text": "Additional text-only warning must remain."
+          }
+        ],
+        "isError": false,
+        "_meta": {
+          "provenance": "synthetic duplicate representations"
+        }
+      },
+      "retained_fields": [
+        "structured payload emitted once",
+        "extra text-only warning",
+        "nextCursor duplicate-page-2",
+        "isError false",
+        "_meta provenance"
+      ],
+      "provider_evidence": false,
+      "source_reads": 0
+    }
+  },
+  "tool_delivery_warnings": [
+    {
+      "location": "initial skill read",
+      "kind": "outer orchestration truncation",
+      "recovery": "Relevant omitted Step 2/3 body separately read; no roles dispatched."
+    },
+    {
+      "location": "changed inspection first read 1\u2013175",
+      "kind": "inner command truncation",
+      "uncertain_range": [
+        81,
+        95
+      ],
+      "recovery_read": [
+        81,
+        95
+      ],
+      "recovered": true
+    }
+  ],
+  "synthetic_fixture_truncation_flags": 1,
+  "provider_calls": 0,
+  "child_agents": 0,
+  "source_edits": 0,
+  "roles_dispatched": 0,
+  "commits": 0,
+  "errors": [
+    {
+      "case": "duplicate-project",
+      "kind": "orchestration ReferenceError",
+      "message": "TextEncoder not defined in functions isolate",
+      "mutation_before_error": false,
+      "recovery": "ASCII JSON encoded directly as hex; same saved normalization used"
+    }
+  ],
+  "tool_delivery_warning_count": 2,
+  "synthetic_fixture_error_count": 1,
+  "synthetic_fixture_error": "SOURCE_UNAVAILABLE in error.json retained; no configuration contents inferred",
+  "notes": [
+    "Actual reads for multiple projects fetched each path separately; only byte-identical bounded response bodies were normalized.",
+    "No repository product source changed; temporary harness scripts and result file live outside projects.",
+    "Metadata repository remains original recovery-project provenance; current repository identity obtained by helper and case project names are explicit."
+  ]
+}

@@ -1,0 +1,583 @@
+{
+  "schemaVersion": 1,
+  "id": "saved-export",
+  "title": "Saved document export \u2014 fictional worked example",
+  "revision": "research-1",
+  "origin": "research",
+  "currentStage": "research",
+  "owner": {
+    "artifact": "sources/export-research.md",
+    "authority": "research",
+    "reason": "Research records the decisions and known gaps; no Design or ready Plan exists."
+  },
+  "sources": [
+    {
+      "id": "research",
+      "title": "Fictional Research",
+      "kind": "artifact",
+      "availability": "available",
+      "revision": "research-1",
+      "path": "sources/export-research.md"
+    },
+    {
+      "id": "design",
+      "title": "Fictional Design decision",
+      "kind": "decision",
+      "availability": "available",
+      "revision": "design-1",
+      "path": "sources/export-design.md"
+    },
+    {
+      "id": "plan",
+      "title": "Fictional draft Plan",
+      "kind": "artifact",
+      "availability": "available",
+      "revision": "plan-draft-1",
+      "path": "sources/export-plan.md"
+    }
+  ],
+  "layers": [
+    {
+      "id": "member",
+      "title": "Editor"
+    },
+    {
+      "id": "service",
+      "title": "Export processing"
+    },
+    {
+      "id": "data",
+      "title": "Saved data"
+    }
+  ],
+  "components": [
+    {
+      "id": "editor",
+      "name": "Document editor",
+      "responsibility": "Requests an export and shows success or failure.",
+      "kind": "interface",
+      "layerId": "member",
+      "claims": {
+        "scope": [
+          {
+            "id": "editor-scope",
+            "text": "Keep existing document saving. Add export feedback.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "editor-implementation",
+            "text": "The fictional baseline has an editor; export feedback needs building.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "editor-evidence",
+            "text": "Fictional Research only; no real source or running app was inspected.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "exporter",
+      "name": "Export document",
+      "responsibility": "Reads a saved revision and prepares a download.",
+      "kind": "process",
+      "layerId": "service",
+      "claims": {
+        "scope": [
+          {
+            "id": "exporter-scope",
+            "text": "Export a saved revision without changing it.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "exporter-implementation",
+            "text": "Exporter does not exist in the fictional baseline.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "exporter-evidence",
+            "text": "No code or test evidence exists in this fictional example.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "document",
+      "name": "Saved document",
+      "responsibility": "Keeps named document revisions.",
+      "kind": "store",
+      "layerId": "data",
+      "claims": {
+        "scope": [
+          {
+            "id": "document-scope",
+            "text": "Existing foundation outside the export ticket.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "document-implementation",
+            "text": "Named revisions exist in the fictional baseline.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "document-evidence",
+            "text": "Fictional Research describes this baseline; no real database was checked.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "download",
+      "name": "Downloadable file",
+      "responsibility": "Holds the generated file for download.",
+      "kind": "store",
+      "layerId": "data",
+      "claims": {
+        "scope": [
+          {
+            "id": "download-scope",
+            "text": "Provide the generated export to the requester.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "download-implementation",
+            "text": "File creation still needs design and build.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "download-evidence",
+            "text": "No export was generated or downloaded.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "request",
+      "from": "editor",
+      "to": "exporter",
+      "label": "Request export",
+      "payload": "A request to export a saved document.",
+      "trigger": "The person selects Export.",
+      "kind": "data",
+      "implementation": "undesigned",
+      "claims": {
+        "scope": [
+          {
+            "id": "edge-request-scope",
+            "text": "This relationship describes the agreed behavior.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "edge-request-implementation",
+            "text": "This path still needs design and build.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "edge-request-evidence",
+            "text": "No execution result is claimed.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "read",
+      "from": "document",
+      "to": "exporter",
+      "label": "Read saved document",
+      "payload": "The saved document revision to export.",
+      "trigger": "The exporter processes the request.",
+      "kind": "data",
+      "implementation": "undesigned",
+      "claims": {
+        "scope": [
+          {
+            "id": "edge-read-scope",
+            "text": "This relationship describes the agreed behavior.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "edge-read-implementation",
+            "text": "This path still needs design and build.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "edge-read-evidence",
+            "text": "No execution result is claimed.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "deliver",
+      "from": "exporter",
+      "to": "download",
+      "label": "Create download",
+      "payload": "Generated document file.",
+      "trigger": "Export generation succeeds.",
+      "kind": "data",
+      "implementation": "undesigned",
+      "claims": {
+        "scope": [
+          {
+            "id": "edge-deliver-scope",
+            "text": "This relationship describes the agreed behavior.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "edge-deliver-implementation",
+            "text": "This path still needs design and build.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "edge-deliver-evidence",
+            "text": "No execution result is claimed.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "failure",
+      "from": "exporter",
+      "to": "editor",
+      "label": "Show export failure",
+      "payload": "A visible failure; the saved document remains unchanged.",
+      "trigger": "Export generation fails.",
+      "kind": "data",
+      "implementation": "undesigned",
+      "claims": {
+        "scope": [
+          {
+            "id": "edge-failure-scope",
+            "text": "This relationship describes the agreed behavior.",
+            "state": "agreed",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "implementation": [
+          {
+            "id": "edge-failure-implementation",
+            "text": "This path still needs design and build.",
+            "state": "source described",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ],
+        "evidence": [
+          {
+            "id": "edge-failure-evidence",
+            "text": "No execution result is claimed.",
+            "state": "snapshot only",
+            "sourceIds": [
+              "research"
+            ]
+          }
+        ]
+      },
+      "sourceIds": [
+        "research"
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": "revision",
+      "title": "How will export keep using one saved revision?",
+      "componentId": "exporter",
+      "status": "open",
+      "action": "engineering",
+      "agreed": "Export a saved document without changing it.",
+      "needs": "Determine how the requested revision is selected and held stable.",
+      "why": "A document edited during export must not produce a mixture of revisions.",
+      "nextStep": "Investigate how export selects a stable saved revision.",
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "retention",
+      "title": "Who will settle how long generated files remain?",
+      "componentId": "download",
+      "status": "open",
+      "action": "coordination",
+      "agreed": "The requester receives a generated file.",
+      "needs": "Coordinate generated-file retention with the document owner.",
+      "why": "Keeping every old export would retain more copies than intended.",
+      "nextStep": "Find the document owner and record the retention agreement.",
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "fallback",
+      "title": "What should be offered when export fails?",
+      "componentId": "editor",
+      "status": "open",
+      "action": "user",
+      "agreed": "Show the failure and leave the saved document unchanged.",
+      "needs": "Choose retry alone or retry plus an explicitly older successful file.",
+      "why": "An immediate older file is useful but could be mistaken for the latest revision.",
+      "nextStep": "Choose the failure experience after reviewing the two investigated possibilities.",
+      "sourceIds": [
+        "research"
+      ],
+      "candidates": [
+        {
+          "id": "retry",
+          "title": "Offer retry",
+          "consequence": "Rerun export; no older file is offered.",
+          "feasibility": "Fictional Research establishes rerunning the saved revision as feasible.",
+          "tradeoffs": "Less retained output, but no immediate file after failure.",
+          "sourceIds": [
+            "research"
+          ]
+        },
+        {
+          "id": "previous",
+          "title": "Offer retry and last successful file",
+          "consequence": "Make an explicitly older revision available immediately.",
+          "feasibility": "Fictional Research establishes retained output plus its revision label as feasible.",
+          "tradeoffs": "Immediate fallback requires more retained output and clear age labeling.",
+          "sourceIds": [
+            "research"
+          ]
+        }
+      ]
+    }
+  ],
+  "work": [
+    {
+      "id": "build",
+      "title": "Build export and download",
+      "description": "Implement export from a saved revision and provide the resulting file.",
+      "kind": "outcome",
+      "status": "remaining",
+      "componentIds": [
+        "exporter",
+        "download"
+      ],
+      "sourceIds": [
+        "research"
+      ]
+    },
+    {
+      "id": "failure-check",
+      "title": "Check failure preserves the saved document",
+      "description": "Make generation fail and confirm the saved document stays unchanged.",
+      "kind": "check",
+      "status": "remaining",
+      "componentIds": [
+        "editor",
+        "document"
+      ],
+      "sourceIds": [
+        "research"
+      ]
+    }
+  ],
+  "journeys": [
+    {
+      "id": "normal",
+      "title": "Successful export",
+      "description": "Intended normal journey; no execution is claimed.",
+      "componentIds": [
+        "editor",
+        "exporter",
+        "document",
+        "download"
+      ],
+      "connectionIds": [
+        "request",
+        "read",
+        "deliver"
+      ]
+    },
+    {
+      "id": "failure",
+      "title": "Export fails",
+      "description": "Intended failure response preserves the document.",
+      "componentIds": [
+        "editor",
+        "exporter",
+        "document"
+      ],
+      "connectionIds": [
+        "request",
+        "read",
+        "failure"
+      ]
+    }
+  ],
+  "tickets": [
+    {
+      "id": "EXPORT-1",
+      "title": "Fictional export delivery",
+      "description": "Invented work item, not a live tracker record.",
+      "sourceIds": [
+        "research"
+      ],
+      "scope": [
+        {
+          "componentId": "exporter",
+          "portion": "Build the export delivery behavior.",
+          "sourceIds": [
+            "research"
+          ]
+        },
+        {
+          "componentId": "download",
+          "portion": "Build the export delivery behavior.",
+          "sourceIds": [
+            "research"
+          ]
+        }
+      ],
+      "connectionIds": [
+        "request",
+        "read",
+        "deliver",
+        "failure"
+      ],
+      "dependencies": [
+        {
+          "componentId": "document",
+          "relationship": "prerequisite",
+          "reason": "Export must read an existing saved revision; this does not assign document saving to the ticket.",
+          "enables": "Produce an export of the requested saved document.",
+          "sourceIds": [
+            "research"
+          ]
+        }
+      ]
+    }
+  ],
+  "suggestion": null,
+  "refresh": {
+    "baselineRevision": null,
+    "changes": []
+  },
+  "reviews": []
+}

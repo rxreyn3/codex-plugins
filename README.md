@@ -8,7 +8,7 @@ Two independent plugins, available through the `ryan-codex` marketplace.
 
 **Intent to verified change.** `rpiv-codex` is an independent Codex-native port of the RPIV feature-development workflow. It takes an unclear request through discovery, grounded research, design, planning, implementation, validation, local commits, and verified code review.
 
-Each skill owns one stage and stops at an explicit boundary. A recommended next stage is a handoff, not permission to continue changing code, committing, pushing, or publishing. [Choose a workflow](#choose-a-workflow).
+Each stage skill owns its work and stops at an explicit boundary. A recommended next stage is a handoff, not permission to continue changing code, committing, pushing, or publishing. [Choose a workflow](#choose-a-workflow).
 
 ## Codex Advisor
 
@@ -67,6 +67,7 @@ There are two routes from research to an implementation plan:
 | --- | --- | --- |
 | Turn an idea or product artifact into explicit requirements | [`$rpivc-discover`](plugins/rpiv-codex/skills/rpivc-discover/SKILL.md) | A Feature Requirements Document under `.rpiv/artifacts/discover/` |
 | Investigate repository behavior or an external contract without implementing | [`$rpivc-research`](plugins/rpiv-codex/skills/rpivc-research/SKILL.md) | Grounded research under `.rpiv/artifacts/research/` |
+| See what still needs deciding or building across existing artifacts | [`$rpivc-map`](plugins/rpiv-codex/skills/rpivc-map/SKILL.md) | An optional interactive map and versioned evidence companion; no stage advancement |
 | Produce one reviewed phased plan directly | [`$rpivc-blueprint`](plugins/rpiv-codex/skills/rpivc-blueprint/SKILL.md) | An implementation-ready plan under `.rpiv/artifacts/plans/` |
 | Resolve architecture and decompose complex work one slice at a time | [`$rpivc-design`](plugins/rpiv-codex/skills/rpivc-design/SKILL.md) | A resumable design under `.rpiv/artifacts/designs/` |
 | Convert a ready design into a reviewed implementation plan | [`$rpivc-plan`](plugins/rpiv-codex/skills/rpivc-plan/SKILL.md) | A plan preserving the design's approved slices and success criteria |
@@ -77,6 +78,8 @@ There are two routes from research to an implementation plan:
 | Review pending changes, a commit, branch, range, folder, or files | [`$rpivc-code-review`](plugins/rpiv-codex/skills/rpivc-code-review/SKILL.md) | A verified review under `.rpiv/artifacts/reviews/` |
 | Preserve in-flight work before changing tasks | [`$rpivc-create-handoff`](plugins/rpiv-codex/skills/rpivc-create-handoff/SKILL.md) | A concise state snapshot under `.rpiv/artifacts/handoffs/` |
 | Continue from a handoff after verifying current repository state | [`$rpivc-resume-handoff`](plugins/rpiv-codex/skills/rpivc-resume-handoff/SKILL.md) | An approved continuation from the next concrete task |
+
+Map is optional alongside either route. One map retains its identity as discovery, research, design and planning evidence changes. It keeps agreements, implementation and checks separate, and requires final Advisor review of the rendered result. See [Map examples and acceptance](docs/MAP.md).
 
 ## Examples
 

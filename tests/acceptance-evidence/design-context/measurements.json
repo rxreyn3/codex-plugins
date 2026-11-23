@@ -1,0 +1,242 @@
+{
+  "measurement_method": "Recorded token_usage_record values; input includes cached input. Incremental = final milestone input minus first response input. Summed input is repeated processing across responses, not window occupancy. Tool characters are visible output text, not tokens. Repeated-comment bytes are a lower bound counting exact synthetic long comment lines delivered more than once after unescaping shell envelopes; excludes other source and newlines.",
+  "trial_count": "One original/candidate pair; exploratory, not a statistical benchmark.",
+  "records": [
+    {
+      "agent": "/root/baseline_trial/analyzer",
+      "thread_id": "01a17824-2557-7053-bce5-1ff833848782",
+      "bytes": 833748,
+      "start_utc": "2026-10-26T12:16:37.750Z",
+      "end_utc": "2026-10-26T12:17:30.880Z",
+      "model_settings": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        }
+      ],
+      "responses": 7,
+      "startup_input_tokens": 42357,
+      "milestone_input_tokens": 76506,
+      "incremental_input_tokens": 34149,
+      "peak_input_tokens": 76506,
+      "summed_response_input_tokens": 430125,
+      "summed_cached_input_tokens": 394240,
+      "summed_output_tokens": 2037,
+      "tool_output_characters": 179550,
+      "truncated_output_lines": [
+        18,
+        29
+      ],
+      "tool_calls": 6,
+      "repeated_long_comment_bytes_lower_bound": 71070,
+      "unique_long_comments_observed": 700,
+      "usage_event_lines": [
+        15,
+        23,
+        34,
+        39,
+        44,
+        49,
+        57
+      ]
+    },
+    {
+      "agent": "/root/baseline_trial",
+      "thread_id": "01a17823-1618-7763-8326-f502bd0807e0",
+      "bytes": 1082272,
+      "start_utc": "2026-10-26T12:15:28.211Z",
+      "end_utc": "2026-10-26T12:18:13.828Z",
+      "model_settings": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        }
+      ],
+      "responses": 20,
+      "startup_input_tokens": 42272,
+      "milestone_input_tokens": 98162,
+      "incremental_input_tokens": 55890,
+      "peak_input_tokens": 98162,
+      "summed_response_input_tokens": 1604810,
+      "summed_cached_input_tokens": 1544960,
+      "summed_output_tokens": 6442,
+      "tool_output_characters": 251957,
+      "truncated_output_lines": [
+        32,
+        43
+      ],
+      "tool_calls": 19,
+      "repeated_long_comment_bytes_lower_bound": 75762,
+      "unique_long_comments_observed": 700,
+      "usage_event_lines": [
+        15,
+        20,
+        29,
+        37,
+        48,
+        53,
+        58,
+        63,
+        70,
+        76,
+        82,
+        87,
+        93,
+        100,
+        106,
+        116,
+        121,
+        131,
+        141,
+        150
+      ]
+    },
+    {
+      "agent": "/root/candidate_trial/analyzer",
+      "thread_id": "01a17826-d7ea-72f3-9ba1-99e47cb9f7c5",
+      "bytes": 598036,
+      "start_utc": "2026-10-26T12:19:37.277Z",
+      "end_utc": "2026-10-26T12:20:23.889Z",
+      "model_settings": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        }
+      ],
+      "responses": 10,
+      "startup_input_tokens": 42383,
+      "milestone_input_tokens": 64472,
+      "incremental_input_tokens": 22089,
+      "peak_input_tokens": 64472,
+      "summed_response_input_tokens": 523479,
+      "summed_cached_input_tokens": 499328,
+      "summed_output_tokens": 1842,
+      "tool_output_characters": 106490,
+      "truncated_output_lines": [],
+      "tool_calls": 9,
+      "repeated_long_comment_bytes_lower_bound": 0,
+      "unique_long_comments_observed": 700,
+      "usage_event_lines": [
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        55,
+        64
+      ]
+    },
+    {
+      "agent": "/root/candidate_trial",
+      "thread_id": "01a17825-1fa8-7d01-9005-f9ed12d30bb6",
+      "bytes": 1017566,
+      "start_utc": "2026-10-26T12:17:41.792Z",
+      "end_utc": "2026-10-26T12:21:02.287Z",
+      "model_settings": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "medium"
+        }
+      ],
+      "responses": 26,
+      "startup_input_tokens": 42273,
+      "milestone_input_tokens": 93546,
+      "incremental_input_tokens": 51273,
+      "peak_input_tokens": 93546,
+      "summed_response_input_tokens": 1957952,
+      "summed_cached_input_tokens": 1901824,
+      "summed_output_tokens": 8395,
+      "tool_output_characters": 203382,
+      "truncated_output_lines": [
+        17,
+        52,
+        118
+      ],
+      "tool_calls": 25,
+      "repeated_long_comment_bytes_lower_bound": 5520,
+      "unique_long_comments_observed": 700,
+      "usage_event_lines": [
+        15,
+        22,
+        29,
+        36,
+        45,
+        50,
+        57,
+        64,
+        69,
+        74,
+        79,
+        84,
+        89,
+        96,
+        101,
+        108,
+        116,
+        123,
+        129,
+        135,
+        144,
+        150,
+        157,
+        170,
+        176,
+        184
+      ]
+    }
+  ],
+  "fingerprints": {
+    "original": {
+      "SKILL.md": "d52f163248aea4f3b2f6d913979778317ee862180b433b4c0398f2d0c06ef312",
+      "agents/openai.yaml": "c81ff02c28b85b53b64dec8950e4144c42d1915e9f9fecd3c62f028c38072427",
+      "references/codebase-analyzer.md": "d5a10b9d845321e7dc115b3c1305b7e2c45bff5d5481ed0e3c65ba3cc2e73682",
+      "references/codebase-pattern-finder.md": "693288f5c98eaec4b84b54e4b003b7043ac9972a2ff3a85766f44cfc5e6370b4",
+      "references/creation-progress.md": "9adbfba3eb17bd529e45bb9b2bea2e0b9315fbd36ccc58869294b23b4d7b81c7",
+      "references/integration-scanner.md": "2ea6cce5a2db26c4790042cd35b2476514d032fdc0bdbf7ac178c4418d7fc477",
+      "references/precedent-locator.md": "67d94f19957163fb24b428b92e04962f12090476ab41641f696ed6631eb43c79",
+      "references/slice-verifier.md": "d3a51ed417b997c5abc1df1663911f0fed8e0c53c72b2e920b9f1ef2193f03cc",
+      "references/web-search-researcher.md": "6658550f7908636e9eb9227801aef71492dd6c538b854099a033a84733b39856",
+      "scripts/git-context.mjs": "61560e4c849cf8542dc5acec84fe1c1e8eb0c10002f64f1c5e36c79a74ffbecb",
+      "scripts/list-recent.mjs": "fd885944d7f68738d8acafa7935068542bd523256563700ce7c01500a7a4f640",
+      "scripts/now.mjs": "0d11b0a0a3a99a98eb94fb9d0e482c1d911586d488fbc8a2e13338ce0256911c"
+    },
+    "candidate": {
+      "SKILL.md": "5c1ee90b5cc8d47e5c1cf32b1e149c5006e1e6721a59276561bdc6b72c12008e",
+      "agents/openai.yaml": "c81ff02c28b85b53b64dec8950e4144c42d1915e9f9fecd3c62f028c38072427",
+      "references/codebase-analyzer.md": "d5a10b9d845321e7dc115b3c1305b7e2c45bff5d5481ed0e3c65ba3cc2e73682",
+      "references/codebase-pattern-finder.md": "693288f5c98eaec4b84b54e4b003b7043ac9972a2ff3a85766f44cfc5e6370b4",
+      "references/creation-progress.md": "272b9368feb37cb5bd2373b2ac206d072202ce9eb8bbad01e84e17fc7dfd4f58",
+      "references/integration-scanner.md": "2ea6cce5a2db26c4790042cd35b2476514d032fdc0bdbf7ac178c4418d7fc477",
+      "references/precedent-locator.md": "67d94f19957163fb24b428b92e04962f12090476ab41641f696ed6631eb43c79",
+      "references/slice-verifier.md": "d3a51ed417b997c5abc1df1663911f0fed8e0c53c72b2e920b9f1ef2193f03cc",
+      "references/web-search-researcher.md": "6658550f7908636e9eb9227801aef71492dd6c538b854099a033a84733b39856",
+      "scripts/git-context.mjs": "61560e4c849cf8542dc5acec84fe1c1e8eb0c10002f64f1c5e36c79a74ffbecb",
+      "scripts/list-recent.mjs": "fd885944d7f68738d8acafa7935068542bd523256563700ce7c01500a7a4f640",
+      "scripts/now.mjs": "0d11b0a0a3a99a98eb94fb9d0e482c1d911586d488fbc8a2e13338ce0256911c"
+    }
+  },
+  "fixture_fingerprints": {
+    ".rpiv/artifacts/research/input.md": "b2ce11905337462cfa3812ff5a1b78f4e4aada7a37169497a9cf44785161e95f",
+    "src/controller.js": "6e62a6355fc9f6886945cd1228a686022fefb05346f459a0551b2986c06e8923",
+    "src/job.js": "effc5788fa30636d368bf1be49ea432f3589e34f00727c59697dd7249e5c1480",
+    "src/send.js": "773b27931376c524d83cf666ce58ccc478a4733b9e081247e42790b50be09aa1",
+    "src/send.test.js": "530f52b4b88a4c568e1b79176e057fa5ead68baa8e1eb9f9984232d9973f6b2e"
+  },
+  "oracle": {
+    "claims": [
+      "default attempts one",
+      "disabled path throws before transport",
+      "only transient failures retry",
+      "terminal error object rethrown unchanged",
+      "controller env configuration",
+      "background job attempts two",
+      "configuration helper at module end",
+      "no request payload logging permitted",
+      "all required first reads complete",
+      "first role directly verified and saved; others pending; no approvals"
+    ]
+  }
+}

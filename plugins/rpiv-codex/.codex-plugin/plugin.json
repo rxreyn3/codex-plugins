@@ -19,13 +19,14 @@
     "validation",
     "commit",
     "code-review",
-    "handoff"
+    "handoff",
+    "mapping"
   ],
   "skills": "./skills/",
   "interface": {
     "displayName": "RPIV Codex",
     "shortDescription": "Feature discovery through verified review and handoff",
-    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, design complex features as resumable vertical slices, shape work into reviewed implementation plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, resume it against verified current state, create approved atomic local commits, and review code through independent specialist passes.",
+    "longDescription": "Define feature intent, investigate repository behavior with verified evidence, design complex features as resumable vertical slices, shape work into reviewed implementation plans, revise plans from grounded feedback, execute approved plans phase by phase, validate the result against the plan, preserve in-flight work in a handoff artifact, resume it against verified current state, create approved atomic local commits, and review code through independent specialist passes. Optionally map remaining decisions and agreed work across the same artifacts, keeping agreement, implementation and checks distinct.",
     "developerName": "Ryan Reynolds",
     "category": "Productivity",
     "capabilities": [
@@ -47,7 +48,8 @@
       "Use $rpivc-commit to group current changes into approved atomic local commits.",
       "Use $rpivc-create-handoff to preserve in-flight work for a fresh task.",
       "Use $rpivc-resume-handoff to verify a handoff against current state and continue its next task.",
-      "Use $rpivc-code-review to review a change set and write a verified review artifact."
+      "Use $rpivc-code-review to review a change set and write a verified review artifact.",
+      "Use $rpivc-map to find remaining decisions and work in a source-linked system map."
     ]
   }
 }
